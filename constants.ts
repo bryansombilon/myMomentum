@@ -1,12 +1,12 @@
 import { ProjectType, Task, Project } from './types';
 
 export const PROJECT_CONFIG: Record<ProjectType, Project> = {
-  [ProjectType.GALA]: { name: ProjectType.GALA, color: '#3b82f6' }, // Blue
-  [ProjectType.MAKERS_MOVERS]: { name: ProjectType.MAKERS_MOVERS, color: '#ec4899' }, // Pink
-  [ProjectType.ALCOTT_GLOBAL]: { name: ProjectType.ALCOTT_GLOBAL, color: '#f59e0b' }, // Amber
-  [ProjectType.SOURCE_TO_SOLD]: { name: ProjectType.SOURCE_TO_SOLD, color: '#10b981' }, // Emerald
-  [ProjectType.SUPPLIFY]: { name: ProjectType.SUPPLIFY, color: '#8b5cf6' }, // Violet
-  [ProjectType.EXECUTIVE_SEARCH]: { name: ProjectType.EXECUTIVE_SEARCH, color: '#ef4444' }, // Red
+  [ProjectType.GALA]: { name: ProjectType.GALA, color: '#EAB308' }, // Gold
+  [ProjectType.MAKERS_MOVERS]: { name: ProjectType.MAKERS_MOVERS, color: '#7E22CE' }, // Dark Purple
+  [ProjectType.ALCOTT_GLOBAL]: { name: ProjectType.ALCOTT_GLOBAL, color: '#14B8A6' }, // Teal
+  [ProjectType.SOURCE_TO_SOLD]: { name: ProjectType.SOURCE_TO_SOLD, color: '#F97316' }, // Orange
+  [ProjectType.SUPPLIFY]: { name: ProjectType.SUPPLIFY, color: '#3B82F6' }, // Blue
+  [ProjectType.EXECUTIVE_SEARCH]: { name: ProjectType.EXECUTIVE_SEARCH, color: '#22C55E' }, // Green
 };
 
 export const STATUS_CONFIG = {

@@ -131,7 +131,13 @@ export const TaskList: React.FC<TaskListProps> = ({ tasks, setTasks, selectedTas
       </div>
 
       <div className="flex-1 overflow-y-auto p-3 scrollbar-hide">
-        <Reorder.Group axis="y" values={tasks} onReorder={setTasks} className="space-y-3 pb-20">
+        <Reorder.Group 
+          axis="y" 
+          values={tasks} 
+          onReorder={setTasks} 
+          className="space-y-3 pb-20"
+          layoutScroll
+        >
           <AnimatePresence initial={false}>
             {tasks.map((task) => (
               <TaskItem

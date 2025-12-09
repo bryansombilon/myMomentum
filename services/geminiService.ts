@@ -2,8 +2,29 @@ import { GoogleGenAI } from "@google/genai";
 import { Task } from "../types";
 
 const getAiClient = () => {
-  // Safe access to process for browser environments
-  const apiKey = (typeof process !== 'undefined' && process.env) ? process.env.API_KEY : undefined;
+  let apiKey: string | undefined;
+
+  // Try standard Vite/Module environment (Vercel default)
+  try {
+    // @ts-ignore
+    if (import.meta && import.meta.env) {
+      // @ts-ignore
+      apiKey = import.meta.env.VITE_API_KEY || import.meta.env.API_KEY;
+    }
+  } catch (e) {
+    // Ignore error if import.meta is not available
+  }
+
+  // Fallback to process.env for Node-like environments or custom webpack configs
+  if (!apiKey) {
+    try {
+      if (typeof process !== 'undefined' && process.env) {
+        apiKey = process.env.API_KEY || process.env.REACT_APP_API_KEY;
+      }
+    } catch (e) {
+       // Ignore error if process is not defined
+    }
+  }
   
   if (!apiKey) {
     console.error("API_KEY is missing. Ensure the environment is configured correctly.");
