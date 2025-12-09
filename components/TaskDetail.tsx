@@ -1,7 +1,7 @@
 import React from 'react';
 import { Task, Message } from '../types';
 import { PROJECT_CONFIG, STATUS_CONFIG } from '../constants';
-import { ExternalLink, Calendar, CheckCircle2, Trash2 } from 'lucide-react';
+import { ExternalLink, Calendar, CheckCircle2, Trash2, Briefcase, Link as LinkIcon, Pencil } from 'lucide-react';
 import { ChatSection } from './ChatSection';
 
 interface TaskDetailProps {
@@ -9,9 +9,10 @@ interface TaskDetailProps {
   onUpdateTask: (taskId: string, updates: Message[]) => void;
   onStatusChange: (taskId: string, status: Task['status']) => void;
   onDeleteTask: (taskId: string) => void;
+  onEditTask: (task: Task) => void;
 }
 
-export const TaskDetail: React.FC<TaskDetailProps> = ({ task, onUpdateTask, onStatusChange, onDeleteTask }) => {
+export const TaskDetail: React.FC<TaskDetailProps> = ({ task, onUpdateTask, onStatusChange, onDeleteTask, onEditTask }) => {
   if (!task) {
     return (
       <div className="flex-1 flex flex-col items-center justify-center bg-slate-950 text-slate-500 select-none">
@@ -25,27 +26,21 @@ export const TaskDetail: React.FC<TaskDetailProps> = ({ task, onUpdateTask, onSt
   }
 
   const project = PROJECT_CONFIG[task.project];
+  const deadlineDate = new Date(task.deadline);
+  const isOverdue = deadlineDate < new Date() && task.status !== 'done';
 
   return (
     <div className="flex-1 h-full flex flex-col bg-slate-950 overflow-hidden">
-      {/* Header */}
+      {/* Header Section */}
       <div className="p-6 md:p-8 border-b border-slate-800 bg-slate-900/30 relative">
+        {/* Background Accent */}
         <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-transparent via-slate-800 to-transparent opacity-50"></div>
         
-        <div className="flex flex-col md:flex-row md:items-start justify-between gap-4 mb-5">
-          <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-slate-900 border border-slate-700/50 shadow-sm self-start">
-            <span 
-              className="w-2.5 h-2.5 rounded-full shadow-[0_0_8px_currentColor]" 
-              style={{ backgroundColor: project.color, color: project.color }} 
-            />
-            <span className="text-xs font-bold tracking-wide text-slate-300 uppercase">
-              {project.name}
-            </span>
-          </div>
-          
-          <div className="flex items-center gap-2 self-start md:self-auto">
-            <div className="flex items-center bg-slate-900 rounded-lg p-1 border border-slate-800 shadow-sm">
-               {(['todo', 'in-progress', 'on-hold', 'done'] as const).map((s) => {
+        {/* Actions Row */}
+        <div className="flex justify-end gap-4 mb-6">
+           <div className="flex items-center self-end gap-3">
+             <div className="flex items-center bg-slate-900/80 rounded-lg p-1 border border-slate-800 shadow-sm backdrop-blur-sm">
+               {(['todo', 'in-progress', 'under-review', 'on-hold', 'done'] as const).map((s) => {
                  const config = STATUS_CONFIG[s];
                  const isActive = task.status === s;
                  return (
@@ -55,7 +50,7 @@ export const TaskDetail: React.FC<TaskDetailProps> = ({ task, onUpdateTask, onSt
                     className={`
                       px-3 py-1.5 text-[10px] md:text-xs font-bold rounded-md transition-all capitalize tracking-wide whitespace-nowrap
                       ${isActive 
-                        ? `${config.color} ${config.text} shadow-md` 
+                        ? `${config.color} ${config.text} shadow-md scale-105` 
                         : 'text-slate-500 hover:text-slate-300 hover:bg-slate-800'}
                     `}
                   >
@@ -65,7 +60,15 @@ export const TaskDetail: React.FC<TaskDetailProps> = ({ task, onUpdateTask, onSt
                })}
             </div>
 
-            <div className="w-px h-8 bg-slate-800 mx-1"></div>
+            <div className="w-px h-6 bg-slate-800 hidden md:block"></div>
+            
+            <button
+              onClick={() => onEditTask(task)}
+              className="p-2 text-slate-500 hover:text-indigo-400 hover:bg-indigo-500/10 rounded-lg border border-transparent hover:border-indigo-500/20 transition-all"
+              title="Edit Task"
+            >
+              <Pencil size={18} />
+            </button>
 
             <button
               onClick={() => onDeleteTask(task.id)}
@@ -74,36 +77,72 @@ export const TaskDetail: React.FC<TaskDetailProps> = ({ task, onUpdateTask, onSt
             >
               <Trash2 size={18} />
             </button>
-          </div>
+           </div>
         </div>
 
+        {/* Title & Description */}
         <h1 className="text-2xl md:text-3xl font-bold text-white mb-3 tracking-tight leading-tight">
           {task.title}
         </h1>
         
-        <p className="text-slate-400 text-sm md:text-base leading-relaxed max-w-3xl mb-6">
+        <p className="text-slate-400 text-sm md:text-base leading-relaxed max-w-3xl mb-8">
           {task.description}
         </p>
 
-        <div className="flex flex-wrap items-center gap-4 text-sm text-slate-400">
-          <div className="flex items-center gap-2 px-3 py-2 rounded-lg bg-slate-900 border border-slate-800">
-            <Calendar size={16} className="text-indigo-400" />
-            <span className="font-medium text-slate-300">
-              Due {new Date(task.deadline).toLocaleDateString(undefined, { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}
-            </span>
-          </div>
-          
-          {task.clickupLink && (
-            <a 
-              href={task.clickupLink} 
-              target="_blank" 
-              rel="noopener noreferrer"
-              className="flex items-center gap-2 px-3 py-2 rounded-lg bg-slate-900 border border-slate-800 hover:border-indigo-500 hover:text-indigo-400 transition-all group shadow-sm hover:shadow-indigo-500/10"
-            >
-              <ExternalLink size={16} />
-              <span className="font-medium">Open in ClickUp</span>
-            </a>
-          )}
+        {/* Metadata Grid */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            {/* Project Card */}
+            <div className="flex items-center gap-3 p-3 rounded-xl bg-slate-900/50 border border-slate-800/60 transition-colors hover:border-slate-700">
+                <div className="p-2 rounded-lg bg-slate-800 text-slate-400">
+                    <Briefcase size={18} />
+                </div>
+                <div>
+                    <div className="text-[10px] font-semibold text-slate-500 uppercase tracking-wider mb-0.5">Project</div>
+                    <div className="text-sm font-medium text-slate-200 flex items-center gap-2">
+                        <span 
+                            className="w-2 h-2 rounded-full shadow-[0_0_8px_currentColor]" 
+                            style={{ backgroundColor: project.color, color: project.color }} 
+                        />
+                        {project.name}
+                    </div>
+                </div>
+            </div>
+
+            {/* Deadline Card */}
+            <div className="flex items-center gap-3 p-3 rounded-xl bg-slate-900/50 border border-slate-800/60 transition-colors hover:border-slate-700">
+                <div className={`p-2 rounded-lg ${isOverdue ? 'bg-red-500/10 text-red-400' : 'bg-slate-800 text-slate-400'}`}>
+                    <Calendar size={18} />
+                </div>
+                <div>
+                    <div className="text-[10px] font-semibold text-slate-500 uppercase tracking-wider mb-0.5">Deadline</div>
+                    <div className={`text-sm font-medium ${isOverdue ? 'text-red-400 font-bold' : 'text-slate-200'}`}>
+                        {deadlineDate.toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' })}
+                        {isOverdue && <span className="ml-2 text-[10px] bg-red-500/20 text-red-400 px-1.5 py-0.5 rounded uppercase">Overdue</span>}
+                    </div>
+                </div>
+            </div>
+
+            {/* ClickUp Link Card */}
+             <div className="flex items-center gap-3 p-3 rounded-xl bg-slate-900/50 border border-slate-800/60 group hover:border-indigo-500/30 transition-colors cursor-pointer">
+                <div className="p-2 rounded-lg bg-slate-800 text-slate-400 group-hover:text-indigo-400 group-hover:bg-indigo-500/10 transition-colors">
+                    <LinkIcon size={18} />
+                </div>
+                <div className="flex-1 min-w-0">
+                    <div className="text-[10px] font-semibold text-slate-500 uppercase tracking-wider mb-0.5">Reference</div>
+                    {task.clickupLink ? (
+                        <a 
+                          href={task.clickupLink} 
+                          target="_blank" 
+                          rel="noopener noreferrer"
+                          className="text-sm font-medium text-indigo-400 hover:text-indigo-300 truncate flex items-center gap-1.5 transition-colors"
+                        >
+                          Open in ClickUp <ExternalLink size={12} />
+                        </a>
+                    ) : (
+                        <span className="text-sm text-slate-500 italic">No link attached</span>
+                    )}
+                </div>
+            </div>
         </div>
       </div>
 

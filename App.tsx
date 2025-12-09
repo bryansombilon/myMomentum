@@ -32,6 +32,7 @@ const App: React.FC = () => {
 
   const [selectedTaskId, setSelectedTaskId] = useState<string | null>(null);
   const [isNewTaskModalOpen, setIsNewTaskModalOpen] = useState(false);
+  const [editingTask, setEditingTask] = useState<Task | null>(null);
 
   // Persist tasks to localStorage whenever they change
   useEffect(() => {
@@ -67,23 +68,43 @@ const App: React.FC = () => {
     }
   };
 
-  const handleCreateTask = (taskData: {
+  const handleEditTask = (task: Task) => {
+    setEditingTask(task);
+    setIsNewTaskModalOpen(true);
+  };
+
+  const handleSaveTask = (taskData: {
     title: string;
     description: string;
     deadline: Date;
     clickupLink: string;
     project: ProjectType;
   }) => {
-    const newTask: Task = {
-      id: Date.now().toString(),
-      ...taskData,
-      status: 'todo',
-      updates: []
-    };
-    
-    setTasks(prev => [newTask, ...prev]);
+    if (editingTask) {
+      // Update existing task
+      setTasks(prev => prev.map(t => 
+        t.id === editingTask.id 
+          ? { ...t, ...taskData } 
+          : t
+      ));
+      setEditingTask(null);
+    } else {
+      // Create new task
+      const newTask: Task = {
+        id: Date.now().toString(),
+        ...taskData,
+        status: 'todo',
+        updates: []
+      };
+      setTasks(prev => [newTask, ...prev]);
+      setSelectedTaskId(newTask.id);
+    }
     setIsNewTaskModalOpen(false);
-    setSelectedTaskId(newTask.id);
+  };
+
+  const handleCloseModal = () => {
+    setIsNewTaskModalOpen(false);
+    setEditingTask(null);
   };
 
   return (
@@ -94,7 +115,10 @@ const App: React.FC = () => {
         setTasks={handleTaskReorder} 
         selectedTaskId={selectedTaskId}
         onSelectTask={(task) => setSelectedTaskId(task.id)}
-        onAddNewTask={() => setIsNewTaskModalOpen(true)}
+        onAddNewTask={() => {
+          setEditingTask(null);
+          setIsNewTaskModalOpen(true);
+        }}
       />
 
       {/* Right Panel */}
@@ -104,14 +128,16 @@ const App: React.FC = () => {
             onUpdateTask={handleUpdateTask}
             onStatusChange={handleStatusChange}
             onDeleteTask={handleDeleteTask}
+            onEditTask={handleEditTask}
          />
       </main>
 
       {/* Modals */}
       <NewTaskModal 
         isOpen={isNewTaskModalOpen}
-        onClose={() => setIsNewTaskModalOpen(false)}
-        onSave={handleCreateTask}
+        onClose={handleCloseModal}
+        onSave={handleSaveTask}
+        taskToEdit={editingTask}
       />
     </div>
   );
