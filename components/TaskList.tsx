@@ -2,7 +2,7 @@ import React, { useState, useMemo } from 'react';
 import { Reorder, useDragControls, AnimatePresence, motion } from 'framer-motion';
 import { Task, ProjectType } from '../types';
 import { PROJECT_CONFIG, STATUS_CONFIG } from '../constants';
-import { Calendar, GripVertical, ChevronRight, Plus, Filter, X, AlertTriangle, Clock } from 'lucide-react';
+import { Calendar, GripVertical, ChevronRight, Plus, Filter, X, AlertTriangle, Clock, Search } from 'lucide-react';
 
 interface TaskListProps {
   tasks: Task[];
@@ -158,14 +158,16 @@ export const TaskList: React.FC<TaskListProps> = ({ tasks, setTasks, selectedTas
   const [filterProject, setFilterProject] = useState<string>('all');
   const [filterStatus, setFilterStatus] = useState<string>('all');
   const [filterDeadline, setFilterDeadline] = useState<string>('all');
+  const [searchQuery, setSearchQuery] = useState<string>('');
 
   const filteredTasks = useMemo(() => {
     // Return original reference if no filters are active to prevent unnecessary re-renders in Reorder.Group
-    if (filterProject === 'all' && filterStatus === 'all' && filterDeadline === 'all') {
+    if (filterProject === 'all' && filterStatus === 'all' && filterDeadline === 'all' && !searchQuery) {
       return tasks;
     }
 
     const now = new Date();
+    const lowerQuery = searchQuery.toLowerCase();
     
     return tasks.filter(task => {
       const matchProject = filterProject === 'all' || task.project === filterProject;
@@ -184,22 +186,27 @@ export const TaskList: React.FC<TaskListProps> = ({ tasks, setTasks, selectedTas
         matchDeadline = deadline < now && task.status !== 'done';
       }
 
-      return matchProject && matchStatus && matchDeadline;
-    });
-  }, [tasks, filterProject, filterStatus, filterDeadline]);
+      const matchSearch = !searchQuery || 
+        task.title.toLowerCase().includes(lowerQuery) || 
+        (task.clickupLink && task.clickupLink.toLowerCase().includes(lowerQuery));
 
-  const isFiltered = filterProject !== 'all' || filterStatus !== 'all' || filterDeadline !== 'all';
+      return matchProject && matchStatus && matchDeadline && matchSearch;
+    });
+  }, [tasks, filterProject, filterStatus, filterDeadline, searchQuery]);
+
+  const isFiltered = filterProject !== 'all' || filterStatus !== 'all' || filterDeadline !== 'all' || searchQuery !== '';
 
   const clearFilters = () => {
     setFilterProject('all');
     setFilterStatus('all');
     setFilterDeadline('all');
+    setSearchQuery('');
   };
 
   return (
     <div className="h-full flex flex-col bg-slate-50 dark:bg-slate-900 border-r border-slate-200 dark:border-slate-800 w-full md:w-80 lg:w-96 flex-shrink-0 transition-colors">
       {/* Header */}
-      <div className="p-4 border-b border-slate-200 dark:border-slate-800 bg-white/50 dark:bg-slate-900/50 backdrop-blur-sm sticky top-0 z-10 space-y-4">
+      <div className="p-4 border-b border-slate-200 dark:border-slate-800 bg-white/50 dark:bg-slate-900/50 backdrop-blur-sm sticky top-0 z-10 space-y-3">
         <div className="flex items-center justify-between">
           <h2 className="text-lg font-semibold text-slate-900 dark:text-slate-100 flex items-center gap-2">
             <div className="flex flex-col gap-0.5">
@@ -219,6 +226,26 @@ export const TaskList: React.FC<TaskListProps> = ({ tasks, setTasks, selectedTas
           >
             <Plus size={18} />
           </button>
+        </div>
+
+        {/* Search Bar */}
+        <div className="relative">
+          <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 dark:text-slate-500" />
+          <input 
+            type="text" 
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            placeholder="Search tasks or paste link..."
+            className="w-full bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-lg pl-9 pr-8 py-2 text-sm text-slate-900 dark:text-slate-200 focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500/20 transition-all placeholder:text-slate-400 dark:placeholder:text-slate-600"
+          />
+          {searchQuery && (
+            <button 
+              onClick={() => setSearchQuery('')}
+              className="absolute right-2 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 p-1 rounded-full transition-colors"
+            >
+              <X size={12} />
+            </button>
+          )}
         </div>
 
         {/* Filter Bar */}

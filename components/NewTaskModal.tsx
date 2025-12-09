@@ -152,32 +152,39 @@ export const NewTaskModal: React.FC<NewTaskModalProps> = ({ isOpen, onClose, onS
             </div>
           </div>
 
-          {/* Priority */}
+          {/* Priority Toggle */}
           <div className="space-y-1.5">
             <label className="text-xs font-medium text-slate-500 dark:text-slate-400 flex items-center gap-1.5">
               <AlertTriangle size={14} /> Priority Level
             </label>
-            <div className="grid grid-cols-2 gap-3">
+            <div className="flex items-center gap-3 p-1">
+              {/* Toggle Switch */}
               <button
                 type="button"
-                onClick={() => setPriority('not-urgent')}
-                className={`flex items-center justify-center gap-2 px-3 py-2 rounded-lg border text-sm transition-all
-                  ${priority === 'not-urgent' 
-                    ? 'bg-slate-200 dark:bg-slate-700 text-slate-800 dark:text-white border-slate-300 dark:border-slate-500 shadow-sm' 
-                    : 'bg-slate-50 dark:bg-slate-800/50 text-slate-500 dark:text-slate-400 border-slate-200 dark:border-slate-700 hover:bg-slate-100 dark:hover:bg-slate-800'}`}
+                onClick={() => setPriority(prev => prev === 'urgent' ? 'not-urgent' : 'urgent')}
+                className={`relative w-12 h-6 rounded-full transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 dark:focus:ring-offset-slate-900 ${
+                  priority === 'urgent' 
+                    ? 'bg-red-500' 
+                    : 'bg-slate-300 dark:bg-slate-600'
+                }`}
+                role="switch"
+                aria-checked={priority === 'urgent'}
               >
-                <Clock size={14} /> Not Urgent
+                <span
+                  className={`absolute top-1 left-1 bg-white rounded-full w-4 h-4 shadow-sm transition-transform duration-200 transform ${
+                    priority === 'urgent' ? 'translate-x-6' : 'translate-x-0'
+                  }`}
+                />
               </button>
-              <button
-                type="button"
-                onClick={() => setPriority('urgent')}
-                className={`flex items-center justify-center gap-2 px-3 py-2 rounded-lg border text-sm transition-all
-                  ${priority === 'urgent' 
-                    ? 'bg-red-100 dark:bg-red-500/20 text-red-600 dark:text-red-400 border-red-200 dark:border-red-500/50 shadow-sm' 
-                    : 'bg-slate-50 dark:bg-slate-800/50 text-slate-500 dark:text-slate-400 border-slate-200 dark:border-slate-700 hover:bg-slate-100 dark:hover:bg-slate-800'}`}
-              >
-                <AlertTriangle size={14} /> URGENT
-              </button>
+              
+              {/* Label */}
+              <span className={`text-sm font-medium transition-colors ${
+                priority === 'urgent' 
+                  ? 'text-red-600 dark:text-red-400 font-bold' 
+                  : 'text-slate-600 dark:text-slate-400'
+              }`}>
+                {priority === 'urgent' ? 'URGENT' : 'Not Urgent'}
+              </span>
             </div>
           </div>
 

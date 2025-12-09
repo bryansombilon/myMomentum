@@ -1,13 +1,14 @@
 import React from 'react';
-import { Task, Message } from '../types';
+import { Task, Message, Priority } from '../types';
 import { PROJECT_CONFIG, STATUS_CONFIG, PRIORITY_CONFIG } from '../constants';
-import { ExternalLink, Calendar, CheckCircle2, Trash2, Briefcase, Link as LinkIcon, Pencil, AlertTriangle, Clock } from 'lucide-react';
+import { ExternalLink, Calendar, CheckCircle2, Trash2, Briefcase, Link as LinkIcon, Pencil, AlertTriangle, Clock, Check, Flag } from 'lucide-react';
 import { ChatSection } from './ChatSection';
 
 interface TaskDetailProps {
   task: Task | null;
   onUpdateTask: (taskId: string, updates: Message[]) => void;
   onStatusChange: (taskId: string, status: Task['status']) => void;
+  onPriorityChange: (taskId: string, priority: Priority) => void;
   onDeleteTask: (taskId: string) => void;
   onEditTask: (task: Task) => void;
 }
@@ -57,7 +58,7 @@ const MetadataItem: React.FC<MetadataItemProps> = ({
   </div>
 );
 
-export const TaskDetail: React.FC<TaskDetailProps> = ({ task, onUpdateTask, onStatusChange, onDeleteTask, onEditTask }) => {
+export const TaskDetail: React.FC<TaskDetailProps> = ({ task, onUpdateTask, onStatusChange, onPriorityChange, onDeleteTask, onEditTask }) => {
   if (!task) {
     return (
       <div className="flex-1 flex flex-col items-center justify-center bg-slate-50 dark:bg-slate-950 text-slate-400 dark:text-slate-500 select-none transition-colors">
@@ -87,6 +88,7 @@ export const TaskDetail: React.FC<TaskDetailProps> = ({ task, onUpdateTask, onSt
   const isDueSoon = !isOverdue && task.status !== 'done' && deadlineDay <= threeDaysFromNow && deadlineDay >= today;
 
   const priorityConfig = PRIORITY_CONFIG[task.priority] || PRIORITY_CONFIG['not-urgent'];
+  const isUrgent = task.priority === 'urgent';
 
   return (
     <div className="flex-1 h-full flex flex-col bg-slate-50 dark:bg-slate-950 overflow-hidden transition-colors">
@@ -102,11 +104,29 @@ export const TaskDetail: React.FC<TaskDetailProps> = ({ task, onUpdateTask, onSt
                    <h1 className="text-xl md:text-2xl xl:text-3xl font-bold text-slate-900 dark:text-white tracking-tight leading-tight break-words">
                      {task.title}
                    </h1>
-                   {/* Priority Badge in Title Area for Visibility */}
-                   <span className={`flex-shrink-0 px-2.5 py-1 rounded-md text-[10px] md:text-xs font-bold uppercase tracking-wider border flex items-center gap-1.5 ${priorityConfig.color} ${priorityConfig.text} ${priorityConfig.border}`}>
-                      <AlertTriangle size={12} /> {priorityConfig.label}
-                   </span>
                 </div>
+
+                {/* Quick Actions */}
+                <div className="flex items-center gap-2 pt-1 pb-1">
+                  <button
+                    onClick={() => onEditTask(task)}
+                    className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-slate-600 dark:text-slate-300 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-md hover:bg-slate-50 dark:hover:bg-slate-700 hover:border-slate-300 dark:hover:border-slate-600 transition-colors shadow-sm"
+                  >
+                    <Pencil size={12} />
+                    Edit Task
+                  </button>
+                  
+                  {task.status !== 'done' && (
+                    <button
+                      onClick={() => onStatusChange(task.id, 'done')}
+                      className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-emerald-600 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-500/10 border border-emerald-200 dark:border-emerald-500/20 rounded-md hover:bg-emerald-100 dark:hover:bg-emerald-500/20 hover:border-emerald-300 dark:hover:border-emerald-500/30 transition-colors shadow-sm"
+                    >
+                      <Check size={12} />
+                      Mark as Done
+                    </button>
+                  )}
+                </div>
+
                 <p className="text-slate-600 dark:text-slate-400 text-sm md:text-base leading-relaxed line-clamp-3 md:line-clamp-none">
                   {task.description}
                 </p>
@@ -143,14 +163,6 @@ export const TaskDetail: React.FC<TaskDetailProps> = ({ task, onUpdateTask, onSt
                     {/* Edit/Delete Actions */}
                     <div className="flex items-center gap-1 ml-auto xl:ml-0">
                         <button
-                            onClick={() => onEditTask(task)}
-                            className="p-2 text-slate-500 hover:text-indigo-600 dark:hover:text-indigo-400 hover:bg-indigo-50 dark:hover:bg-indigo-500/10 rounded-lg border border-transparent hover:border-indigo-200 dark:hover:border-indigo-500/20 transition-all"
-                            title="Edit Task"
-                        >
-                            <Pencil size={18} />
-                        </button>
-
-                        <button
                             onClick={() => onDeleteTask(task.id)}
                             className="p-2 text-slate-500 hover:text-red-600 dark:hover:text-red-400 hover:bg-red-50 dark:hover:bg-red-500/10 rounded-lg border border-transparent hover:border-red-200 dark:hover:border-red-500/20 transition-all"
                             title="Delete Task"
@@ -162,8 +174,8 @@ export const TaskDetail: React.FC<TaskDetailProps> = ({ task, onUpdateTask, onSt
             </div>
         </div>
 
-        {/* Refactored Metadata Grid */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 md:gap-4">
+        {/* Refactored Metadata Grid: 4 Columns on XL for clean row */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-3 md:gap-4">
             {/* Project Card */}
             <MetadataItem 
                 icon={Briefcase} 
@@ -174,6 +186,31 @@ export const TaskDetail: React.FC<TaskDetailProps> = ({ task, onUpdateTask, onSt
                     style={{ backgroundColor: project.color, color: project.color }} 
                 />
                 <span className="truncate">{project.name}</span>
+            </MetadataItem>
+
+            {/* Priority Card - Enhanced Prominence & Toggle Interaction */}
+            <MetadataItem 
+                icon={Flag}
+                label="Priority"
+                onClick={() => onPriorityChange(task.id, isUrgent ? 'not-urgent' : 'urgent')}
+                className={isUrgent 
+                  ? "bg-red-100 dark:bg-red-900/30 border-red-300 dark:border-red-700 shadow-[0_0_15px_rgba(239,68,68,0.15)] dark:shadow-none" 
+                  : "hover:bg-slate-100/50"}
+                iconBgClass={isUrgent 
+                  ? "bg-red-600 text-white shadow-lg shadow-red-600/40 ring-2 ring-red-100 dark:ring-red-900 scale-110" 
+                  : "bg-slate-200 dark:bg-slate-700"}
+                iconColorClass={isUrgent ? "text-white" : "text-slate-500 dark:text-slate-400"}
+            >
+                <span className={`truncate uppercase tracking-wide flex-1 ${
+                  isUrgent 
+                    ? "text-lg font-black text-red-700 dark:text-red-400 drop-shadow-sm" 
+                    : "font-bold text-slate-600 dark:text-slate-400"
+                }`}>
+                    {priorityConfig.label}
+                </span>
+                <span className="text-[10px] text-slate-400 dark:text-slate-500 opacity-0 group-hover:opacity-100 transition-opacity uppercase font-semibold">
+                  {isUrgent ? 'Set Low' : 'Set High'}
+                </span>
             </MetadataItem>
 
             {/* Deadline Card */}
@@ -210,11 +247,10 @@ export const TaskDetail: React.FC<TaskDetailProps> = ({ task, onUpdateTask, onSt
                 )}
             </MetadataItem>
 
-            {/* Reference/Link Card - Spans 2 cols on tablet for better balance */}
+            {/* Reference/Link Card */}
             <MetadataItem 
                 icon={LinkIcon} 
                 label="Reference"
-                className="sm:col-span-2 lg:col-span-1"
                 onClick={task.clickupLink ? () => window.open(task.clickupLink, '_blank') : undefined}
                 iconBgClass="group-hover:bg-indigo-50 dark:group-hover:bg-indigo-500/10 transition-colors"
                 iconColorClass="group-hover:text-indigo-600 dark:group-hover:text-indigo-400 transition-colors"

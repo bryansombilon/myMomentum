@@ -88,6 +88,14 @@ const App: React.FC = () => {
     );
   };
 
+  const handlePriorityChange = (taskId: string, priority: Priority) => {
+    setTasks(prevTasks => 
+      prevTasks.map(t => 
+        t.id === taskId ? { ...t, priority } : t
+      )
+    );
+  };
+
   const handleDeleteTask = (taskId: string) => {
     setTasks(prevTasks => prevTasks.filter(t => t.id !== taskId));
     if (selectedTaskId === taskId) {
@@ -165,6 +173,7 @@ const App: React.FC = () => {
               task={selectedTask} 
               onUpdateTask={handleUpdateTask}
               onStatusChange={handleStatusChange}
+              onPriorityChange={handlePriorityChange}
               onDeleteTask={handleDeleteTask}
               onEditTask={handleEditTask}
            />

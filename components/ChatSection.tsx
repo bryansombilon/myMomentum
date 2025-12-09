@@ -16,17 +16,30 @@ const renderTextWithLinks = (text: string) => {
 
   return parts.map((part, index) => {
     if (part.match(urlRegex)) {
+      // Handle trailing punctuation that shouldn't be part of the URL
+      // e.g. "Check google.com." -> link should be "google.com" not "google.com."
+      const trailingPunctuationMatch = part.match(/[.,;!?)]+$/);
+      let cleanUrl = part;
+      let suffix = '';
+
+      if (trailingPunctuationMatch) {
+        suffix = trailingPunctuationMatch[0];
+        cleanUrl = part.slice(0, -suffix.length);
+      }
+
       return (
-        <a
-          key={index}
-          href={part}
-          target="_blank"
-          rel="noopener noreferrer"
-          className="text-indigo-600 dark:text-indigo-400 hover:underline hover:text-indigo-800 dark:hover:text-indigo-300 break-all transition-colors font-medium"
-          onClick={(e) => e.stopPropagation()}
-        >
-          {part}
-        </a>
+        <React.Fragment key={index}>
+          <a
+            href={cleanUrl}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="text-indigo-600 dark:text-indigo-400 hover:underline hover:text-indigo-800 dark:hover:text-indigo-300 break-all transition-colors font-medium"
+            onClick={(e) => e.stopPropagation()}
+          >
+            {cleanUrl}
+          </a>
+          {suffix}
+        </React.Fragment>
       );
     }
     return part;
