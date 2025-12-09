@@ -36,58 +36,66 @@ export const TaskDetail: React.FC<TaskDetailProps> = ({ task, onUpdateTask, onSt
         {/* Background Accent */}
         <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-transparent via-slate-800 to-transparent opacity-50"></div>
         
-        {/* Actions Row */}
-        <div className="flex justify-end gap-4 mb-6">
-           <div className="flex items-center self-end gap-3">
-             <div className="flex items-center bg-slate-900/80 rounded-lg p-1 border border-slate-800 shadow-sm backdrop-blur-sm">
-               {(['todo', 'in-progress', 'under-review', 'on-hold', 'done'] as const).map((s) => {
-                 const config = STATUS_CONFIG[s];
-                 const isActive = task.status === s;
-                 return (
-                  <button
-                    key={s}
-                    onClick={() => onStatusChange(task.id, s)}
-                    className={`
-                      px-3 py-1.5 text-[10px] md:text-xs font-bold rounded-md transition-all capitalize tracking-wide whitespace-nowrap
-                      ${isActive 
-                        ? `${config.color} ${config.text} shadow-md scale-105` 
-                        : 'text-slate-500 hover:text-slate-300 hover:bg-slate-800'}
-                    `}
-                  >
-                    {config.label}
-                  </button>
-                 );
-               })}
+        <div className="flex flex-col xl:flex-row xl:items-start justify-between gap-6 mb-8">
+            {/* Title & Description (Left Side) */}
+            <div className="flex-1 min-w-0 space-y-3">
+                <h1 className="text-2xl md:text-3xl font-bold text-white tracking-tight leading-tight break-words">
+                  {task.title}
+                </h1>
+                <p className="text-slate-400 text-sm md:text-base leading-relaxed">
+                  {task.description}
+                </p>
             </div>
 
-            <div className="w-px h-6 bg-slate-800 hidden md:block"></div>
-            
-            <button
-              onClick={() => onEditTask(task)}
-              className="p-2 text-slate-500 hover:text-indigo-400 hover:bg-indigo-500/10 rounded-lg border border-transparent hover:border-indigo-500/20 transition-all"
-              title="Edit Task"
-            >
-              <Pencil size={18} />
-            </button>
+            {/* Actions & Status (Right Side) */}
+            <div className="flex flex-col items-start xl:items-end gap-3 flex-shrink-0">
+                <div className="flex flex-wrap items-center gap-3">
+                    {/* Status Buttons */}
+                    <div className="flex items-center bg-slate-900/80 rounded-lg p-1 border border-slate-800 shadow-sm backdrop-blur-sm overflow-x-auto max-w-full no-scrollbar">
+                        {(['todo', 'in-progress', 'under-review', 'on-hold', 'done'] as const).map((s) => {
+                            const config = STATUS_CONFIG[s];
+                            const isActive = task.status === s;
+                            return (
+                                <button
+                                    key={s}
+                                    onClick={() => onStatusChange(task.id, s)}
+                                    className={`
+                                      px-3 py-1.5 text-[10px] md:text-xs font-bold rounded-md transition-all capitalize tracking-wide whitespace-nowrap
+                                      ${isActive 
+                                        ? `${config.color} ${config.text} shadow-md scale-105` 
+                                        : 'text-slate-500 hover:text-slate-300 hover:bg-slate-800'}
+                                    `}
+                                >
+                                    {config.label}
+                                </button>
+                            );
+                        })}
+                    </div>
 
-            <button
-              onClick={() => onDeleteTask(task.id)}
-              className="p-2 text-slate-500 hover:text-red-400 hover:bg-red-500/10 rounded-lg border border-transparent hover:border-red-500/20 transition-all"
-              title="Delete Task"
-            >
-              <Trash2 size={18} />
-            </button>
-           </div>
+                    {/* Divider */}
+                    <div className="w-px h-8 bg-slate-800 hidden md:block"></div>
+                    
+                    {/* Edit/Delete Actions */}
+                    <div className="flex items-center gap-1">
+                        <button
+                            onClick={() => onEditTask(task)}
+                            className="p-2 text-slate-500 hover:text-indigo-400 hover:bg-indigo-500/10 rounded-lg border border-transparent hover:border-indigo-500/20 transition-all"
+                            title="Edit Task"
+                        >
+                            <Pencil size={18} />
+                        </button>
+
+                        <button
+                            onClick={() => onDeleteTask(task.id)}
+                            className="p-2 text-slate-500 hover:text-red-400 hover:bg-red-500/10 rounded-lg border border-transparent hover:border-red-500/20 transition-all"
+                            title="Delete Task"
+                        >
+                            <Trash2 size={18} />
+                        </button>
+                    </div>
+                </div>
+            </div>
         </div>
-
-        {/* Title & Description */}
-        <h1 className="text-2xl md:text-3xl font-bold text-white mb-3 tracking-tight leading-tight">
-          {task.title}
-        </h1>
-        
-        <p className="text-slate-400 text-sm md:text-base leading-relaxed max-w-3xl mb-8">
-          {task.description}
-        </p>
 
         {/* Metadata Grid */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">

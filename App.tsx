@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { TaskList } from './components/TaskList';
 import { TaskDetail } from './components/TaskDetail';
 import { NewTaskModal } from './components/NewTaskModal';
+import { ProjectProgress } from './components/ProjectProgress';
 import { INITIAL_TASKS } from './constants';
 import { Task, Message, ProjectType } from './types';
 
@@ -108,29 +109,35 @@ const App: React.FC = () => {
   };
 
   return (
-    <div className="flex h-screen w-full bg-slate-950 text-slate-200 overflow-hidden font-inter">
-      {/* Left Panel */}
-      <TaskList 
-        tasks={tasks} 
-        setTasks={handleTaskReorder} 
-        selectedTaskId={selectedTaskId}
-        onSelectTask={(task) => setSelectedTaskId(task.id)}
-        onAddNewTask={() => {
-          setEditingTask(null);
-          setIsNewTaskModalOpen(true);
-        }}
-      />
+    <div className="flex flex-col h-screen w-full bg-slate-950 text-slate-200 overflow-hidden font-inter">
+      {/* Top Project Progress Bar */}
+      <ProjectProgress tasks={tasks} />
 
-      {/* Right Panel */}
-      <main className="flex-1 flex flex-col h-full min-w-0 bg-slate-950 relative z-0">
-         <TaskDetail 
-            task={selectedTask} 
-            onUpdateTask={handleUpdateTask}
-            onStatusChange={handleStatusChange}
-            onDeleteTask={handleDeleteTask}
-            onEditTask={handleEditTask}
-         />
-      </main>
+      {/* Main Workspace */}
+      <div className="flex flex-1 overflow-hidden relative z-0">
+        {/* Left Panel */}
+        <TaskList 
+          tasks={tasks} 
+          setTasks={handleTaskReorder} 
+          selectedTaskId={selectedTaskId}
+          onSelectTask={(task) => setSelectedTaskId(task.id)}
+          onAddNewTask={() => {
+            setEditingTask(null);
+            setIsNewTaskModalOpen(true);
+          }}
+        />
+
+        {/* Right Panel */}
+        <main className="flex-1 flex flex-col h-full min-w-0 bg-slate-950 relative z-0">
+           <TaskDetail 
+              task={selectedTask} 
+              onUpdateTask={handleUpdateTask}
+              onStatusChange={handleStatusChange}
+              onDeleteTask={handleDeleteTask}
+              onEditTask={handleEditTask}
+           />
+        </main>
+      </div>
 
       {/* Modals */}
       <NewTaskModal 
