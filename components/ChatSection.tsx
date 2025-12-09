@@ -8,6 +8,31 @@ interface ChatSectionProps {
   onUpdateTask: (taskId: string, updates: Message[]) => void;
 }
 
+// Helper function to render text with clickable links
+const renderTextWithLinks = (text: string) => {
+  // Regex to identify URLs (http/https)
+  const urlRegex = /(https?:\/\/[^\s]+)/g;
+  const parts = text.split(urlRegex);
+
+  return parts.map((part, index) => {
+    if (part.match(urlRegex)) {
+      return (
+        <a
+          key={index}
+          href={part}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="text-indigo-600 dark:text-indigo-400 hover:underline hover:text-indigo-800 dark:hover:text-indigo-300 break-all transition-colors font-medium"
+          onClick={(e) => e.stopPropagation()}
+        >
+          {part}
+        </a>
+      );
+    }
+    return part;
+  });
+};
+
 export const ChatSection: React.FC<ChatSectionProps> = ({ task, onUpdateTask }) => {
   const [inputValue, setInputValue] = useState('');
   const [isAiProcessing, setIsAiProcessing] = useState(false);
@@ -123,7 +148,9 @@ export const ChatSection: React.FC<ChatSectionProps> = ({ task, onUpdateTask }) 
                   ? 'bg-indigo-50 dark:bg-indigo-950/20 border-indigo-200 dark:border-indigo-500/20 text-indigo-900 dark:text-indigo-100 shadow-sm' 
                   : 'bg-white dark:bg-slate-800/50 border-slate-200 dark:border-slate-700/50 text-slate-700 dark:text-slate-300'}
               `}>
-                <div className="whitespace-pre-wrap text-xs md:text-sm">{msg.text}</div>
+                <div className="whitespace-pre-wrap text-xs md:text-sm">
+                  {renderTextWithLinks(msg.text)}
+                </div>
               </div>
             </div>
           ))

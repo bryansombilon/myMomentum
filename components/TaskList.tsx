@@ -19,8 +19,8 @@ interface TaskItemProps {
   isDragEnabled: boolean;
 }
 
-// Sub-component to handle individual drag controls properly
-const TaskItem: React.FC<TaskItemProps> = ({ 
+// Wrapped in React.memo to prevent unnecessary re-renders during drag operations
+const TaskItem: React.FC<TaskItemProps> = React.memo(({ 
   task, 
   isSelected, 
   onSelect,
@@ -46,7 +46,7 @@ const TaskItem: React.FC<TaskItemProps> = ({
         {isDragEnabled ? (
           <div 
             onPointerDown={(e) => controls.start(e)}
-            className="mt-1.5 text-slate-400 dark:text-slate-600 hover:text-slate-600 dark:hover:text-slate-200 cursor-grab active:cursor-grabbing p-1 rounded hover:bg-slate-200 dark:hover:bg-slate-700/50 transition-colors touch-none"
+            className="mt-1.5 text-slate-400 dark:text-slate-600 hover:text-slate-600 dark:hover:text-slate-200 cursor-grab active:cursor-grabbing p-1.5 -ml-1.5 rounded hover:bg-slate-200 dark:hover:bg-slate-700/50 transition-colors touch-none"
           >
             <GripVertical size={16} />
           </div>
@@ -101,11 +101,13 @@ const TaskItem: React.FC<TaskItemProps> = ({
     </>
   );
 
+  // Using solid backgrounds to prevent transparency issues during drag
+  // Removed transition-all to ensure drag physics take precedence without CSS conflict
   const containerClasses = `
-    relative group rounded-xl border cursor-pointer select-none overflow-hidden touch-none transition-all
+    relative group rounded-xl border cursor-pointer select-none overflow-hidden touch-none transition-colors duration-200
     ${isSelected 
       ? 'bg-indigo-50 dark:bg-slate-800 border-indigo-500 shadow-md dark:shadow-indigo-500/10' 
-      : 'bg-white dark:bg-slate-800/40 border-slate-200 dark:border-slate-700/50 hover:bg-slate-50 dark:hover:bg-slate-800 hover:border-slate-300 dark:hover:border-slate-600'}
+      : 'bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-700/80 hover:border-slate-300 dark:hover:border-slate-600'}
   `;
 
   // Render Reorder.Item if draggable, otherwise standard motion.div
@@ -117,15 +119,17 @@ const TaskItem: React.FC<TaskItemProps> = ({
         dragListener={false}
         dragControls={controls}
         layout
+        dragMomentum={false} // Prevents "sliding" after release for precise placement
         initial={{ opacity: 0, y: 10 }}
         animate={{ opacity: 1, y: 0, scale: 1 }}
         exit={{ opacity: 0, scale: 0.95 }}
         whileDrag={{ 
-          scale: 1.03, 
+          scale: 1.02, 
           zIndex: 50,
-          boxShadow: "0 20px 25px -5px rgb(0 0 0 / 0.1), 0 8px 10px -6px rgb(0 0 0 / 0.1)",
+          boxShadow: "0 10px 20px rgba(0,0,0,0.15)", // Smoother, softer shadow
           cursor: "grabbing",
         }}
+        // Tuning spring for smoother, softer reorder feel
         transition={{ type: "spring", stiffness: 500, damping: 30, mass: 1 }}
         className={containerClasses}
         onClick={() => onSelect(task)}
@@ -141,13 +145,14 @@ const TaskItem: React.FC<TaskItemProps> = ({
       initial={{ opacity: 0, y: 10 }}
       animate={{ opacity: 1, y: 0, scale: 1 }}
       exit={{ opacity: 0, scale: 0.95 }}
+      transition={{ duration: 0.2 }}
       className={containerClasses}
       onClick={() => onSelect(task)}
     >
       {Content}
     </motion.div>
   );
-};
+});
 
 export const TaskList: React.FC<TaskListProps> = ({ tasks, setTasks, selectedTaskId, onSelectTask, onAddNewTask }) => {
   const [filterProject, setFilterProject] = useState<string>('all');
@@ -155,9 +160,12 @@ export const TaskList: React.FC<TaskListProps> = ({ tasks, setTasks, selectedTas
   const [filterDeadline, setFilterDeadline] = useState<string>('all');
 
   const filteredTasks = useMemo(() => {
+    // Return original reference if no filters are active to prevent unnecessary re-renders in Reorder.Group
+    if (filterProject === 'all' && filterStatus === 'all' && filterDeadline === 'all') {
+      return tasks;
+    }
+
     const now = new Date();
-    // Normalize now to start of day for cleaner comparison if needed, 
-    // but straight comparison works for "Due Soon" relative to current moment.
     
     return tasks.filter(task => {
       const matchProject = filterProject === 'all' || task.project === filterProject;
@@ -273,26 +281,26 @@ export const TaskList: React.FC<TaskListProps> = ({ tasks, setTasks, selectedTas
 
       <div className="flex-1 overflow-y-auto p-3 scrollbar-hide">
         {!isFiltered ? (
+          /* Reorder Group without AnimatePresence to ensure smoother direct updates */
           <Reorder.Group 
             axis="y" 
             values={tasks} 
             onReorder={setTasks} 
-            className="space-y-3"
+            className="space-y-3 relative"
             layoutScroll
           >
-            <AnimatePresence initial={false} mode="popLayout">
-              {filteredTasks.map((task) => (
-                <TaskItem
-                  key={task.id}
-                  task={task}
-                  isSelected={selectedTaskId === task.id}
-                  onSelect={onSelectTask}
-                  isDragEnabled={true}
-                />
-              ))}
-            </AnimatePresence>
+            {filteredTasks.map((task) => (
+              <TaskItem
+                key={task.id}
+                task={task}
+                isSelected={selectedTaskId === task.id}
+                onSelect={onSelectTask}
+                isDragEnabled={true}
+              />
+            ))}
           </Reorder.Group>
         ) : (
+          /* Standard list with animations for filtering */
           <div className="space-y-3">
              <AnimatePresence initial={false} mode="popLayout">
               {filteredTasks.length > 0 ? (

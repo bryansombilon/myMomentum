@@ -1,7 +1,7 @@
 import React from 'react';
 import { Task, Message } from '../types';
 import { PROJECT_CONFIG, STATUS_CONFIG, PRIORITY_CONFIG } from '../constants';
-import { ExternalLink, Calendar, CheckCircle2, Trash2, Briefcase, Link as LinkIcon, Pencil, AlertTriangle } from 'lucide-react';
+import { ExternalLink, Calendar, CheckCircle2, Trash2, Briefcase, Link as LinkIcon, Pencil, AlertTriangle, Clock } from 'lucide-react';
 import { ChatSection } from './ChatSection';
 
 interface TaskDetailProps {
@@ -40,8 +40,8 @@ const MetadataItem: React.FC<MetadataItemProps> = ({
       border border-slate-200 dark:border-slate-800/60 
       transition-all duration-200
       ${onClick 
-        ? 'cursor-pointer hover:border-indigo-400/50 dark:hover:border-indigo-500/50 hover:bg-white dark:hover:bg-slate-900 group shadow-sm hover:shadow-md' 
-        : 'hover:border-slate-300 dark:hover:border-slate-700'} 
+        ? 'cursor-pointer hover:border-indigo-400/50 dark:hover:border-indigo-500/50 hover:bg-white dark:hover:bg-slate-900 group shadow-sm hover:shadow-md hover:scale-[1.02] active:scale-95' 
+        : 'hover:border-slate-300 dark:hover:border-slate-700 hover:bg-white/80 dark:hover:bg-slate-900/80'} 
       ${className}
     `}
   >
@@ -72,7 +72,20 @@ export const TaskDetail: React.FC<TaskDetailProps> = ({ task, onUpdateTask, onSt
 
   const project = PROJECT_CONFIG[task.project];
   const deadlineDate = new Date(task.deadline);
-  const isOverdue = deadlineDate < new Date() && task.status !== 'done';
+  
+  // Deadline Logic
+  const now = new Date();
+  // Reset time for accurate date comparison
+  const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+  const deadlineDay = new Date(deadlineDate.getFullYear(), deadlineDate.getMonth(), deadlineDate.getDate());
+  
+  const isOverdue = deadlineDay < today && task.status !== 'done';
+  
+  // Due soon logic: not overdue, not done, and within next 3 days
+  const threeDaysFromNow = new Date(today);
+  threeDaysFromNow.setDate(today.getDate() + 3);
+  const isDueSoon = !isOverdue && task.status !== 'done' && deadlineDay <= threeDaysFromNow && deadlineDay >= today;
+
   const priorityConfig = PRIORITY_CONFIG[task.priority] || PRIORITY_CONFIG['not-urgent'];
 
   return (
@@ -166,16 +179,33 @@ export const TaskDetail: React.FC<TaskDetailProps> = ({ task, onUpdateTask, onSt
             {/* Deadline Card */}
             <MetadataItem 
                 icon={Calendar} 
-                label="Deadline"
-                iconBgClass={isOverdue ? 'bg-red-100 dark:bg-red-500/10' : 'bg-slate-100 dark:bg-slate-800'}
-                iconColorClass={isOverdue ? 'text-red-600 dark:text-red-400' : 'text-slate-400 dark:text-slate-400'}
+                label={isOverdue ? 'Deadline (Overdue)' : isDueSoon ? 'Deadline (Soon)' : 'Deadline'}
+                iconBgClass={
+                  isOverdue ? 'bg-red-100 dark:bg-red-500/10' : 
+                  isDueSoon ? 'bg-amber-100 dark:bg-amber-500/10' : 
+                  'bg-slate-100 dark:bg-slate-800'
+                }
+                iconColorClass={
+                  isOverdue ? 'text-red-600 dark:text-red-400' : 
+                  isDueSoon ? 'text-amber-600 dark:text-amber-400' :
+                  'text-slate-400 dark:text-slate-400'
+                }
             >
-                <span className={`truncate ${isOverdue ? 'text-red-600 dark:text-red-400 font-bold' : ''}`}>
+                <span className={`truncate ${
+                  isOverdue ? 'text-red-600 dark:text-red-400 font-bold' : 
+                  isDueSoon ? 'text-amber-600 dark:text-amber-400 font-bold' : 
+                  ''
+                }`}>
                     {deadlineDate.toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' })}
                 </span>
                 {isOverdue && (
                     <span className="ml-auto text-[10px] bg-red-100 dark:bg-red-500/20 text-red-600 dark:text-red-400 px-1.5 py-0.5 rounded uppercase font-bold tracking-wide">
                         Overdue
+                    </span>
+                )}
+                {isDueSoon && (
+                    <span className="ml-auto text-[10px] bg-amber-100 dark:bg-amber-500/20 text-amber-600 dark:text-amber-400 px-1.5 py-0.5 rounded uppercase font-bold tracking-wide flex items-center gap-1">
+                        <Clock size={10} /> Soon
                     </span>
                 )}
             </MetadataItem>
