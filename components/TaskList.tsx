@@ -30,7 +30,7 @@ const TaskItem: React.FC<TaskItemProps> = ({
     return new Intl.DateTimeFormat('en-US', { month: 'short', day: 'numeric' }).format(date);
   };
 
-  const statusStyle = STATUS_CONFIG[task.status];
+  const statusStyle = STATUS_CONFIG[task.status] || STATUS_CONFIG['todo'];
 
   return (
     <Reorder.Item
@@ -39,10 +39,16 @@ const TaskItem: React.FC<TaskItemProps> = ({
       dragListener={false}
       dragControls={controls}
       initial={{ opacity: 0, y: 10 }}
-      animate={{ opacity: 1, y: 0 }}
+      animate={{ opacity: 1, y: 0, scale: 1 }}
       exit={{ opacity: 0, scale: 0.95 }}
+      whileDrag={{ 
+        scale: 1.05, 
+        zIndex: 50,
+        boxShadow: "0px 10px 20px rgba(0,0,0,0.5), 0px 4px 6px rgba(0,0,0,0.3)",
+        cursor: "grabbing"
+      }}
       className={`
-        relative group rounded-xl border p-3 cursor-pointer transition-all duration-200 select-none
+        relative group rounded-xl border p-3 cursor-pointer transition-colors duration-200 select-none
         ${isSelected 
           ? 'bg-slate-800 border-indigo-500 shadow-lg shadow-indigo-500/10' 
           : 'bg-slate-800/40 border-slate-700/50 hover:bg-slate-800 hover:border-slate-600'}
@@ -53,7 +59,7 @@ const TaskItem: React.FC<TaskItemProps> = ({
         {/* Drag Handle - Restricted Area */}
         <div 
           onPointerDown={(e) => controls.start(e)}
-          className="mt-1.5 text-slate-600 hover:text-slate-400 cursor-grab active:cursor-grabbing p-1 -ml-2 rounded hover:bg-slate-700/50 transition-colors touch-none"
+          className="mt-1.5 text-slate-600 hover:text-slate-200 cursor-grab active:cursor-grabbing p-1 -ml-2 rounded hover:bg-slate-700/50 transition-colors touch-none"
         >
           <GripVertical size={16} />
         </div>
@@ -125,7 +131,7 @@ export const TaskList: React.FC<TaskListProps> = ({ tasks, setTasks, selectedTas
       </div>
 
       <div className="flex-1 overflow-y-auto p-3 scrollbar-hide">
-        <Reorder.Group axis="y" values={tasks} onReorder={setTasks} className="space-y-3">
+        <Reorder.Group axis="y" values={tasks} onReorder={setTasks} className="space-y-3 pb-20">
           <AnimatePresence initial={false}>
             {tasks.map((task) => (
               <TaskItem

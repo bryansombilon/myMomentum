@@ -2,9 +2,11 @@ import { GoogleGenAI } from "@google/genai";
 import { Task } from "../types";
 
 const getAiClient = () => {
-  const apiKey = process.env.API_KEY;
+  // Safe access to process for browser environments
+  const apiKey = (typeof process !== 'undefined' && process.env) ? process.env.API_KEY : undefined;
+  
   if (!apiKey) {
-    console.error("API_KEY is missing in environment variables.");
+    console.error("API_KEY is missing. Ensure the environment is configured correctly.");
     return null;
   }
   return new GoogleGenAI({ apiKey });
@@ -12,7 +14,7 @@ const getAiClient = () => {
 
 export const generateTaskSummaryOrAdvice = async (task: Task, query: string, contextUpdates: string): Promise<string> => {
   const ai = getAiClient();
-  if (!ai) return "Error: API Key not found.";
+  if (!ai) return "Configuration Error: API Key not found. Please check your environment settings.";
 
   const prompt = `
     You are a helpful AI project assistant. 

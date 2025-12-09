@@ -45,7 +45,7 @@ export const TaskDetail: React.FC<TaskDetailProps> = ({ task, onUpdateTask, onSt
           
           <div className="flex items-center gap-2 self-start md:self-auto">
             <div className="flex items-center bg-slate-900 rounded-lg p-1 border border-slate-800 shadow-sm">
-               {(['todo', 'in-progress', 'done'] as const).map((s) => {
+               {(['todo', 'in-progress', 'on-hold', 'done'] as const).map((s) => {
                  const config = STATUS_CONFIG[s];
                  const isActive = task.status === s;
                  return (
@@ -53,7 +53,7 @@ export const TaskDetail: React.FC<TaskDetailProps> = ({ task, onUpdateTask, onSt
                     key={s}
                     onClick={() => onStatusChange(task.id, s)}
                     className={`
-                      px-4 py-1.5 text-xs font-bold rounded-md transition-all capitalize tracking-wide
+                      px-3 py-1.5 text-[10px] md:text-xs font-bold rounded-md transition-all capitalize tracking-wide whitespace-nowrap
                       ${isActive 
                         ? `${config.color} ${config.text} shadow-md` 
                         : 'text-slate-500 hover:text-slate-300 hover:bg-slate-800'}

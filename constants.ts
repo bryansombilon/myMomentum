@@ -12,6 +12,7 @@ export const PROJECT_CONFIG: Record<ProjectType, Project> = {
 export const STATUS_CONFIG = {
   'todo': { label: 'To Do', color: 'bg-slate-600', text: 'text-white' },
   'in-progress': { label: 'In Progress', color: 'bg-blue-600', text: 'text-white' },
+  'on-hold': { label: 'On Hold', color: 'bg-amber-600', text: 'text-white' },
   'done': { label: 'Done', color: 'bg-emerald-600', text: 'text-white' }
 };
 
