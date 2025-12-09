@@ -38,17 +38,24 @@ const TaskItem: React.FC<TaskItemProps> = ({
       id={task.id}
       dragListener={false}
       dragControls={controls}
+      layout
       initial={{ opacity: 0, y: 10 }}
       animate={{ opacity: 1, y: 0, scale: 1 }}
       exit={{ opacity: 0, scale: 0.95 }}
       whileDrag={{ 
-        scale: 1.05, 
+        scale: 1.03, 
         zIndex: 50,
-        boxShadow: "0px 10px 20px rgba(0,0,0,0.5), 0px 4px 6px rgba(0,0,0,0.3)",
-        cursor: "grabbing"
+        boxShadow: "0 20px 25px -5px rgb(0 0 0 / 0.5), 0 8px 10px -6px rgb(0 0 0 / 0.5)",
+        cursor: "grabbing",
+      }}
+      transition={{
+        type: "spring",
+        stiffness: 500,
+        damping: 30,
+        mass: 1
       }}
       className={`
-        relative group rounded-xl border cursor-pointer transition-all duration-200 select-none overflow-hidden
+        relative group rounded-xl border cursor-pointer select-none overflow-hidden touch-none
         ${isSelected 
           ? 'bg-slate-800 border-indigo-500 shadow-lg shadow-indigo-500/10' 
           : 'bg-slate-800/40 border-slate-700/50 hover:bg-slate-800 hover:border-slate-600'}
@@ -138,10 +145,10 @@ export const TaskList: React.FC<TaskListProps> = ({ tasks, setTasks, selectedTas
           axis="y" 
           values={tasks} 
           onReorder={setTasks} 
-          className="space-y-3 pb-20"
+          className="space-y-3"
           layoutScroll
         >
-          <AnimatePresence initial={false}>
+          <AnimatePresence initial={false} mode="popLayout">
             {tasks.map((task) => (
               <TaskItem
                 key={task.id}
