@@ -12,6 +12,51 @@ interface TaskDetailProps {
   onEditTask: (task: Task) => void;
 }
 
+// Sub-component for metadata items to ensure consistent layout and styling
+interface MetadataItemProps {
+  icon: React.ElementType;
+  label: string;
+  children: React.ReactNode;
+  iconBgClass?: string;
+  iconColorClass?: string;
+  className?: string;
+  onClick?: () => void;
+}
+
+const MetadataItem: React.FC<MetadataItemProps> = ({ 
+  icon: Icon, 
+  label, 
+  children, 
+  iconBgClass = "bg-slate-100 dark:bg-slate-800", 
+  iconColorClass = "text-slate-400 dark:text-slate-400",
+  className = "",
+  onClick
+}) => (
+  <div 
+    onClick={onClick}
+    className={`
+      flex items-center gap-3 p-3 rounded-xl 
+      bg-white/50 dark:bg-slate-900/50 
+      border border-slate-200 dark:border-slate-800/60 
+      transition-all duration-200
+      ${onClick 
+        ? 'cursor-pointer hover:border-indigo-400/50 dark:hover:border-indigo-500/50 hover:bg-white dark:hover:bg-slate-900 group shadow-sm hover:shadow-md' 
+        : 'hover:border-slate-300 dark:hover:border-slate-700'} 
+      ${className}
+    `}
+  >
+    <div className={`p-2 rounded-lg flex-shrink-0 transition-colors ${iconBgClass} ${iconColorClass}`}>
+      <Icon size={18} />
+    </div>
+    <div className="min-w-0 flex-1">
+      <div className="text-[10px] font-semibold text-slate-500 uppercase tracking-wider mb-0.5">{label}</div>
+      <div className="text-sm font-medium text-slate-900 dark:text-slate-200 flex items-center gap-2 truncate">
+        {children}
+      </div>
+    </div>
+  </div>
+);
+
 export const TaskDetail: React.FC<TaskDetailProps> = ({ task, onUpdateTask, onStatusChange, onDeleteTask, onEditTask }) => {
   if (!task) {
     return (
@@ -104,60 +149,55 @@ export const TaskDetail: React.FC<TaskDetailProps> = ({ task, onUpdateTask, onSt
             </div>
         </div>
 
-        {/* Metadata Grid */}
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 md:gap-4">
+        {/* Refactored Metadata Grid */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 md:gap-4">
             {/* Project Card */}
-            <div className="flex items-center gap-2.5 md:gap-3 p-2.5 md:p-3 rounded-xl bg-white/50 dark:bg-slate-900/50 border border-slate-200 dark:border-slate-800/60 transition-colors hover:border-slate-300 dark:hover:border-slate-700">
-                <div className="p-1.5 md:p-2 rounded-lg bg-slate-100 dark:bg-slate-800 text-slate-400 dark:text-slate-400 flex-shrink-0 transition-colors">
-                    <Briefcase size={16} className="md:w-[18px] md:h-[18px]" />
-                </div>
-                <div className="min-w-0">
-                    <div className="text-[10px] font-semibold text-slate-500 uppercase tracking-wider mb-0.5">Project</div>
-                    <div className="text-sm font-medium text-slate-900 dark:text-slate-200 flex items-center gap-2 truncate">
-                        <span 
-                            className="w-2 h-2 rounded-full shadow-[0_0_8px_currentColor] flex-shrink-0" 
-                            style={{ backgroundColor: project.color, color: project.color }} 
-                        />
-                        <span className="truncate">{project.name}</span>
-                    </div>
-                </div>
-            </div>
+            <MetadataItem 
+                icon={Briefcase} 
+                label="Project"
+            >
+                <span 
+                    className="w-2 h-2 rounded-full shadow-[0_0_8px_currentColor] flex-shrink-0" 
+                    style={{ backgroundColor: project.color, color: project.color }} 
+                />
+                <span className="truncate">{project.name}</span>
+            </MetadataItem>
 
             {/* Deadline Card */}
-            <div className="flex items-center gap-2.5 md:gap-3 p-2.5 md:p-3 rounded-xl bg-white/50 dark:bg-slate-900/50 border border-slate-200 dark:border-slate-800/60 transition-colors hover:border-slate-300 dark:hover:border-slate-700">
-                <div className={`p-1.5 md:p-2 rounded-lg flex-shrink-0 transition-colors ${isOverdue ? 'bg-red-100 dark:bg-red-500/10 text-red-600 dark:text-red-400' : 'bg-slate-100 dark:bg-slate-800 text-slate-400 dark:text-slate-400'}`}>
-                    <Calendar size={16} className="md:w-[18px] md:h-[18px]" />
-                </div>
-                <div className="min-w-0">
-                    <div className="text-[10px] font-semibold text-slate-500 uppercase tracking-wider mb-0.5">Deadline</div>
-                    <div className={`text-sm font-medium truncate ${isOverdue ? 'text-red-600 dark:text-red-400 font-bold' : 'text-slate-900 dark:text-slate-200'}`}>
-                        {deadlineDate.toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' })}
-                        {isOverdue && <span className="ml-2 text-[10px] bg-red-100 dark:bg-red-500/20 text-red-600 dark:text-red-400 px-1.5 py-0.5 rounded uppercase hidden lg:inline">Overdue</span>}
-                    </div>
-                </div>
-            </div>
+            <MetadataItem 
+                icon={Calendar} 
+                label="Deadline"
+                iconBgClass={isOverdue ? 'bg-red-100 dark:bg-red-500/10' : 'bg-slate-100 dark:bg-slate-800'}
+                iconColorClass={isOverdue ? 'text-red-600 dark:text-red-400' : 'text-slate-400 dark:text-slate-400'}
+            >
+                <span className={`truncate ${isOverdue ? 'text-red-600 dark:text-red-400 font-bold' : ''}`}>
+                    {deadlineDate.toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' })}
+                </span>
+                {isOverdue && (
+                    <span className="ml-auto text-[10px] bg-red-100 dark:bg-red-500/20 text-red-600 dark:text-red-400 px-1.5 py-0.5 rounded uppercase font-bold tracking-wide">
+                        Overdue
+                    </span>
+                )}
+            </MetadataItem>
 
-            {/* ClickUp Link Card */}
-             <div className="flex items-center gap-2.5 md:gap-3 p-2.5 md:p-3 rounded-xl bg-white/50 dark:bg-slate-900/50 border border-slate-200 dark:border-slate-800/60 group hover:border-indigo-500/30 transition-colors cursor-pointer">
-                <div className="p-1.5 md:p-2 rounded-lg bg-slate-100 dark:bg-slate-800 text-slate-400 group-hover:text-indigo-600 dark:group-hover:text-indigo-400 group-hover:bg-indigo-50 dark:group-hover:bg-indigo-500/10 transition-colors flex-shrink-0">
-                    <LinkIcon size={16} className="md:w-[18px] md:h-[18px]" />
-                </div>
-                <div className="flex-1 min-w-0">
-                    <div className="text-[10px] font-semibold text-slate-500 uppercase tracking-wider mb-0.5">Reference</div>
-                    {task.clickupLink ? (
-                        <a 
-                          href={task.clickupLink} 
-                          target="_blank" 
-                          rel="noopener noreferrer"
-                          className="text-sm font-medium text-indigo-600 dark:text-indigo-400 hover:text-indigo-500 dark:hover:text-indigo-300 truncate flex items-center gap-1.5 transition-colors"
-                        >
-                          <span className="truncate">Open in ClickUp</span> <ExternalLink size={12} className="flex-shrink-0" />
-                        </a>
-                    ) : (
-                        <span className="text-sm text-slate-400 dark:text-slate-500 italic truncate block">No link attached</span>
-                    )}
-                </div>
-            </div>
+            {/* Reference/Link Card - Spans 2 cols on tablet for better balance */}
+            <MetadataItem 
+                icon={LinkIcon} 
+                label="Reference"
+                className="sm:col-span-2 lg:col-span-1"
+                onClick={task.clickupLink ? () => window.open(task.clickupLink, '_blank') : undefined}
+                iconBgClass="group-hover:bg-indigo-50 dark:group-hover:bg-indigo-500/10 transition-colors"
+                iconColorClass="group-hover:text-indigo-600 dark:group-hover:text-indigo-400 transition-colors"
+            >
+                 {task.clickupLink ? (
+                    <>
+                      <span className="truncate text-indigo-600 dark:text-indigo-400 group-hover:underline">Open in ClickUp</span>
+                      <ExternalLink size={12} className="text-indigo-400 flex-shrink-0" />
+                    </>
+                ) : (
+                    <span className="text-slate-400 dark:text-slate-500 italic">No link attached</span>
+                )}
+            </MetadataItem>
         </div>
       </div>
 
