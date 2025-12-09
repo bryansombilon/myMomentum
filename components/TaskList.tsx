@@ -106,7 +106,7 @@ const TaskItem: React.FC<TaskItemProps> = React.memo(({
   const containerClasses = `
     relative group rounded-xl border cursor-pointer select-none overflow-hidden touch-none transition-colors duration-200
     ${isSelected 
-      ? 'bg-indigo-50 dark:bg-slate-800 border-indigo-500 shadow-md dark:shadow-indigo-500/10' 
+      ? 'bg-indigo-50 dark:bg-slate-800 border-indigo-500 shadow-md dark:shadow-indigo-500/10 z-10' 
       : 'bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-700/80 hover:border-slate-300 dark:hover:border-slate-600'}
   `;
 
@@ -124,13 +124,13 @@ const TaskItem: React.FC<TaskItemProps> = React.memo(({
         animate={{ opacity: 1, y: 0, scale: 1 }}
         exit={{ opacity: 0, scale: 0.95 }}
         whileDrag={{ 
-          scale: 1.02, 
-          zIndex: 50,
-          boxShadow: "0 10px 20px rgba(0,0,0,0.15)", // Smoother, softer shadow
+          scale: 1.03, // Slight lift
+          zIndex: 100, // Ensure it floats above everything
+          boxShadow: "0px 15px 25px rgba(0,0,0,0.15)", // Deep, soft shadow
           cursor: "grabbing",
         }}
-        // Tuning spring for smoother, softer reorder feel
-        transition={{ type: "spring", stiffness: 500, damping: 30, mass: 1 }}
+        // Tuning spring for "buttery" feel: Lower stiffness = softer, higher damping = less bounce
+        transition={{ type: "spring", stiffness: 350, damping: 25, mass: 1 }}
         className={containerClasses}
         onClick={() => onSelect(task)}
       >
