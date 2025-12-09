@@ -109,26 +109,27 @@ const App: React.FC = () => {
   };
 
   return (
-    <div className="flex flex-col h-screen w-full bg-slate-950 text-slate-200 overflow-hidden font-inter">
-      {/* Top Project Progress Bar */}
-      <ProjectProgress tasks={tasks} />
+    <div className="flex h-screen w-full bg-slate-950 text-slate-200 overflow-hidden font-inter">
+      {/* Left Panel - Full Height */}
+      <TaskList 
+        tasks={tasks} 
+        setTasks={handleTaskReorder} 
+        selectedTaskId={selectedTaskId}
+        onSelectTask={(task) => setSelectedTaskId(task.id)}
+        onAddNewTask={() => {
+          setEditingTask(null);
+          setIsNewTaskModalOpen(true);
+        }}
+      />
 
-      {/* Main Workspace */}
-      <div className="flex flex-1 overflow-hidden relative z-0">
-        {/* Left Panel */}
-        <TaskList 
-          tasks={tasks} 
-          setTasks={handleTaskReorder} 
-          selectedTaskId={selectedTaskId}
-          onSelectTask={(task) => setSelectedTaskId(task.id)}
-          onAddNewTask={() => {
-            setEditingTask(null);
-            setIsNewTaskModalOpen(true);
-          }}
-        />
+      {/* Right Column: Progress + Details */}
+      <div className="flex flex-col flex-1 min-w-0 overflow-hidden relative z-0">
+        
+        {/* Project Progress Bar */}
+        <ProjectProgress tasks={tasks} />
 
-        {/* Right Panel */}
-        <main className="flex-1 flex flex-col h-full min-w-0 bg-slate-950 relative z-0">
+        {/* Main Details Workspace */}
+        <main className="flex-1 flex flex-col min-w-0 bg-slate-950 relative z-0 overflow-hidden">
            <TaskDetail 
               task={selectedTask} 
               onUpdateTask={handleUpdateTask}
