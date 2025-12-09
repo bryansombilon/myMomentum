@@ -48,18 +48,21 @@ const TaskItem: React.FC<TaskItemProps> = ({
         cursor: "grabbing"
       }}
       className={`
-        relative group rounded-xl border p-3 cursor-pointer transition-colors duration-200 select-none
+        relative group rounded-xl border cursor-pointer transition-all duration-200 select-none overflow-hidden
         ${isSelected 
           ? 'bg-slate-800 border-indigo-500 shadow-lg shadow-indigo-500/10' 
           : 'bg-slate-800/40 border-slate-700/50 hover:bg-slate-800 hover:border-slate-600'}
       `}
       onClick={() => onSelect(task)}
     >
-      <div className="flex items-start gap-3">
-        {/* Drag Handle - Restricted Area */}
+      {/* Prominent Status Strip */}
+      <div className={`absolute left-0 top-0 bottom-0 w-1.5 ${statusStyle.color} transition-colors duration-200`} />
+
+      <div className="flex items-start gap-3 p-3 pl-5">
+        {/* Drag Handle */}
         <div 
           onPointerDown={(e) => controls.start(e)}
-          className="mt-1.5 text-slate-600 hover:text-slate-200 cursor-grab active:cursor-grabbing p-1 -ml-2 rounded hover:bg-slate-700/50 transition-colors touch-none"
+          className="mt-1.5 text-slate-600 hover:text-slate-200 cursor-grab active:cursor-grabbing p-1 rounded hover:bg-slate-700/50 transition-colors touch-none"
         >
           <GripVertical size={16} />
         </div>
@@ -88,8 +91,8 @@ const TaskItem: React.FC<TaskItemProps> = ({
             </div>
             
             <div className={`
-              text-[10px] px-2 py-0.5 rounded-full font-bold uppercase tracking-wide
-              ${statusStyle.color} ${statusStyle.text} shadow-sm
+              text-[10px] px-2.5 py-1 rounded-md font-bold uppercase tracking-wide
+              ${statusStyle.color} ${statusStyle.text} shadow-sm bg-opacity-90 backdrop-blur-sm
             `}>
               {statusStyle.label}
             </div>
