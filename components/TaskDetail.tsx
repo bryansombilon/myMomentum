@@ -117,7 +117,7 @@ export const TaskDetail: React.FC<TaskDetailProps> = ({ task, onUpdateTask, onSt
                 <div className="flex flex-wrap items-center gap-2 md:gap-3 w-full xl:w-auto">
                     {/* Status Buttons */}
                     <div className="flex-1 xl:flex-none flex items-center bg-white/50 dark:bg-slate-900/80 rounded-lg p-1 border border-slate-200 dark:border-slate-800 shadow-sm backdrop-blur-sm overflow-x-auto max-w-full no-scrollbar transition-colors">
-                        {(['todo', 'in-progress', 'under-review', 'on-hold', 'done'] as const).map((s) => {
+                        {(['todo', 'in-progress', 'under-review', 'on-hold', 'follow-up', 'done'] as const).map((s) => {
                             const config = STATUS_CONFIG[s];
                             const isActive = task.status === s;
                             return (

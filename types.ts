@@ -30,6 +30,6 @@ export interface Task {
   clickupLink: string;
   project: ProjectType;
   updates: Message[];
-  status: 'todo' | 'in-progress' | 'on-hold' | 'under-review' | 'done';
+  status: 'todo' | 'in-progress' | 'on-hold' | 'under-review' | 'follow-up' | 'done';
   priority: Priority;
 }

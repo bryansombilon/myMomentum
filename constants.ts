@@ -14,6 +14,7 @@ export const STATUS_CONFIG = {
   'in-progress': { label: 'In Progress', color: 'bg-blue-600', text: 'text-white' },
   'on-hold': { label: 'On Hold', color: 'bg-amber-600', text: 'text-white' },
   'under-review': { label: 'Under Review', color: 'bg-fuchsia-600', text: 'text-white' },
+  'follow-up': { label: 'Follow Up', color: 'bg-violet-600', text: 'text-white' },
   'done': { label: 'Done', color: 'bg-emerald-600', text: 'text-white' }
 };
 
