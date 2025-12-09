@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
-import { ProjectType, Task } from '../types';
+import { ProjectType, Task, Priority } from '../types';
 import { PROJECT_CONFIG } from '../constants';
-import { X, Calendar, Link as LinkIcon, Type, AlignLeft, Briefcase } from 'lucide-react';
+import { X, Calendar, Link as LinkIcon, Type, AlignLeft, Briefcase, AlertTriangle, Clock } from 'lucide-react';
 
 interface NewTaskModalProps {
   isOpen: boolean;
@@ -12,6 +12,7 @@ interface NewTaskModalProps {
     deadline: Date;
     clickupLink: string;
     project: ProjectType;
+    priority: Priority;
   }) => void;
   taskToEdit?: Task | null;
 }
@@ -22,6 +23,7 @@ export const NewTaskModal: React.FC<NewTaskModalProps> = ({ isOpen, onClose, onS
   const [deadline, setDeadline] = useState('');
   const [clickupLink, setClickupLink] = useState('');
   const [project, setProject] = useState<ProjectType>(ProjectType.GALA);
+  const [priority, setPriority] = useState<Priority>('not-urgent');
 
   // Effect to populate form when modal opens or taskToEdit changes
   useEffect(() => {
@@ -36,6 +38,7 @@ export const NewTaskModal: React.FC<NewTaskModalProps> = ({ isOpen, onClose, onS
         setDeadline(dateStr);
         setClickupLink(taskToEdit.clickupLink);
         setProject(taskToEdit.project);
+        setPriority(taskToEdit.priority || 'not-urgent');
       } else {
         // Reset for new task
         setTitle('');
@@ -43,6 +46,7 @@ export const NewTaskModal: React.FC<NewTaskModalProps> = ({ isOpen, onClose, onS
         setDeadline('');
         setClickupLink('');
         setProject(ProjectType.GALA);
+        setPriority('not-urgent');
       }
     }
   }, [isOpen, taskToEdit]);
@@ -58,7 +62,8 @@ export const NewTaskModal: React.FC<NewTaskModalProps> = ({ isOpen, onClose, onS
       description,
       deadline: new Date(deadline),
       clickupLink,
-      project
+      project,
+      priority
     });
     
     // We don't reset here immediately because the parent handles closing, 
@@ -68,15 +73,15 @@ export const NewTaskModal: React.FC<NewTaskModalProps> = ({ isOpen, onClose, onS
   const isEditing = !!taskToEdit;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-sm">
-      <div className="w-full max-w-lg bg-slate-900 border border-slate-700 rounded-2xl shadow-2xl overflow-hidden animate-in fade-in zoom-in-95 duration-200">
-        <div className="flex items-center justify-between p-4 border-b border-slate-700 bg-slate-800/50">
-          <h2 className="text-lg font-semibold text-slate-100">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/80 backdrop-blur-sm transition-opacity">
+      <div className="w-full max-w-lg bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-2xl shadow-2xl overflow-hidden animate-in fade-in zoom-in-95 duration-200 transition-colors">
+        <div className="flex items-center justify-between p-4 border-b border-slate-200 dark:border-slate-700 bg-slate-50/80 dark:bg-slate-800/50 transition-colors">
+          <h2 className="text-lg font-semibold text-slate-800 dark:text-slate-100">
             {isEditing ? 'Edit Task' : 'Create New Task'}
           </h2>
           <button 
             onClick={onClose}
-            className="p-1 text-slate-400 hover:text-slate-200 hover:bg-slate-700 rounded-lg transition-colors"
+            className="p-1 text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 hover:bg-slate-200 dark:hover:bg-slate-700 rounded-lg transition-colors"
           >
             <X size={20} />
           </button>
@@ -86,7 +91,7 @@ export const NewTaskModal: React.FC<NewTaskModalProps> = ({ isOpen, onClose, onS
           
           {/* Title */}
           <div className="space-y-1.5">
-            <label className="text-xs font-medium text-slate-400 flex items-center gap-1.5">
+            <label className="text-xs font-medium text-slate-500 dark:text-slate-400 flex items-center gap-1.5">
               <Type size={14} /> Task Title
             </label>
             <input
@@ -95,13 +100,13 @@ export const NewTaskModal: React.FC<NewTaskModalProps> = ({ isOpen, onClose, onS
               value={title}
               onChange={(e) => setTitle(e.target.value)}
               placeholder="e.g. Update API Documentation"
-              className="w-full bg-slate-800/50 border border-slate-700 rounded-lg px-3 py-2 text-sm text-slate-200 focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500/20 transition-all"
+              className="w-full bg-slate-50 dark:bg-slate-800/50 border border-slate-300 dark:border-slate-700 rounded-lg px-3 py-2 text-sm text-slate-900 dark:text-slate-200 focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500/20 transition-all placeholder:text-slate-400 dark:placeholder:text-slate-600"
             />
           </div>
 
           {/* Description */}
           <div className="space-y-1.5">
-            <label className="text-xs font-medium text-slate-400 flex items-center gap-1.5">
+            <label className="text-xs font-medium text-slate-500 dark:text-slate-400 flex items-center gap-1.5">
               <AlignLeft size={14} /> Description
             </label>
             <textarea
@@ -109,20 +114,20 @@ export const NewTaskModal: React.FC<NewTaskModalProps> = ({ isOpen, onClose, onS
               onChange={(e) => setDescription(e.target.value)}
               placeholder="Briefly describe the task..."
               rows={3}
-              className="w-full bg-slate-800/50 border border-slate-700 rounded-lg px-3 py-2 text-sm text-slate-200 focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500/20 transition-all resize-none"
+              className="w-full bg-slate-50 dark:bg-slate-800/50 border border-slate-300 dark:border-slate-700 rounded-lg px-3 py-2 text-sm text-slate-900 dark:text-slate-200 focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500/20 transition-all resize-none placeholder:text-slate-400 dark:placeholder:text-slate-600"
             />
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             {/* Project */}
             <div className="space-y-1.5">
-              <label className="text-xs font-medium text-slate-400 flex items-center gap-1.5">
+              <label className="text-xs font-medium text-slate-500 dark:text-slate-400 flex items-center gap-1.5">
                 <Briefcase size={14} /> Project
               </label>
               <select
                 value={project}
                 onChange={(e) => setProject(e.target.value as ProjectType)}
-                className="w-full bg-slate-800/50 border border-slate-700 rounded-lg px-3 py-2 text-sm text-slate-200 focus:outline-none focus:border-indigo-500"
+                className="w-full bg-slate-50 dark:bg-slate-800/50 border border-slate-300 dark:border-slate-700 rounded-lg px-3 py-2 text-sm text-slate-900 dark:text-slate-200 focus:outline-none focus:border-indigo-500"
               >
                 {Object.values(PROJECT_CONFIG).map((proj) => (
                   <option key={proj.name} value={proj.name}>
@@ -134,7 +139,7 @@ export const NewTaskModal: React.FC<NewTaskModalProps> = ({ isOpen, onClose, onS
 
             {/* Deadline */}
             <div className="space-y-1.5">
-              <label className="text-xs font-medium text-slate-400 flex items-center gap-1.5">
+              <label className="text-xs font-medium text-slate-500 dark:text-slate-400 flex items-center gap-1.5">
                 <Calendar size={14} /> Deadline
               </label>
               <input
@@ -142,14 +147,43 @@ export const NewTaskModal: React.FC<NewTaskModalProps> = ({ isOpen, onClose, onS
                 required
                 value={deadline}
                 onChange={(e) => setDeadline(e.target.value)}
-                className="w-full bg-slate-800/50 border border-slate-700 rounded-lg px-3 py-2 text-sm text-slate-200 focus:outline-none focus:border-indigo-500 [color-scheme:dark]"
+                className="w-full bg-slate-50 dark:bg-slate-800/50 border border-slate-300 dark:border-slate-700 rounded-lg px-3 py-2 text-sm text-slate-900 dark:text-slate-200 focus:outline-none focus:border-indigo-500 [color-scheme:light] dark:[color-scheme:dark]"
               />
+            </div>
+          </div>
+
+          {/* Priority */}
+          <div className="space-y-1.5">
+            <label className="text-xs font-medium text-slate-500 dark:text-slate-400 flex items-center gap-1.5">
+              <AlertTriangle size={14} /> Priority Level
+            </label>
+            <div className="grid grid-cols-2 gap-3">
+              <button
+                type="button"
+                onClick={() => setPriority('not-urgent')}
+                className={`flex items-center justify-center gap-2 px-3 py-2 rounded-lg border text-sm transition-all
+                  ${priority === 'not-urgent' 
+                    ? 'bg-slate-200 dark:bg-slate-700 text-slate-800 dark:text-white border-slate-300 dark:border-slate-500 shadow-sm' 
+                    : 'bg-slate-50 dark:bg-slate-800/50 text-slate-500 dark:text-slate-400 border-slate-200 dark:border-slate-700 hover:bg-slate-100 dark:hover:bg-slate-800'}`}
+              >
+                <Clock size={14} /> Not Urgent
+              </button>
+              <button
+                type="button"
+                onClick={() => setPriority('urgent')}
+                className={`flex items-center justify-center gap-2 px-3 py-2 rounded-lg border text-sm transition-all
+                  ${priority === 'urgent' 
+                    ? 'bg-red-100 dark:bg-red-500/20 text-red-600 dark:text-red-400 border-red-200 dark:border-red-500/50 shadow-sm' 
+                    : 'bg-slate-50 dark:bg-slate-800/50 text-slate-500 dark:text-slate-400 border-slate-200 dark:border-slate-700 hover:bg-slate-100 dark:hover:bg-slate-800'}`}
+              >
+                <AlertTriangle size={14} /> URGENT
+              </button>
             </div>
           </div>
 
           {/* ClickUp Link */}
           <div className="space-y-1.5">
-            <label className="text-xs font-medium text-slate-400 flex items-center gap-1.5">
+            <label className="text-xs font-medium text-slate-500 dark:text-slate-400 flex items-center gap-1.5">
               <LinkIcon size={14} /> ClickUp URL
             </label>
             <input
@@ -157,7 +191,7 @@ export const NewTaskModal: React.FC<NewTaskModalProps> = ({ isOpen, onClose, onS
               value={clickupLink}
               onChange={(e) => setClickupLink(e.target.value)}
               placeholder="https://clickup.com/t/..."
-              className="w-full bg-slate-800/50 border border-slate-700 rounded-lg px-3 py-2 text-sm text-slate-200 focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500/20 transition-all"
+              className="w-full bg-slate-50 dark:bg-slate-800/50 border border-slate-300 dark:border-slate-700 rounded-lg px-3 py-2 text-sm text-slate-900 dark:text-slate-200 focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500/20 transition-all placeholder:text-slate-400 dark:placeholder:text-slate-600"
             />
           </div>
 
@@ -165,7 +199,7 @@ export const NewTaskModal: React.FC<NewTaskModalProps> = ({ isOpen, onClose, onS
             <button
               type="button"
               onClick={onClose}
-              className="px-4 py-2 text-sm font-medium text-slate-400 hover:text-slate-200 hover:bg-slate-800 rounded-lg transition-colors"
+              className="px-4 py-2 text-sm font-medium text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg transition-colors"
             >
               Cancel
             </button>

@@ -4,9 +4,10 @@ import { TaskDetail } from './components/TaskDetail';
 import { NewTaskModal } from './components/NewTaskModal';
 import { ProjectProgress } from './components/ProjectProgress';
 import { INITIAL_TASKS } from './constants';
-import { Task, Message, ProjectType } from './types';
+import { Task, Message, ProjectType, Priority } from './types';
 
 const STORAGE_KEY = 'taskflow_tasks_v1';
+const THEME_KEY = 'taskflow_theme';
 
 const App: React.FC = () => {
   // Initialize state from localStorage or fallback to INITIAL_TASKS
@@ -22,7 +23,8 @@ const App: React.FC = () => {
           updates: t.updates ? t.updates.map((m: any) => ({
             ...m,
             timestamp: new Date(m.timestamp)
-          })) : []
+          })) : [],
+          priority: t.priority || 'not-urgent' // Default for existing tasks in storage
         }));
       }
     } catch (e) {
@@ -34,6 +36,30 @@ const App: React.FC = () => {
   const [selectedTaskId, setSelectedTaskId] = useState<string | null>(null);
   const [isNewTaskModalOpen, setIsNewTaskModalOpen] = useState(false);
   const [editingTask, setEditingTask] = useState<Task | null>(null);
+
+  // Theme State
+  const [isDarkMode, setIsDarkMode] = useState<boolean>(() => {
+    try {
+      const savedTheme = localStorage.getItem(THEME_KEY);
+      if (savedTheme) return savedTheme === 'dark';
+      // Default to dark mode if no preference
+      return true;
+    } catch {
+      return true;
+    }
+  });
+
+  // Apply Theme Effect
+  useEffect(() => {
+    const root = window.document.documentElement;
+    if (isDarkMode) {
+      root.classList.add('dark');
+      localStorage.setItem(THEME_KEY, 'dark');
+    } else {
+      root.classList.remove('dark');
+      localStorage.setItem(THEME_KEY, 'light');
+    }
+  }, [isDarkMode]);
 
   // Persist tasks to localStorage whenever they change
   useEffect(() => {
@@ -80,6 +106,7 @@ const App: React.FC = () => {
     deadline: Date;
     clickupLink: string;
     project: ProjectType;
+    priority: Priority;
   }) => {
     if (editingTask) {
       // Update existing task
@@ -109,7 +136,7 @@ const App: React.FC = () => {
   };
 
   return (
-    <div className="flex h-screen w-full bg-slate-950 text-slate-200 overflow-hidden font-inter">
+    <div className="flex h-screen w-full bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-slate-200 overflow-hidden font-inter transition-colors duration-300">
       {/* Left Panel - Full Height */}
       <TaskList 
         tasks={tasks} 
@@ -126,10 +153,14 @@ const App: React.FC = () => {
       <div className="flex flex-col flex-1 min-w-0 overflow-hidden relative z-0">
         
         {/* Project Progress Bar */}
-        <ProjectProgress tasks={tasks} />
+        <ProjectProgress 
+          tasks={tasks} 
+          isDarkMode={isDarkMode}
+          toggleTheme={() => setIsDarkMode(!isDarkMode)}
+        />
 
         {/* Main Details Workspace */}
-        <main className="flex-1 flex flex-col min-w-0 bg-slate-950 relative z-0 overflow-hidden">
+        <main className="flex-1 flex flex-col min-w-0 bg-slate-50 dark:bg-slate-950 relative z-0 overflow-hidden transition-colors">
            <TaskDetail 
               task={selectedTask} 
               onUpdateTask={handleUpdateTask}

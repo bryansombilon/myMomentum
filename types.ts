@@ -20,6 +20,8 @@ export interface Message {
   isUpdate?: boolean; // If true, it's a formal task update
 }
 
+export type Priority = 'urgent' | 'not-urgent';
+
 export interface Task {
   id: string;
   title: string;
@@ -29,4 +31,5 @@ export interface Task {
   project: ProjectType;
   updates: Message[];
   status: 'todo' | 'in-progress' | 'on-hold' | 'under-review' | 'done';
+  priority: Priority;
 }

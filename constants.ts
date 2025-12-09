@@ -1,4 +1,4 @@
-import { ProjectType, Task, Project } from './types';
+import { ProjectType, Task, Project, Priority } from './types';
 
 export const PROJECT_CONFIG: Record<ProjectType, Project> = {
   [ProjectType.GALA]: { name: ProjectType.GALA, color: '#EAB308' }, // Gold
@@ -17,6 +17,21 @@ export const STATUS_CONFIG = {
   'done': { label: 'Done', color: 'bg-emerald-600', text: 'text-white' }
 };
 
+export const PRIORITY_CONFIG: Record<Priority, { label: string, color: string, text: string, border: string }> = {
+  'urgent': { 
+    label: 'URGENT', 
+    color: 'bg-red-500/10', 
+    text: 'text-red-600 dark:text-red-400', 
+    border: 'border-red-500/30 dark:border-red-500/50' 
+  },
+  'not-urgent': { 
+    label: 'NOT URGENT', 
+    color: 'bg-slate-200 dark:bg-slate-800/50', 
+    text: 'text-slate-600 dark:text-slate-500', 
+    border: 'border-slate-300 dark:border-slate-700' 
+  }
+};
+
 export const INITIAL_TASKS: Task[] = [
   {
     id: 't-1',
@@ -26,6 +41,7 @@ export const INITIAL_TASKS: Task[] = [
     clickupLink: 'https://clickup.com/t/12345',
     project: ProjectType.GALA,
     status: 'in-progress',
+    priority: 'urgent',
     updates: [
       {
         id: 'm-1',
@@ -44,6 +60,7 @@ export const INITIAL_TASKS: Task[] = [
     clickupLink: 'https://clickup.com/t/67890',
     project: ProjectType.MAKERS_MOVERS,
     status: 'todo',
+    priority: 'not-urgent',
     updates: []
   },
   {
@@ -54,6 +71,7 @@ export const INITIAL_TASKS: Task[] = [
     clickupLink: 'https://clickup.com/t/54321',
     project: ProjectType.ALCOTT_GLOBAL,
     status: 'todo',
+    priority: 'urgent',
     updates: []
   },
   {
@@ -64,6 +82,7 @@ export const INITIAL_TASKS: Task[] = [
     clickupLink: 'https://clickup.com/t/98765',
     project: ProjectType.SOURCE_TO_SOLD,
     status: 'in-progress',
+    priority: 'not-urgent',
     updates: []
   },
   {
@@ -74,6 +93,7 @@ export const INITIAL_TASKS: Task[] = [
     clickupLink: 'https://clickup.com/t/11223',
     project: ProjectType.EXECUTIVE_SEARCH,
     status: 'todo',
+    priority: 'not-urgent',
     updates: []
   },
   {
@@ -84,6 +104,7 @@ export const INITIAL_TASKS: Task[] = [
     clickupLink: 'https://clickup.com/t/44556',
     project: ProjectType.SUPPLIFY,
     status: 'in-progress',
+    priority: 'not-urgent',
     updates: []
   }
 ];
