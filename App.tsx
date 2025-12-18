@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { TaskList } from './components/TaskList';
 import { TaskDetail } from './components/TaskDetail';
@@ -81,11 +82,23 @@ const App: React.FC = () => {
   };
 
   const handleStatusChange = (taskId: string, status: Task['status']) => {
-    setTasks(prevTasks => 
-      prevTasks.map(t => 
-        t.id === taskId ? { ...t, status } : t
-      )
-    );
+    setTasks(prevTasks => {
+      const taskIndex = prevTasks.findIndex(t => t.id === taskId);
+      if (taskIndex === -1) return prevTasks;
+
+      const updatedTask = { ...prevTasks[taskIndex], status };
+      const otherTasks = prevTasks.filter(t => t.id !== taskId);
+
+      if (status === 'done') {
+        // If marked as done, move to the end of the list
+        return [...otherTasks, updatedTask];
+      } else {
+        // If status changed to anything else, update in place to preserve user's manual order
+        const newTasks = [...prevTasks];
+        newTasks[taskIndex] = updatedTask;
+        return newTasks;
+      }
+    });
   };
 
   const handlePriorityChange = (taskId: string, priority: Priority) => {

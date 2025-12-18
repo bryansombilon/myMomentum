@@ -1,8 +1,9 @@
+
 import React, { useState, useMemo } from 'react';
 import { Reorder, useDragControls, AnimatePresence, motion } from 'framer-motion';
-import { Task, ProjectType } from '../types';
-import { PROJECT_CONFIG, STATUS_CONFIG } from '../constants';
-import { Calendar, GripVertical, ChevronRight, Plus, Filter, X, AlertTriangle, Clock, Search } from 'lucide-react';
+import { Task, ProjectType, Priority } from '../types';
+import { PROJECT_CONFIG, STATUS_CONFIG, PRIORITY_CONFIG } from '../constants';
+import { Calendar, GripVertical, ChevronRight, Plus, Filter, X, AlertTriangle, Clock, Search, Flag } from 'lucide-react';
 
 interface TaskListProps {
   tasks: Task[];
@@ -78,7 +79,7 @@ const TaskItem: React.FC<TaskItemProps> = React.memo(({
           <div className="flex items-center justify-between gap-2">
             <div className="flex items-center gap-1.5 text-xs text-slate-500">
               <Calendar size={12} />
-              <span className={new Date(task.deadline) < new Date() ? 'text-red-500 dark:text-red-400 font-bold' : ''}>
+              <span className={new Date(task.deadline) < new Date() && task.status !== 'done' ? 'text-red-500 dark:text-red-400 font-bold' : ''}>
                 {formatDate(new Date(task.deadline))}
               </span>
             </div>
@@ -102,7 +103,6 @@ const TaskItem: React.FC<TaskItemProps> = React.memo(({
   );
 
   // Using solid backgrounds to prevent transparency issues during drag
-  // Removed transition-all to ensure drag physics take precedence without CSS conflict
   const containerClasses = `
     relative group rounded-xl border cursor-pointer select-none overflow-hidden touch-none transition-colors duration-200
     ${isSelected 
@@ -158,11 +158,12 @@ export const TaskList: React.FC<TaskListProps> = ({ tasks, setTasks, selectedTas
   const [filterProject, setFilterProject] = useState<string>('all');
   const [filterStatus, setFilterStatus] = useState<string>('all');
   const [filterDeadline, setFilterDeadline] = useState<string>('all');
+  const [filterPriority, setFilterPriority] = useState<string>('all');
   const [searchQuery, setSearchQuery] = useState<string>('');
 
   const filteredTasks = useMemo(() => {
     // Return original reference if no filters are active to prevent unnecessary re-renders in Reorder.Group
-    if (filterProject === 'all' && filterStatus === 'all' && filterDeadline === 'all' && !searchQuery) {
+    if (filterProject === 'all' && filterStatus === 'all' && filterDeadline === 'all' && filterPriority === 'all' && !searchQuery) {
       return tasks;
     }
 
@@ -172,6 +173,7 @@ export const TaskList: React.FC<TaskListProps> = ({ tasks, setTasks, selectedTas
     return tasks.filter(task => {
       const matchProject = filterProject === 'all' || task.project === filterProject;
       const matchStatus = filterStatus === 'all' || task.status === filterStatus;
+      const matchPriority = filterPriority === 'all' || task.priority === filterPriority;
       
       let matchDeadline = true;
       const deadline = new Date(task.deadline);
@@ -190,16 +192,17 @@ export const TaskList: React.FC<TaskListProps> = ({ tasks, setTasks, selectedTas
         task.title.toLowerCase().includes(lowerQuery) || 
         (task.clickupLink && task.clickupLink.toLowerCase().includes(lowerQuery));
 
-      return matchProject && matchStatus && matchDeadline && matchSearch;
+      return matchProject && matchStatus && matchDeadline && matchPriority && matchSearch;
     });
-  }, [tasks, filterProject, filterStatus, filterDeadline, searchQuery]);
+  }, [tasks, filterProject, filterStatus, filterDeadline, filterPriority, searchQuery]);
 
-  const isFiltered = filterProject !== 'all' || filterStatus !== 'all' || filterDeadline !== 'all' || searchQuery !== '';
+  const isFiltered = filterProject !== 'all' || filterStatus !== 'all' || filterDeadline !== 'all' || filterPriority !== 'all' || searchQuery !== '';
 
   const clearFilters = () => {
     setFilterProject('all');
     setFilterStatus('all');
     setFilterDeadline('all');
+    setFilterPriority('all');
     setSearchQuery('');
   };
 
@@ -248,14 +251,14 @@ export const TaskList: React.FC<TaskListProps> = ({ tasks, setTasks, selectedTas
           )}
         </div>
 
-        {/* Filter Bar */}
+        {/* Filter Bar Row 1 */}
         <div className="flex items-center gap-2">
            {/* Project Filter */}
            <div className="flex-1 relative min-w-0">
              <select
                value={filterProject}
                onChange={(e) => setFilterProject(e.target.value)}
-               className="w-full appearance-none bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-700 text-xs text-slate-700 dark:text-slate-300 rounded-lg pl-3 pr-6 py-2 focus:outline-none focus:border-indigo-500 transition-colors cursor-pointer truncate"
+               className="w-full appearance-none bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-700 text-[11px] text-slate-700 dark:text-slate-300 rounded-lg pl-3 pr-6 py-2 focus:outline-none focus:border-indigo-500 transition-colors cursor-pointer truncate"
              >
                <option value="all">All Projects</option>
                {Object.values(PROJECT_CONFIG).map((proj) => (
@@ -270,7 +273,7 @@ export const TaskList: React.FC<TaskListProps> = ({ tasks, setTasks, selectedTas
              <select
                value={filterStatus}
                onChange={(e) => setFilterStatus(e.target.value)}
-               className="w-full appearance-none bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-700 text-xs text-slate-700 dark:text-slate-300 rounded-lg pl-3 pr-6 py-2 focus:outline-none focus:border-indigo-500 transition-colors cursor-pointer truncate"
+               className="w-full appearance-none bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-700 text-[11px] text-slate-700 dark:text-slate-300 rounded-lg pl-3 pr-6 py-2 focus:outline-none focus:border-indigo-500 transition-colors cursor-pointer truncate"
              >
                <option value="all">All Status</option>
                {Object.entries(STATUS_CONFIG).map(([key, config]) => (
@@ -279,13 +282,16 @@ export const TaskList: React.FC<TaskListProps> = ({ tasks, setTasks, selectedTas
              </select>
              <Filter size={10} className="absolute right-2 top-1/2 -translate-y-1/2 text-slate-400 dark:text-slate-500 pointer-events-none" />
            </div>
+        </div>
 
+        {/* Filter Bar Row 2 */}
+        <div className="flex items-center gap-2">
            {/* Deadline Filter */}
            <div className="flex-1 relative min-w-0">
              <select
                value={filterDeadline}
                onChange={(e) => setFilterDeadline(e.target.value)}
-               className="w-full appearance-none bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-700 text-xs text-slate-700 dark:text-slate-300 rounded-lg pl-3 pr-6 py-2 focus:outline-none focus:border-indigo-500 transition-colors cursor-pointer truncate"
+               className="w-full appearance-none bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-700 text-[11px] text-slate-700 dark:text-slate-300 rounded-lg pl-3 pr-6 py-2 focus:outline-none focus:border-indigo-500 transition-colors cursor-pointer truncate"
              >
                <option value="all">Any Time</option>
                <option value="due-soon">Due Soon (3 Days)</option>
@@ -294,10 +300,24 @@ export const TaskList: React.FC<TaskListProps> = ({ tasks, setTasks, selectedTas
              <Clock size={10} className="absolute right-2 top-1/2 -translate-y-1/2 text-slate-400 dark:text-slate-500 pointer-events-none" />
            </div>
 
+           {/* Priority Filter */}
+           <div className="flex-1 relative min-w-0">
+             <select
+               value={filterPriority}
+               onChange={(e) => setFilterPriority(e.target.value)}
+               className="w-full appearance-none bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-700 text-[11px] text-slate-700 dark:text-slate-300 rounded-lg pl-3 pr-6 py-2 focus:outline-none focus:border-indigo-500 transition-colors cursor-pointer truncate"
+             >
+               <option value="all">All Priority</option>
+               <option value="urgent">Urgent</option>
+               <option value="not-urgent">Not Urgent</option>
+             </select>
+             <Flag size={10} className="absolute right-2 top-1/2 -translate-y-1/2 text-slate-400 dark:text-slate-500 pointer-events-none" />
+           </div>
+
            {isFiltered && (
              <button 
                onClick={clearFilters}
-               className="p-2 bg-slate-200 dark:bg-slate-800 text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-300 dark:hover:bg-slate-700 rounded-lg border border-slate-300 dark:border-slate-700 transition-colors flex-shrink-0"
+               className="p-2 bg-slate-200 dark:bg-slate-800 text-slate-500 dark:text-slate-400 hover:text-red-600 dark:hover:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg border border-slate-300 dark:border-slate-700 transition-colors flex-shrink-0"
                title="Clear Filters"
              >
                <X size={14} />
