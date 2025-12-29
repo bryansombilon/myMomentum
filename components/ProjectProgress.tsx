@@ -1,15 +1,26 @@
-import React from 'react';
+
+import React, { useRef } from 'react';
 import { Task } from '../types';
 import { PROJECT_CONFIG } from '../constants';
-import { CheckCircle2, Moon, Sun } from 'lucide-react';
+import { CheckCircle2, Moon, Sun, Download, Upload } from 'lucide-react';
 
 interface ProjectProgressProps {
   tasks: Task[];
   isDarkMode: boolean;
   toggleTheme: () => void;
+  onExport: () => void;
+  onImport: (file: File) => void;
 }
 
-export const ProjectProgress: React.FC<ProjectProgressProps> = ({ tasks, isDarkMode, toggleTheme }) => {
+export const ProjectProgress: React.FC<ProjectProgressProps> = ({ 
+  tasks, 
+  isDarkMode, 
+  toggleTheme, 
+  onExport, 
+  onImport 
+}) => {
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
   const stats = Object.values(PROJECT_CONFIG).map(project => {
     const projectTasks = tasks.filter(t => t.project === project.name);
     const total = projectTasks.length;
@@ -24,8 +35,21 @@ export const ProjectProgress: React.FC<ProjectProgressProps> = ({ tasks, isDarkM
     };
   });
 
+  const handleImportClick = () => {
+    fileInputRef.current?.click();
+  };
+
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      onImport(file);
+      // Reset input so the same file can be uploaded again if needed
+      e.target.value = '';
+    }
+  };
+
   return (
-    <div className="w-full bg-white dark:bg-slate-900 border-b border-slate-200 dark:border-slate-800 p-4 shadow-lg z-20 flex items-center gap-4 transition-colors">
+    <div className="w-full bg-white dark:bg-slate-900 border-b border-slate-200 dark:border-slate-800 p-4 shadow-lg z-20 flex items-center gap-3 transition-colors">
       <div className="flex-1 flex items-center gap-4 overflow-x-auto pb-2 scrollbar-hide snap-x">
         {stats.map(stat => (
           <div 
@@ -73,14 +97,41 @@ export const ProjectProgress: React.FC<ProjectProgressProps> = ({ tasks, isDarkM
         </div>
       </div>
 
-      {/* Theme Toggle Button */}
-      <button
-        onClick={toggleTheme}
-        className="flex-shrink-0 p-2.5 rounded-full bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400 hover:text-indigo-600 dark:hover:text-indigo-400 hover:bg-indigo-50 dark:hover:bg-indigo-900/20 transition-colors border border-slate-200 dark:border-slate-700"
-        title={isDarkMode ? "Switch to Light Mode" : "Switch to Dark Mode"}
-      >
-        {isDarkMode ? <Sun size={20} /> : <Moon size={20} />}
-      </button>
+      <div className="flex items-center gap-2 flex-shrink-0">
+        {/* Import Button */}
+        <input 
+          type="file" 
+          ref={fileInputRef} 
+          onChange={handleFileChange} 
+          accept=".json" 
+          className="hidden" 
+        />
+        <button
+          onClick={handleImportClick}
+          className="p-2.5 rounded-full bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400 hover:text-indigo-600 dark:hover:text-indigo-400 hover:bg-indigo-50 dark:hover:bg-indigo-900/20 transition-colors border border-slate-200 dark:border-slate-700"
+          title="Import Tasks Data"
+        >
+          <Upload size={18} />
+        </button>
+
+        {/* Export Button */}
+        <button
+          onClick={onExport}
+          className="p-2.5 rounded-full bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400 hover:text-indigo-600 dark:hover:text-indigo-400 hover:bg-indigo-50 dark:hover:bg-indigo-900/20 transition-colors border border-slate-200 dark:border-slate-700"
+          title="Export All Data"
+        >
+          <Download size={18} />
+        </button>
+
+        {/* Theme Toggle Button */}
+        <button
+          onClick={toggleTheme}
+          className="p-2.5 rounded-full bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400 hover:text-indigo-600 dark:hover:text-indigo-400 hover:bg-indigo-50 dark:hover:bg-indigo-900/20 transition-colors border border-slate-200 dark:border-slate-700"
+          title={isDarkMode ? "Switch to Light Mode" : "Switch to Dark Mode"}
+        >
+          {isDarkMode ? <Sun size={18} /> : <Moon size={18} />}
+        </button>
+      </div>
     </div>
   );
 };

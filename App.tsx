@@ -156,6 +156,62 @@ const App: React.FC = () => {
     setEditingTask(null);
   };
 
+  // Export Data Handler
+  const handleExportData = () => {
+    try {
+      const dataStr = JSON.stringify(tasks, null, 2);
+      const blob = new Blob([dataStr], { type: 'application/json' });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = `taskflow-data-${new Date().toISOString().split('T')[0]}.json`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      URL.revokeObjectURL(url);
+    } catch (error) {
+      console.error("Export failed:", error);
+      alert("Failed to export data. Please try again.");
+    }
+  };
+
+  // Import Data Handler
+  const handleImportData = (file: File) => {
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      try {
+        const content = e.target?.result as string;
+        const importedData = JSON.parse(content);
+        
+        if (!Array.isArray(importedData)) {
+          throw new Error("Invalid data format: Expected an array of tasks.");
+        }
+
+        // Revive dates and validate basic structure
+        const revivedTasks = importedData.map((t: any) => ({
+          ...t,
+          deadline: new Date(t.deadline),
+          updates: t.updates ? t.updates.map((m: any) => ({
+            ...m,
+            timestamp: new Date(m.timestamp)
+          })) : [],
+          priority: t.priority || 'not-urgent'
+        }));
+
+        const confirmOverwrite = window.confirm("This will overwrite all your current tasks. Are you sure you want to proceed?");
+        if (confirmOverwrite) {
+          setTasks(revivedTasks);
+          setSelectedTaskId(null);
+          alert("Data imported successfully!");
+        }
+      } catch (error) {
+        console.error("Import failed:", error);
+        alert("Failed to import data. Please ensure the file is a valid TaskFlow export.");
+      }
+    };
+    reader.readAsText(file);
+  };
+
   return (
     <div className="flex h-screen w-full bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-slate-200 overflow-hidden font-inter transition-colors duration-300">
       {/* Left Panel - Full Height */}
@@ -178,6 +234,8 @@ const App: React.FC = () => {
           tasks={tasks} 
           isDarkMode={isDarkMode}
           toggleTheme={() => setIsDarkMode(!isDarkMode)}
+          onExport={handleExportData}
+          onImport={handleImportData}
         />
 
         {/* Main Details Workspace */}
