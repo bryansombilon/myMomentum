@@ -12,6 +12,7 @@ interface TaskDetailProps {
   onPriorityChange: (taskId: string, priority: Priority) => void;
   onDeleteTask: (taskId: string) => void;
   onEditTask: (task: Task) => void;
+  onNavigateToTask?: (taskId: string) => void;
 }
 
 // Sub-component for metadata items to ensure consistent layout and styling
@@ -59,7 +60,7 @@ const MetadataItem: React.FC<MetadataItemProps> = ({
   </div>
 );
 
-export const TaskDetail: React.FC<TaskDetailProps> = ({ task, onUpdateTask, onStatusChange, onPriorityChange, onDeleteTask, onEditTask }) => {
+export const TaskDetail: React.FC<TaskDetailProps> = ({ task, onUpdateTask, onStatusChange, onPriorityChange, onDeleteTask, onEditTask, onNavigateToTask }) => {
   if (!task) {
     return (
       <div className="flex-1 flex flex-col items-center justify-center bg-slate-50 dark:bg-slate-950 text-slate-400 dark:text-slate-500 select-none transition-colors">
@@ -91,8 +92,9 @@ export const TaskDetail: React.FC<TaskDetailProps> = ({ task, onUpdateTask, onSt
   const priorityConfig = PRIORITY_CONFIG[task.priority] || PRIORITY_CONFIG['not-urgent'];
   const isUrgent = task.priority === 'urgent';
 
-  const handleDeleteClick = () => {
-    if (window.confirm('Are you sure you want to delete this task?')) {
+  const handleDeleteClick = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    if (window.confirm('Are you sure you want to permanently delete this task?')) {
       onDeleteTask(task.id);
     }
   };
@@ -176,14 +178,14 @@ export const TaskDetail: React.FC<TaskDetailProps> = ({ task, onUpdateTask, onSt
                     {/* Divider */}
                     <div className="w-px h-8 bg-slate-200 dark:bg-slate-800 hidden md:block"></div>
                     
-                    {/* Edit/Delete Actions */}
+                    {/* Delete Action */}
                     <div className="flex items-center gap-1 ml-auto xl:ml-0">
                         <button
                             onClick={handleDeleteClick}
-                            className="p-2 text-slate-500 hover:text-red-600 dark:hover:text-red-400 hover:bg-red-50 dark:hover:bg-red-500/10 rounded-lg border border-transparent hover:border-red-200 dark:hover:border-red-500/20 transition-all"
+                            className="p-2.5 text-slate-500 hover:text-red-600 dark:hover:text-red-400 hover:bg-red-50 dark:hover:bg-red-500/10 rounded-xl border border-transparent hover:border-red-200 dark:hover:border-red-500/20 transition-all shadow-sm hover:shadow-md active:scale-90"
                             title="Delete Task"
                         >
-                            <Trash2 size={18} />
+                            <Trash2 size={20} />
                         </button>
                     </div>
                 </div>

@@ -478,8 +478,8 @@ export const NotesApp: React.FC<NotesAppProps> = ({ notes, tasks, onSaveNotes, o
       <div className="flex-1 flex flex-col bg-white dark:bg-slate-950 transition-colors">
         {activeNote ? (
           <>
-            {/* Toolbar */}
-            <div className="p-2 border-b border-slate-200 dark:border-slate-800 flex items-center justify-between bg-white dark:bg-slate-900 transition-colors overflow-x-auto no-scrollbar z-30">
+            {/* Toolbar - Removed overflow-x-auto to ensure dropdown is visible */}
+            <div className="p-2 border-b border-slate-200 dark:border-slate-800 flex items-center justify-between bg-white dark:bg-slate-900 transition-colors z-30">
               <div className="flex items-center gap-0.5">
                 <ToolbarButton icon={Bold} onClick={() => execCommand('bold')} onMouseDown={(e) => e.preventDefault()} title="Bold (Ctrl+B)" />
                 <ToolbarButton icon={Italic} onClick={() => execCommand('italic')} onMouseDown={(e) => e.preventDefault()} title="Italic (Ctrl+I)" />
@@ -511,7 +511,7 @@ export const NotesApp: React.FC<NotesAppProps> = ({ notes, tasks, onSaveNotes, o
                     ref={colorPickerTriggerRef}
                     onMouseDown={(e) => e.preventDefault()} // Preserve selection
                     onClick={() => setShowColorPicker(!showColorPicker)}
-                    className={`p-1.5 hover:bg-slate-100 dark:hover:bg-slate-800 rounded transition-colors text-slate-600 dark:text-slate-400 flex items-center gap-1 ${showColorPicker ? 'bg-slate-100 dark:bg-slate-800' : ''}`}
+                    className={`p-1.5 hover:bg-slate-100 dark:hover:bg-slate-800 rounded transition-colors text-slate-600 dark:text-slate-400 flex items-center gap-1 ${showColorPicker ? 'bg-slate-100 dark:bg-slate-800 shadow-inner' : ''}`}
                     title="Text Color Palette"
                   >
                     <Palette size={18} />
@@ -521,13 +521,13 @@ export const NotesApp: React.FC<NotesAppProps> = ({ notes, tasks, onSaveNotes, o
                     {showColorPicker && (
                       <motion.div 
                         ref={colorPickerRef}
-                        initial={{ opacity: 0, y: 5 }}
+                        initial={{ opacity: 0, y: 10 }}
                         animate={{ opacity: 1, y: 0 }}
-                        exit={{ opacity: 0 }}
-                        className="absolute top-full left-0 mt-1 z-[100] bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl shadow-2xl p-3 w-52"
+                        exit={{ opacity: 0, y: 10 }}
+                        className="absolute top-full left-0 mt-2 z-[100] bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl shadow-[0_10px_40px_rgba(0,0,0,0.15)] p-4 w-56"
                       >
                         <div className="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-widest mb-3 px-1">Presets</div>
-                        <div className="grid grid-cols-4 gap-2 mb-4">
+                        <div className="grid grid-cols-4 gap-2.5 mb-5">
                           {PRESET_COLORS.map(color => (
                             <button
                               key={color.name}
@@ -545,11 +545,11 @@ export const NotesApp: React.FC<NotesAppProps> = ({ notes, tasks, onSaveNotes, o
                             </button>
                           ))}
                         </div>
-                        <div className="border-t border-slate-100 dark:border-slate-700 pt-3">
-                          <div className="flex items-center justify-between mb-2 px-1">
+                        <div className="border-t border-slate-100 dark:border-slate-700 pt-4">
+                          <div className="flex items-center justify-between mb-2.5 px-1">
                             <span className="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase">Custom Pick</span>
                           </div>
-                          <div className="relative h-10 w-full rounded-lg overflow-hidden border border-slate-200 dark:border-slate-600 shadow-inner group/picker">
+                          <div className="relative h-12 w-full rounded-xl overflow-hidden border-2 border-slate-200 dark:border-slate-600 shadow-inner group/picker hover:border-indigo-400 transition-colors">
                             <input 
                               type="color" 
                               onMouseDown={(e) => e.stopPropagation()} // Allow interaction
@@ -557,10 +557,10 @@ export const NotesApp: React.FC<NotesAppProps> = ({ notes, tasks, onSaveNotes, o
                                 const val = (e.target as HTMLInputElement).value;
                                 execCommand('foreColor', val);
                               }}
-                              className="absolute inset-0 w-full h-full scale-[2] cursor-pointer bg-transparent border-none p-0 outline-none"
+                              className="absolute inset-[-10px] w-[calc(100%+20px)] h-[calc(100%+20px)] cursor-pointer bg-transparent border-none p-0 outline-none"
                               title="Pick custom hex color"
                             />
-                            <div className="absolute inset-0 pointer-events-none flex items-center justify-center text-[10px] font-bold text-white mix-blend-difference opacity-0 group-hover/picker:opacity-100 transition-opacity uppercase tracking-tighter">
+                            <div className="absolute inset-0 pointer-events-none flex items-center justify-center text-[10px] font-black text-white mix-blend-difference opacity-0 group-hover/picker:opacity-100 transition-opacity uppercase tracking-tighter">
                               Choose Color
                             </div>
                           </div>
