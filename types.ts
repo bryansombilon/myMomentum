@@ -1,3 +1,4 @@
+
 export enum ProjectType {
   GALA = 'GALA',
   MAKERS_MOVERS = 'Makers & Movers',
@@ -17,7 +18,7 @@ export interface Message {
   sender: 'user' | 'ai' | 'system';
   text: string;
   timestamp: Date;
-  isUpdate?: boolean; // If true, it's a formal task update
+  isUpdate?: boolean; 
 }
 
 export type Priority = 'urgent' | 'not-urgent';
@@ -32,4 +33,15 @@ export interface Task {
   updates: Message[];
   status: 'todo' | 'in-progress' | 'on-hold' | 'under-review' | 'follow-up' | 'done';
   priority: Priority;
+}
+
+// New Types for multi-app system
+export type AppView = 'home' | 'tasks' | 'notes';
+
+export interface Note {
+  id: string;
+  title: string;
+  content: string;
+  lastModified: Date;
+  tags: string[];
 }

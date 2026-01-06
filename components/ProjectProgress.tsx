@@ -1,26 +1,22 @@
 
-import React, { useRef } from 'react';
+import React from 'react';
 import { Task } from '../types';
 import { PROJECT_CONFIG } from '../constants';
-import { CheckCircle2, Moon, Sun, Download, Upload } from 'lucide-react';
+import { CheckCircle2, Moon, Sun, Home } from 'lucide-react';
 
 interface ProjectProgressProps {
   tasks: Task[];
   isDarkMode: boolean;
   toggleTheme: () => void;
-  onExport: () => void;
-  onImport: (file: File) => void;
+  onGoHome: () => void;
 }
 
 export const ProjectProgress: React.FC<ProjectProgressProps> = ({ 
   tasks, 
   isDarkMode, 
   toggleTheme, 
-  onExport, 
-  onImport 
+  onGoHome
 }) => {
-  const fileInputRef = useRef<HTMLInputElement>(null);
-
   const stats = Object.values(PROJECT_CONFIG).map(project => {
     const projectTasks = tasks.filter(t => t.project === project.name);
     const total = projectTasks.length;
@@ -34,19 +30,6 @@ export const ProjectProgress: React.FC<ProjectProgressProps> = ({
       percentage
     };
   });
-
-  const handleImportClick = () => {
-    fileInputRef.current?.click();
-  };
-
-  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (file) {
-      onImport(file);
-      // Reset input so the same file can be uploaded again if needed
-      e.target.value = '';
-    }
-  };
 
   return (
     <div className="w-full bg-white dark:bg-slate-900 border-b border-slate-200 dark:border-slate-800 p-4 shadow-lg z-20 flex items-center gap-3 transition-colors">
@@ -98,29 +81,13 @@ export const ProjectProgress: React.FC<ProjectProgressProps> = ({
       </div>
 
       <div className="flex items-center gap-2 flex-shrink-0">
-        {/* Import Button */}
-        <input 
-          type="file" 
-          ref={fileInputRef} 
-          onChange={handleFileChange} 
-          accept=".json" 
-          className="hidden" 
-        />
+        {/* Home Button */}
         <button
-          onClick={handleImportClick}
-          className="p-2.5 rounded-full bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400 hover:text-indigo-600 dark:hover:text-indigo-400 hover:bg-indigo-50 dark:hover:bg-indigo-900/20 transition-colors border border-slate-200 dark:border-slate-700"
-          title="Import Tasks Data"
+          onClick={onGoHome}
+          className="p-2.5 rounded-full bg-indigo-50 dark:bg-indigo-900/20 text-indigo-600 dark:text-indigo-400 hover:bg-indigo-100 dark:hover:bg-indigo-900/40 transition-colors border border-indigo-200 dark:border-indigo-800"
+          title="Back to Home Screen"
         >
-          <Upload size={18} />
-        </button>
-
-        {/* Export Button */}
-        <button
-          onClick={onExport}
-          className="p-2.5 rounded-full bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400 hover:text-indigo-600 dark:hover:text-indigo-400 hover:bg-indigo-50 dark:hover:bg-indigo-900/20 transition-colors border border-slate-200 dark:border-slate-700"
-          title="Export All Data"
-        >
-          <Download size={18} />
+          <Home size={18} />
         </button>
 
         {/* Theme Toggle Button */}

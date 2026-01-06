@@ -1,6 +1,7 @@
+
 import React, { useState, useEffect, useRef } from 'react';
 import { Task, Message } from '../types';
-import { Send, Sparkles, Loader2, StickyNote, PenLine } from 'lucide-react';
+import { Send, Sparkles, Loader2, StickyNote, PenLine, ExternalLink, Clock } from 'lucide-react';
 import { generateTaskSummaryOrAdvice } from '../services/geminiService';
 
 interface ChatSectionProps {
@@ -8,16 +9,18 @@ interface ChatSectionProps {
   onUpdateTask: (taskId: string, updates: Message[]) => void;
 }
 
-// Helper function to render text with clickable links
+/**
+ * Automatically detects and renders URLs within text as clickable hyperlinks.
+ * Supports http, https, and www prefixes.
+ */
 const renderTextWithLinks = (text: string) => {
-  // Regex to identify URLs (http/https)
-  const urlRegex = /(https?:\/\/[^\s]+)/g;
+  // Regex to identify URLs (http/https or www.)
+  const urlRegex = /(https?:\/\/[^\s]+|www\.[^\s]+)/gi;
   const parts = text.split(urlRegex);
 
   return parts.map((part, index) => {
     if (part.match(urlRegex)) {
-      // Handle trailing punctuation that shouldn't be part of the URL
-      // e.g. "Check google.com." -> link should be "google.com" not "google.com."
+      // Handle trailing punctuation (.,;!?) that shouldn't be part of the URL
       const trailingPunctuationMatch = part.match(/[.,;!?)]+$/);
       let cleanUrl = part;
       let suffix = '';
@@ -27,16 +30,20 @@ const renderTextWithLinks = (text: string) => {
         cleanUrl = part.slice(0, -suffix.length);
       }
 
+      // Ensure the href is absolute
+      const href = cleanUrl.toLowerCase().startsWith('http') ? cleanUrl : `https://${cleanUrl}`;
+
       return (
         <React.Fragment key={index}>
           <a
-            href={cleanUrl}
+            href={href}
             target="_blank"
             rel="noopener noreferrer"
-            className="text-indigo-600 dark:text-indigo-400 hover:underline hover:text-indigo-800 dark:hover:text-indigo-300 break-all transition-colors font-medium"
+            className="inline-flex items-center gap-0.5 text-indigo-600 dark:text-indigo-400 hover:text-indigo-800 dark:hover:text-indigo-300 font-semibold underline decoration-indigo-500/30 underline-offset-2 transition-all group/link"
             onClick={(e) => e.stopPropagation()}
           >
             {cleanUrl}
+            <ExternalLink size={10} className="opacity-0 group-hover/link:opacity-100 transition-opacity" />
           </a>
           {suffix}
         </React.Fragment>
@@ -78,11 +85,11 @@ export const ChatSection: React.FC<ChatSectionProps> = ({ task, onUpdateTask }) 
   const handleAskAI = async () => {
     setIsAiProcessing(true);
     
-    // Use existing notes as context
+    // Use existing updates as context
     const contextText = task.updates.map(m => `[${m.timestamp.toISOString()}] ${m.text}`).join('\n');
     
-    // If user typed something in the box, treat it as a specific prompt, otherwise ask for general advice
-    const prompt = inputValue.trim() || "Review the current notes and suggest 3 actionable next steps.";
+    // If user typed something in the box, treat it as a specific prompt
+    const prompt = inputValue.trim() || "Review the current task updates and suggest 3 actionable next steps.";
     
     const response = await generateTaskSummaryOrAdvice(task, prompt, contextText);
 
@@ -95,7 +102,7 @@ export const ChatSection: React.FC<ChatSectionProps> = ({ task, onUpdateTask }) 
     };
 
     onUpdateTask(task.id, [...task.updates, aiMessage]);
-    setInputValue(''); // Clear input if it was used as a prompt
+    setInputValue(''); 
     setIsAiProcessing(false);
   };
 
@@ -116,18 +123,18 @@ export const ChatSection: React.FC<ChatSectionProps> = ({ task, onUpdateTask }) 
   };
 
   return (
-    <div className="flex flex-col h-full bg-white/50 dark:bg-slate-900/30 rounded-xl border border-slate-200 dark:border-slate-800 overflow-hidden transition-colors">
+    <div className="flex flex-col h-full bg-white/50 dark:bg-slate-900/30 rounded-xl border border-slate-200 dark:border-slate-800 overflow-hidden transition-colors shadow-sm">
       <div className="p-3 md:p-4 border-b border-slate-200 dark:border-slate-800 bg-white/80 dark:bg-slate-900/80 backdrop-blur-md flex items-center justify-between shrink-0 transition-colors">
         <h3 className="text-sm font-semibold text-slate-800 dark:text-slate-200 flex items-center gap-2">
           <StickyNote size={16} className="text-amber-500 dark:text-amber-400 md:w-[18px] md:h-[18px]" />
           <span className="truncate">Notes & Insights</span>
         </h3>
-        <div className="text-[10px] md:text-xs font-medium text-slate-500 dark:text-slate-500 px-2 py-1 bg-slate-100 dark:bg-slate-800 rounded-md border border-slate-200 dark:border-slate-700 whitespace-nowrap transition-colors">
+        <div className="text-[10px] md:text-xs font-medium text-slate-500 dark:text-slate-500 px-2.5 py-1 bg-slate-100 dark:bg-slate-800 rounded-md border border-slate-200 dark:border-slate-700 whitespace-nowrap transition-colors">
           {task.updates.length} entries
         </div>
       </div>
 
-      <div className="flex-1 overflow-y-auto p-3 md:p-4 space-y-4 md:space-y-6">
+      <div className="flex-1 overflow-y-auto p-3 md:p-4 space-y-4 md:space-y-6 scrollbar-thin">
         {task.updates.length === 0 ? (
           <div className="h-full flex flex-col items-center justify-center text-slate-400 dark:text-slate-500 opacity-60">
              <PenLine size={40} className="mb-3 text-slate-400 dark:text-slate-600 md:w-[48px] md:h-[48px]" />
@@ -136,10 +143,10 @@ export const ChatSection: React.FC<ChatSectionProps> = ({ task, onUpdateTask }) 
           </div>
         ) : (
           task.updates.map((msg) => (
-            <div key={msg.id} className="group relative pl-4 border-l-2 border-slate-200 dark:border-slate-800 hover:border-slate-300 dark:hover:border-slate-700 transition-colors">
+            <div key={msg.id} className="group relative pl-4 border-l-2 border-slate-200 dark:border-slate-800 hover:border-slate-300 dark:hover:border-slate-700 transition-all duration-300">
               {/* Timeline dot */}
               <div className={`
-                absolute -left-[9px] top-0 w-4 h-4 rounded-full border-4 border-slate-50 dark:border-slate-900 
+                absolute -left-[9px] top-0 w-4 h-4 rounded-full border-4 border-slate-50 dark:border-slate-900 shadow-sm
                 ${msg.sender === 'ai' ? 'bg-indigo-500' : 'bg-slate-400 dark:bg-slate-600'}
               `}></div>
 
@@ -156,9 +163,9 @@ export const ChatSection: React.FC<ChatSectionProps> = ({ task, onUpdateTask }) 
               </div>
 
               <div className={`
-                text-sm leading-relaxed p-2.5 md:p-3 rounded-lg border
+                text-sm leading-relaxed p-3 rounded-xl border shadow-sm transition-all
                 ${msg.sender === 'ai' 
-                  ? 'bg-indigo-50 dark:bg-indigo-950/20 border-indigo-200 dark:border-indigo-500/20 text-indigo-900 dark:text-indigo-100 shadow-sm' 
+                  ? 'bg-indigo-50 dark:bg-indigo-950/20 border-indigo-200 dark:border-indigo-500/20 text-indigo-900 dark:text-indigo-100' 
                   : 'bg-white dark:bg-slate-800/50 border-slate-200 dark:border-slate-700/50 text-slate-700 dark:text-slate-300'}
               `}>
                 <div className="whitespace-pre-wrap text-xs md:text-sm">
@@ -177,7 +184,7 @@ export const ChatSection: React.FC<ChatSectionProps> = ({ task, onUpdateTask }) 
                  Analyzing
                </span>
             </div>
-            <div className="h-16 bg-indigo-100 dark:bg-indigo-900/10 rounded-lg w-full"></div>
+            <div className="h-16 bg-indigo-100 dark:bg-indigo-900/10 rounded-xl w-full"></div>
           </div>
         )}
         <div ref={messagesEndRef} />
@@ -189,8 +196,8 @@ export const ChatSection: React.FC<ChatSectionProps> = ({ task, onUpdateTask }) 
             value={inputValue}
             onChange={(e) => setInputValue(e.target.value)}
             onKeyDown={handleKeyDown}
-            placeholder="Add a new note..."
-            className="w-full bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-700 rounded-xl p-3 pr-24 text-sm text-slate-800 dark:text-slate-200 focus:outline-none focus:border-indigo-500/50 focus:ring-1 focus:ring-indigo-500/20 resize-none h-14 md:h-20 scrollbar-thin transition-all placeholder:text-slate-400 dark:placeholder:text-slate-600"
+            placeholder="Add a new update or ask AI..."
+            className="w-full bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-700 rounded-xl p-3 pr-24 text-sm text-slate-800 dark:text-slate-200 focus:outline-none focus:border-indigo-500/50 focus:ring-1 focus:ring-indigo-500/20 resize-none h-16 md:h-24 scrollbar-thin transition-all placeholder:text-slate-400 dark:placeholder:text-slate-600 shadow-inner"
           />
           <div className="absolute bottom-2.5 right-2 md:bottom-3 md:right-3 flex items-center gap-2">
              <button
@@ -198,28 +205,29 @@ export const ChatSection: React.FC<ChatSectionProps> = ({ task, onUpdateTask }) 
               disabled={isAiProcessing}
               title={inputValue ? "Generate AI Insight based on this prompt" : "Generate AI suggestions based on notes"}
               className={`
-                flex items-center gap-1.5 px-2.5 py-1 md:px-3 md:py-1.5 rounded-lg text-[10px] md:text-xs font-medium transition-all
+                flex items-center gap-1.5 px-3 py-1.5 md:px-4 md:py-2 rounded-lg text-[10px] md:text-xs font-bold transition-all
                 ${inputValue.trim() 
-                  ? 'text-indigo-600 dark:text-indigo-400 hover:bg-indigo-50 dark:hover:bg-indigo-500/10' 
+                  ? 'text-indigo-600 dark:text-indigo-400 hover:bg-indigo-50 dark:hover:bg-indigo-500/10 bg-white dark:bg-slate-800 border border-indigo-200 dark:border-indigo-800' 
                   : 'bg-indigo-600 text-white hover:bg-indigo-500 shadow-lg shadow-indigo-500/20'}
               `}
             >
               <Sparkles size={14} className="md:w-[14px] md:h-[14px] w-3 h-3" />
-              {inputValue.trim() ? 'Ask AI' : 'Generate Insight'}
+              {inputValue.trim() ? 'Ask AI' : 'AI Advice'}
             </button>
             
             {inputValue.trim() && (
               <button
                 onClick={handleSend}
-                className="p-1.5 bg-slate-200 dark:bg-slate-700 text-slate-600 dark:text-white rounded-lg hover:bg-slate-300 dark:hover:bg-slate-600 transition-colors shadow-lg"
+                className="p-2 bg-slate-200 dark:bg-slate-700 text-slate-600 dark:text-white rounded-lg hover:bg-slate-300 dark:hover:bg-slate-600 transition-all shadow-md active:scale-95"
               >
-                <Send size={14} className="md:w-[14px] md:h-[14px] w-3 h-3" />
+                <Send size={14} className="md:w-[16px] md:h-[16px] w-4 h-4" />
               </button>
             )}
           </div>
         </div>
         <div className="mt-2 text-[10px] text-slate-400 dark:text-slate-500 flex justify-between px-1">
-           <span>Records are saved automatically.</span>
+           {/* Added Clock icon to imports above to fix "Cannot find name 'Clock'" error */}
+           <span className="flex items-center gap-1"><Clock size={10} /> Real-time tracking enabled</span>
         </div>
       </div>
     </div>

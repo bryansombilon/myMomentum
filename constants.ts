@@ -1,12 +1,13 @@
-import { ProjectType, Task, Project, Priority } from './types';
+
+import { ProjectType, Task, Project, Priority, Note } from './types';
 
 export const PROJECT_CONFIG: Record<ProjectType, Project> = {
-  [ProjectType.GALA]: { name: ProjectType.GALA, color: '#EAB308' }, // Gold
-  [ProjectType.MAKERS_MOVERS]: { name: ProjectType.MAKERS_MOVERS, color: '#7E22CE' }, // Dark Purple
-  [ProjectType.ALCOTT_GLOBAL]: { name: ProjectType.ALCOTT_GLOBAL, color: '#14B8A6' }, // Teal
-  [ProjectType.SOURCE_TO_SOLD]: { name: ProjectType.SOURCE_TO_SOLD, color: '#F97316' }, // Orange
-  [ProjectType.SUPPLIFY]: { name: ProjectType.SUPPLIFY, color: '#3B82F6' }, // Blue
-  [ProjectType.EXECUTIVE_SEARCH]: { name: ProjectType.EXECUTIVE_SEARCH, color: '#22C55E' }, // Green
+  [ProjectType.GALA]: { name: ProjectType.GALA, color: '#EAB308' }, 
+  [ProjectType.MAKERS_MOVERS]: { name: ProjectType.MAKERS_MOVERS, color: '#7E22CE' }, 
+  [ProjectType.ALCOTT_GLOBAL]: { name: ProjectType.ALCOTT_GLOBAL, color: '#14B8A6' }, 
+  [ProjectType.SOURCE_TO_SOLD]: { name: ProjectType.SOURCE_TO_SOLD, color: '#F97316' }, 
+  [ProjectType.SUPPLIFY]: { name: ProjectType.SUPPLIFY, color: '#3B82F6' }, 
+  [ProjectType.EXECUTIVE_SEARCH]: { name: ProjectType.EXECUTIVE_SEARCH, color: '#22C55E' }, 
 };
 
 export const STATUS_CONFIG = {
@@ -38,7 +39,7 @@ export const INITIAL_TASKS: Task[] = [
     id: 't-1',
     title: 'GALA Website Launch',
     description: 'Finalize the homepage assets and deploy to production.',
-    deadline: new Date(new Date().setDate(new Date().getDate() + 2)), // 2 days from now
+    deadline: new Date(new Date().setDate(new Date().getDate() + 2)), 
     clickupLink: 'https://clickup.com/t/12345',
     project: ProjectType.GALA,
     status: 'in-progress',
@@ -47,65 +48,27 @@ export const INITIAL_TASKS: Task[] = [
       {
         id: 'm-1',
         sender: 'user',
-        text: 'Initial deployment successful on staging. Waiting for final QA sign-off.',
+        text: 'Initial deployment successful on staging.',
         timestamp: new Date(new Date().setDate(new Date().getDate() - 1)),
         isUpdate: true
       }
     ]
+  }
+];
+
+export const INITIAL_NOTES: Note[] = [
+  {
+    id: 'n-1',
+    title: 'Project Brainstorming',
+    content: '# Idea for Q4\n- Launch AI features\n- Improve mobile layout\n- User feedback session',
+    lastModified: new Date(),
+    tags: ['work', 'ideas']
   },
   {
-    id: 't-2',
-    title: 'Podcast Guest Outreach',
-    description: 'Contact potential guests for the Makers & Movers Q3 season.',
-    deadline: new Date(new Date().setDate(new Date().getDate() + 5)),
-    clickupLink: 'https://clickup.com/t/67890',
-    project: ProjectType.MAKERS_MOVERS,
-    status: 'todo',
-    priority: 'not-urgent',
-    updates: []
-  },
-  {
-    id: 't-3',
-    title: 'Alcott Global Rebrand Assets',
-    description: 'Create new logo variations and social media kit.',
-    deadline: new Date(new Date().setDate(new Date().getDate() + 1)),
-    clickupLink: 'https://clickup.com/t/54321',
-    project: ProjectType.ALCOTT_GLOBAL,
-    status: 'todo',
-    priority: 'urgent',
-    updates: []
-  },
-  {
-    id: 't-4',
-    title: 'Source to Sold Book Launch',
-    description: 'Coordinate with publishers for the book release event.',
-    deadline: new Date(new Date().setDate(new Date().getDate() + 3)),
-    clickupLink: 'https://clickup.com/t/98765',
-    project: ProjectType.SOURCE_TO_SOLD,
-    status: 'in-progress',
-    priority: 'not-urgent',
-    updates: []
-  },
-  {
-    id: 't-5',
-    title: 'Executive Talent Pipeline',
-    description: 'Review top candidates for the VP of Operations role.',
-    deadline: new Date(new Date().setDate(new Date().getDate() + 4)),
-    clickupLink: 'https://clickup.com/t/11223',
-    project: ProjectType.EXECUTIVE_SEARCH,
-    status: 'todo',
-    priority: 'not-urgent',
-    updates: []
-  },
-  {
-    id: 't-6',
-    title: 'Supplify Platform Beta',
-    description: 'Gather feedback from the first cohort of beta testers.',
-    deadline: new Date(new Date().setDate(new Date().getDate() + 6)),
-    clickupLink: 'https://clickup.com/t/44556',
-    project: ProjectType.SUPPLIFY,
-    status: 'in-progress',
-    priority: 'not-urgent',
-    updates: []
+    id: 'n-2',
+    title: 'Shopping List',
+    content: '- Coffee beans\n- Milk\n- High-end mechanical keyboard (budget approved)',
+    lastModified: new Date(Date.now() - 86400000),
+    tags: ['personal']
   }
 ];

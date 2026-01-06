@@ -1,41 +1,11 @@
+
 import { GoogleGenAI } from "@google/genai";
 import { Task } from "../types";
 
-const getAiClient = () => {
-  let apiKey: string | undefined;
-
-  // Try standard Vite/Module environment (Vercel default)
-  try {
-    // @ts-ignore
-    if (import.meta && import.meta.env) {
-      // @ts-ignore
-      apiKey = import.meta.env.VITE_API_KEY || import.meta.env.API_KEY;
-    }
-  } catch (e) {
-    // Ignore error if import.meta is not available
-  }
-
-  // Fallback to process.env for Node-like environments or custom webpack configs
-  if (!apiKey) {
-    try {
-      if (typeof process !== 'undefined' && process.env) {
-        apiKey = process.env.API_KEY || process.env.REACT_APP_API_KEY;
-      }
-    } catch (e) {
-       // Ignore error if process is not defined
-    }
-  }
-  
-  if (!apiKey) {
-    console.error("API_KEY is missing. Ensure the environment is configured correctly.");
-    return null;
-  }
-  return new GoogleGenAI({ apiKey });
-};
-
+// Always obtain API key exclusively from process.env.API_KEY.
+// The client is initialized directly before use to ensure it uses the latest environment configuration.
 export const generateTaskSummaryOrAdvice = async (task: Task, query: string, contextUpdates: string): Promise<string> => {
-  const ai = getAiClient();
-  if (!ai) return "Configuration Error: API Key not found. Please check your environment settings.";
+  const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
 
   const prompt = `
     You are a helpful AI project assistant. 
@@ -52,10 +22,13 @@ export const generateTaskSummaryOrAdvice = async (task: Task, query: string, con
   `;
 
   try {
+    // Using gemini-3-flash-preview for general text tasks as per guidelines.
     const response = await ai.models.generateContent({
-      model: 'gemini-2.5-flash',
+      model: 'gemini-3-flash-preview',
       contents: prompt,
     });
+
+    // Directly access the .text property from the GenerateContentResponse object.
     return response.text || "I couldn't generate a response.";
   } catch (error) {
     console.error("Gemini API Error:", error);

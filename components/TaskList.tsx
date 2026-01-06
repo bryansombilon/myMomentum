@@ -3,7 +3,7 @@ import React, { useState, useMemo } from 'react';
 import { Reorder, useDragControls, AnimatePresence, motion } from 'framer-motion';
 import { Task, ProjectType, Priority } from '../types';
 import { PROJECT_CONFIG, STATUS_CONFIG, PRIORITY_CONFIG } from '../constants';
-import { Calendar, GripVertical, ChevronRight, Plus, Filter, X, AlertTriangle, Clock, Search, Flag } from 'lucide-react';
+import { Calendar, GripVertical, ChevronRight, Plus, Filter, X, AlertTriangle, Clock, Search, Flag, Home } from 'lucide-react';
 
 interface TaskListProps {
   tasks: Task[];
@@ -11,6 +11,7 @@ interface TaskListProps {
   selectedTaskId: string | null;
   onSelectTask: (task: Task) => void;
   onAddNewTask: () => void;
+  onGoHome?: () => void;
 }
 
 interface TaskItemProps {
@@ -154,7 +155,7 @@ const TaskItem: React.FC<TaskItemProps> = React.memo(({
   );
 });
 
-export const TaskList: React.FC<TaskListProps> = ({ tasks, setTasks, selectedTaskId, onSelectTask, onAddNewTask }) => {
+export const TaskList: React.FC<TaskListProps> = ({ tasks, setTasks, selectedTaskId, onSelectTask, onAddNewTask, onGoHome }) => {
   const [filterProject, setFilterProject] = useState<string>('all');
   const [filterStatus, setFilterStatus] = useState<string>('all');
   const [filterDeadline, setFilterDeadline] = useState<string>('all');
@@ -211,16 +212,23 @@ export const TaskList: React.FC<TaskListProps> = ({ tasks, setTasks, selectedTas
       {/* Header */}
       <div className="p-4 border-b border-slate-200 dark:border-slate-800 bg-white/50 dark:bg-slate-900/50 backdrop-blur-sm sticky top-0 z-10 space-y-3">
         <div className="flex items-center justify-between">
-          <h2 className="text-lg font-semibold text-slate-900 dark:text-slate-100 flex items-center gap-2">
-            <div className="flex flex-col gap-0.5">
-              <span className="w-4 h-1 bg-indigo-500 rounded-full"></span>
-              <span className="w-2 h-1 bg-indigo-500/50 rounded-full"></span>
-            </div>
-            TaskFlow
-            <span className="text-xs font-medium text-slate-500 dark:text-slate-400 bg-slate-200 dark:bg-slate-800 px-2 py-0.5 rounded-full ml-1 border border-slate-300 dark:border-slate-700">
-              {filteredTasks.length}
-            </span>
-          </h2>
+          <div className="flex items-center gap-2">
+            {onGoHome && (
+              <button 
+                onClick={onGoHome}
+                className="p-2 hover:bg-slate-200 dark:hover:bg-slate-800 rounded-lg text-slate-500 transition-colors"
+                title="Back to Home Screen"
+              >
+                <Home size={20} />
+              </button>
+            )}
+            <h2 className="text-lg font-semibold text-slate-900 dark:text-slate-100 flex items-center gap-2">
+              TaskFlow
+              <span className="text-xs font-medium text-slate-500 dark:text-slate-400 bg-slate-200 dark:bg-slate-800 px-2 py-0.5 rounded-full ml-1 border border-slate-300 dark:border-slate-700">
+                {filteredTasks.length}
+              </span>
+            </h2>
+          </div>
           
           <button
             onClick={onAddNewTask}
@@ -238,7 +246,7 @@ export const TaskList: React.FC<TaskListProps> = ({ tasks, setTasks, selectedTas
             type="text" 
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            placeholder="Search tasks or paste link..."
+            placeholder="Search tasks..."
             className="w-full bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-lg pl-9 pr-8 py-2 text-sm text-slate-900 dark:text-slate-200 focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500/20 transition-all placeholder:text-slate-400 dark:placeholder:text-slate-600"
           />
           {searchQuery && (
@@ -328,7 +336,6 @@ export const TaskList: React.FC<TaskListProps> = ({ tasks, setTasks, selectedTas
 
       <div className="flex-1 overflow-y-auto p-3 scrollbar-hide">
         {!isFiltered ? (
-          /* Reorder Group without AnimatePresence to ensure smoother direct updates */
           <Reorder.Group 
             axis="y" 
             values={tasks} 
@@ -347,7 +354,6 @@ export const TaskList: React.FC<TaskListProps> = ({ tasks, setTasks, selectedTas
             ))}
           </Reorder.Group>
         ) : (
-          /* Standard list with animations for filtering */
           <div className="space-y-3">
              <AnimatePresence initial={false} mode="popLayout">
               {filteredTasks.length > 0 ? (

@@ -1,37 +1,49 @@
 
 import React, { useState, useEffect } from 'react';
+import { AnimatePresence, motion } from 'framer-motion';
 import { TaskList } from './components/TaskList';
 import { TaskDetail } from './components/TaskDetail';
 import { NewTaskModal } from './components/NewTaskModal';
 import { ProjectProgress } from './components/ProjectProgress';
-import { INITIAL_TASKS } from './constants';
-import { Task, Message, ProjectType, Priority } from './types';
+import { Home } from './components/Home';
+import { NotesApp } from './components/NotesApp';
+import { INITIAL_TASKS, INITIAL_NOTES } from './constants';
+import { Task, Message, ProjectType, Priority, AppView, Note } from './types';
 
-const STORAGE_KEY = 'taskflow_tasks_v1';
+const STORAGE_KEY_TASKS = 'taskflow_tasks_v1';
+const STORAGE_KEY_NOTES = 'taskflow_notes_v1';
 const THEME_KEY = 'taskflow_theme';
 
 const App: React.FC = () => {
-  // Initialize state from localStorage or fallback to INITIAL_TASKS
+  const [currentView, setCurrentView] = useState<AppView>('home');
+
+  // Tasks State
   const [tasks, setTasks] = useState<Task[]>(() => {
     try {
-      const saved = localStorage.getItem(STORAGE_KEY);
+      const saved = localStorage.getItem(STORAGE_KEY_TASKS);
       if (saved) {
-        const parsedTasks = JSON.parse(saved);
-        // Revive Date objects from ISO strings because JSON.stringify converts Dates to strings
-        return parsedTasks.map((t: any) => ({
+        return JSON.parse(saved).map((t: any) => ({
           ...t,
           deadline: new Date(t.deadline),
-          updates: t.updates ? t.updates.map((m: any) => ({
-            ...m,
-            timestamp: new Date(m.timestamp)
-          })) : [],
-          priority: t.priority || 'not-urgent' // Default for existing tasks in storage
+          updates: t.updates.map((m: any) => ({ ...m, timestamp: new Date(m.timestamp) }))
         }));
       }
-    } catch (e) {
-      console.error("Failed to load tasks from localStorage", e);
-    }
+    } catch (e) {}
     return INITIAL_TASKS;
+  });
+
+  // Notes State
+  const [notes, setNotes] = useState<Note[]>(() => {
+    try {
+      const saved = localStorage.getItem(STORAGE_KEY_NOTES);
+      if (saved) {
+        return JSON.parse(saved).map((n: any) => ({
+          ...n,
+          lastModified: new Date(n.lastModified)
+        }));
+      }
+    } catch (e) {}
+    return INITIAL_NOTES;
   });
 
   const [selectedTaskId, setSelectedTaskId] = useState<string | null>(null);
@@ -40,224 +52,170 @@ const App: React.FC = () => {
 
   // Theme State
   const [isDarkMode, setIsDarkMode] = useState<boolean>(() => {
-    try {
-      const savedTheme = localStorage.getItem(THEME_KEY);
-      if (savedTheme) return savedTheme === 'dark';
-      // Default to dark mode if no preference
-      return true;
-    } catch {
-      return true;
-    }
+    const savedTheme = localStorage.getItem(THEME_KEY);
+    return savedTheme ? savedTheme === 'dark' : true;
   });
 
-  // Apply Theme Effect
   useEffect(() => {
     const root = window.document.documentElement;
-    if (isDarkMode) {
-      root.classList.add('dark');
-      localStorage.setItem(THEME_KEY, 'dark');
-    } else {
-      root.classList.remove('dark');
-      localStorage.setItem(THEME_KEY, 'light');
-    }
+    if (isDarkMode) root.classList.add('dark');
+    else root.classList.remove('dark');
+    localStorage.setItem(THEME_KEY, isDarkMode ? 'dark' : 'light');
   }, [isDarkMode]);
 
-  // Persist tasks to localStorage whenever they change
   useEffect(() => {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(tasks));
+    localStorage.setItem(STORAGE_KEY_TASKS, JSON.stringify(tasks));
   }, [tasks]);
 
-  const selectedTask = tasks.find(t => t.id === selectedTaskId) || null;
+  useEffect(() => {
+    localStorage.setItem(STORAGE_KEY_NOTES, JSON.stringify(notes));
+  }, [notes]);
 
-  const handleTaskReorder = (newOrder: Task[]) => {
-    setTasks(newOrder);
-  };
-
+  // Handlers for Task App
+  const handleTaskReorder = (newOrder: Task[]) => setTasks(newOrder);
   const handleUpdateTask = (taskId: string, updates: Message[]) => {
-    setTasks(prevTasks => 
-      prevTasks.map(t => 
-        t.id === taskId ? { ...t, updates } : t
-      )
-    );
+    setTasks(prev => prev.map(t => t.id === taskId ? { ...t, updates } : t));
   };
-
   const handleStatusChange = (taskId: string, status: Task['status']) => {
-    setTasks(prevTasks => {
-      const taskIndex = prevTasks.findIndex(t => t.id === taskId);
-      if (taskIndex === -1) return prevTasks;
-
-      const updatedTask = { ...prevTasks[taskIndex], status };
-      const otherTasks = prevTasks.filter(t => t.id !== taskId);
-
-      if (status === 'done') {
-        // If marked as done, move to the end of the list
-        return [...otherTasks, updatedTask];
-      } else {
-        // If status changed to anything else, update in place to preserve user's manual order
-        const newTasks = [...prevTasks];
-        newTasks[taskIndex] = updatedTask;
-        return newTasks;
-      }
+    setTasks(prev => {
+      const taskIndex = prev.findIndex(t => t.id === taskId);
+      if (taskIndex === -1) return prev;
+      const updatedTask = { ...prev[taskIndex], status };
+      const others = prev.filter(t => t.id !== taskId);
+      return status === 'done' ? [...others, updatedTask] : prev.map(t => t.id === taskId ? updatedTask : t);
     });
   };
-
   const handlePriorityChange = (taskId: string, priority: Priority) => {
-    setTasks(prevTasks => 
-      prevTasks.map(t => 
-        t.id === taskId ? { ...t, priority } : t
-      )
-    );
+    setTasks(prev => prev.map(t => t.id === taskId ? { ...t, priority } : t));
   };
-
   const handleDeleteTask = (taskId: string) => {
-    setTasks(prevTasks => prevTasks.filter(t => t.id !== taskId));
-    if (selectedTaskId === taskId) {
-      setSelectedTaskId(null);
-    }
+    setTasks(prev => prev.filter(t => t.id !== taskId));
+    if (selectedTaskId === taskId) setSelectedTaskId(null);
   };
-
-  const handleEditTask = (task: Task) => {
-    setEditingTask(task);
-    setIsNewTaskModalOpen(true);
-  };
-
-  const handleSaveTask = (taskData: {
-    title: string;
-    description: string;
-    deadline: Date;
-    clickupLink: string;
-    project: ProjectType;
-    priority: Priority;
-  }) => {
+  const handleSaveTask = (taskData: any) => {
     if (editingTask) {
-      // Update existing task
-      setTasks(prev => prev.map(t => 
-        t.id === editingTask.id 
-          ? { ...t, ...taskData } 
-          : t
-      ));
+      setTasks(prev => prev.map(t => t.id === editingTask.id ? { ...t, ...taskData } : t));
       setEditingTask(null);
     } else {
-      // Create new task
-      const newTask: Task = {
-        id: Date.now().toString(),
-        ...taskData,
-        status: 'todo',
-        updates: []
-      };
+      const newTask: Task = { id: Date.now().toString(), ...taskData, status: 'todo', updates: [] };
       setTasks(prev => [newTask, ...prev]);
       setSelectedTaskId(newTask.id);
     }
     setIsNewTaskModalOpen(false);
   };
 
-  const handleCloseModal = () => {
-    setIsNewTaskModalOpen(false);
-    setEditingTask(null);
-  };
-
-  // Export Data Handler
   const handleExportData = () => {
-    try {
-      const dataStr = JSON.stringify(tasks, null, 2);
-      const blob = new Blob([dataStr], { type: 'application/json' });
-      const url = URL.createObjectURL(blob);
-      const link = document.createElement('a');
-      link.href = url;
-      link.download = `taskflow-data-${new Date().toISOString().split('T')[0]}.json`;
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
-      URL.revokeObjectURL(url);
-    } catch (error) {
-      console.error("Export failed:", error);
-      alert("Failed to export data. Please try again.");
-    }
+    const data = { tasks, notes };
+    const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = `taskflow-full-backup.json`;
+    link.click();
   };
 
-  // Import Data Handler
   const handleImportData = (file: File) => {
     const reader = new FileReader();
     reader.onload = (e) => {
       try {
-        const content = e.target?.result as string;
-        const importedData = JSON.parse(content);
-        
-        if (!Array.isArray(importedData)) {
-          throw new Error("Invalid data format: Expected an array of tasks.");
-        }
-
-        // Revive dates and validate basic structure
-        const revivedTasks = importedData.map((t: any) => ({
-          ...t,
-          deadline: new Date(t.deadline),
-          updates: t.updates ? t.updates.map((m: any) => ({
-            ...m,
-            timestamp: new Date(m.timestamp)
-          })) : [],
-          priority: t.priority || 'not-urgent'
-        }));
-
-        const confirmOverwrite = window.confirm("This will overwrite all your current tasks. Are you sure you want to proceed?");
-        if (confirmOverwrite) {
-          setTasks(revivedTasks);
-          setSelectedTaskId(null);
-          alert("Data imported successfully!");
-        }
-      } catch (error) {
-        console.error("Import failed:", error);
-        alert("Failed to import data. Please ensure the file is a valid TaskFlow export.");
-      }
+        const data = JSON.parse(e.target?.result as string);
+        if (data.tasks) setTasks(data.tasks.map((t: any) => ({ ...t, deadline: new Date(t.deadline), updates: t.updates.map((m: any) => ({ ...m, timestamp: new Date(m.timestamp) })) })));
+        if (data.notes) setNotes(data.notes.map((n: any) => ({ ...n, lastModified: new Date(n.lastModified) })));
+        alert("Backup restored!");
+      } catch (err) { alert("Invalid backup file."); }
     };
     reader.readAsText(file);
   };
 
+  const handleNavigateToTask = (taskId: string) => {
+    setSelectedTaskId(taskId);
+    setCurrentView('tasks');
+  };
+
+  const selectedTask = tasks.find(t => t.id === selectedTaskId) || null;
+
   return (
-    <div className="flex h-screen w-full bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-slate-200 overflow-hidden font-inter transition-colors duration-300">
-      {/* Left Panel - Full Height */}
-      <TaskList 
-        tasks={tasks} 
-        setTasks={handleTaskReorder} 
-        selectedTaskId={selectedTaskId}
-        onSelectTask={(task) => setSelectedTaskId(task.id)}
-        onAddNewTask={() => {
-          setEditingTask(null);
-          setIsNewTaskModalOpen(true);
-        }}
-      />
+    <div className="flex h-screen w-full bg-slate-50 dark:bg-slate-950 overflow-hidden font-inter transition-colors duration-300">
+      <AnimatePresence mode="wait">
+        {currentView === 'home' && (
+          <motion.div 
+            key="home"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0, scale: 1.1 }}
+            className="w-full h-full"
+          >
+            <Home 
+              onLaunchApp={setCurrentView} 
+              onExport={handleExportData}
+              onImport={handleImportData}
+            />
+          </motion.div>
+        )}
 
-      {/* Right Column: Progress + Details */}
-      <div className="flex flex-col flex-1 min-w-0 overflow-hidden relative z-0">
-        
-        {/* Project Progress Bar */}
-        <ProjectProgress 
-          tasks={tasks} 
-          isDarkMode={isDarkMode}
-          toggleTheme={() => setIsDarkMode(!isDarkMode)}
-          onExport={handleExportData}
-          onImport={handleImportData}
-        />
+        {currentView === 'tasks' && (
+          <motion.div 
+            key="tasks"
+            initial={{ x: '100%' }}
+            animate={{ x: 0 }}
+            exit={{ x: '100%' }}
+            transition={{ type: 'spring', damping: 25, stiffness: 200 }}
+            className="w-full h-full flex flex-col md:flex-row"
+          >
+            <TaskList 
+              tasks={tasks} 
+              setTasks={handleTaskReorder} 
+              selectedTaskId={selectedTaskId}
+              onSelectTask={(task) => setSelectedTaskId(task.id)}
+              onAddNewTask={() => { setEditingTask(null); setIsNewTaskModalOpen(true); }}
+              onGoHome={() => setCurrentView('home')}
+            />
+            <div className="flex flex-col flex-1 min-w-0">
+              <ProjectProgress 
+                tasks={tasks} 
+                isDarkMode={isDarkMode}
+                toggleTheme={() => setIsDarkMode(!isDarkMode)}
+                onGoHome={() => setCurrentView('home')}
+              />
+              <div className="flex-1 relative overflow-hidden">
+                  <TaskDetail 
+                    task={selectedTask} 
+                    onUpdateTask={handleUpdateTask}
+                    onStatusChange={handleStatusChange}
+                    onNavigateToTask={handleNavigateToTask}
+                    onPriorityChange={handlePriorityChange}
+                    onDeleteTask={handleDeleteTask}
+                    onEditTask={(t) => { setEditingTask(t); setIsNewTaskModalOpen(true); }}
+                  />
+              </div>
+            </div>
+            <NewTaskModal 
+              isOpen={isNewTaskModalOpen}
+              onClose={() => setIsNewTaskModalOpen(false)}
+              onSave={handleSaveTask}
+              taskToEdit={editingTask}
+            />
+          </motion.div>
+        )}
 
-        {/* Main Details Workspace */}
-        <main className="flex-1 flex flex-col min-w-0 bg-slate-50 dark:bg-slate-950 relative z-0 overflow-hidden transition-colors">
-           <TaskDetail 
-              task={selectedTask} 
-              onUpdateTask={handleUpdateTask}
-              onStatusChange={handleStatusChange}
-              onPriorityChange={handlePriorityChange}
-              onDeleteTask={handleDeleteTask}
-              onEditTask={handleEditTask}
-           />
-        </main>
-      </div>
-
-      {/* Modals */}
-      <NewTaskModal 
-        isOpen={isNewTaskModalOpen}
-        onClose={handleCloseModal}
-        onSave={handleSaveTask}
-        taskToEdit={editingTask}
-      />
+        {currentView === 'notes' && (
+          <motion.div 
+            key="notes"
+            initial={{ scale: 0.8, opacity: 0 }}
+            animate={{ scale: 1, opacity: 1 }}
+            exit={{ scale: 0.8, opacity: 0 }}
+            className="w-full h-full"
+          >
+            <NotesApp 
+              notes={notes} 
+              tasks={tasks}
+              onSaveNotes={setNotes} 
+              onGoHome={() => setCurrentView('home')}
+              onNavigateToTask={handleNavigateToTask}
+            />
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   );
 };

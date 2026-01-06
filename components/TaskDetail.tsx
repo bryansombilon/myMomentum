@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { Task, Message, Priority } from '../types';
 import { PROJECT_CONFIG, STATUS_CONFIG, PRIORITY_CONFIG } from '../constants';
@@ -90,18 +91,33 @@ export const TaskDetail: React.FC<TaskDetailProps> = ({ task, onUpdateTask, onSt
   const priorityConfig = PRIORITY_CONFIG[task.priority] || PRIORITY_CONFIG['not-urgent'];
   const isUrgent = task.priority === 'urgent';
 
+  const handleDeleteClick = () => {
+    if (window.confirm('Are you sure you want to delete this task?')) {
+      onDeleteTask(task.id);
+    }
+  };
+
   return (
-    <div className="flex-1 h-full flex flex-col bg-slate-50 dark:bg-slate-950 overflow-hidden transition-colors">
+    <div className={`flex-1 h-full flex flex-col overflow-hidden transition-all duration-500 relative border-l-4 ${
+      isUrgent 
+        ? 'bg-red-50/10 dark:bg-red-950/5 border-red-500/40 shadow-[inset_0_0_80px_rgba(239,68,68,0.02)]' 
+        : 'bg-slate-50 dark:bg-slate-950 border-transparent'
+    }`}>
       {/* Header Section */}
-      <div className="p-4 md:p-6 xl:p-8 border-b border-slate-200 dark:border-slate-800 bg-white/30 dark:bg-slate-900/30 relative shrink-0 transition-colors">
+      <div className={`p-4 md:p-6 xl:p-8 border-b border-slate-200 dark:border-slate-800 relative shrink-0 transition-colors ${
+        isUrgent ? 'bg-red-500/5 dark:bg-red-500/5' : 'bg-white/30 dark:bg-slate-900/30'
+      }`}>
         {/* Background Accent */}
-        <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-transparent via-slate-200 dark:via-slate-800 to-transparent opacity-50"></div>
+        <div className={`absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-transparent ${
+          isUrgent ? 'via-red-500' : 'via-slate-200 dark:via-slate-800'
+        } to-transparent ${isUrgent ? 'opacity-100 scale-x-110' : 'opacity-50'} transition-all duration-700`}></div>
         
         <div className="flex flex-col xl:flex-row xl:items-start justify-between gap-4 md:gap-6 mb-5 md:mb-8">
             {/* Title & Description (Left Side) */}
             <div className="flex-1 min-w-0 space-y-2 md:space-y-3">
                 <div className="flex items-start gap-3">
-                   <h1 className="text-xl md:text-2xl xl:text-3xl font-bold text-slate-900 dark:text-white tracking-tight leading-tight break-words">
+                   <h1 className="text-xl md:text-2xl xl:text-3xl font-bold text-slate-900 dark:text-white tracking-tight leading-tight break-words flex items-center gap-3">
+                     {isUrgent && <AlertTriangle className="text-red-500 animate-pulse hidden md:block" size={24} />}
                      {task.title}
                    </h1>
                 </div>
@@ -163,7 +179,7 @@ export const TaskDetail: React.FC<TaskDetailProps> = ({ task, onUpdateTask, onSt
                     {/* Edit/Delete Actions */}
                     <div className="flex items-center gap-1 ml-auto xl:ml-0">
                         <button
-                            onClick={() => onDeleteTask(task.id)}
+                            onClick={handleDeleteClick}
                             className="p-2 text-slate-500 hover:text-red-600 dark:hover:text-red-400 hover:bg-red-50 dark:hover:bg-red-500/10 rounded-lg border border-transparent hover:border-red-200 dark:hover:border-red-500/20 transition-all"
                             title="Delete Task"
                         >
@@ -268,7 +284,9 @@ export const TaskDetail: React.FC<TaskDetailProps> = ({ task, onUpdateTask, onSt
       </div>
 
       {/* Content Body: Chat/Updates */}
-      <div className="flex-1 p-4 md:p-6 lg:p-8 min-h-0 bg-gradient-to-b from-slate-50 to-white dark:from-slate-950 dark:to-slate-900/50 transition-colors">
+      <div className={`flex-1 p-4 md:p-6 lg:p-8 min-h-0 transition-colors ${
+        isUrgent ? 'bg-gradient-to-b from-red-50/10 to-transparent dark:from-red-950/5 dark:to-transparent' : 'bg-gradient-to-b from-slate-50 to-white dark:from-slate-950 dark:to-slate-900/50'
+      }`}>
         <ChatSection task={task} onUpdateTask={onUpdateTask} />
       </div>
     </div>
