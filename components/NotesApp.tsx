@@ -1,3 +1,4 @@
+
 import React, { useState, useMemo, useRef, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Note, Task } from '../types';
@@ -249,7 +250,7 @@ export const NotesApp: React.FC<NotesAppProps> = ({ notes, tasks, onSaveNotes, o
               </div>
             </div>
 
-            <div className="flex-1 overflow-y-auto px-4 py-8 w-full">
+            <div className="flex-1 overflow-y-auto px-12 md:px-24 lg:px-32 py-8 w-full">
               <input 
                 type="text"
                 value={activeNote.title}
