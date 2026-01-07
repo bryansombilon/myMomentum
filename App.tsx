@@ -7,13 +7,11 @@ import { NewTaskModal } from './components/NewTaskModal';
 import { ProjectProgress } from './components/ProjectProgress';
 import { Home } from './components/Home';
 import { NotesApp } from './components/NotesApp';
-import { LinksApp } from './components/LinksApp';
-import { INITIAL_TASKS, INITIAL_NOTES, INITIAL_LINKS } from './constants';
-import { Task, Message, ProjectType, Priority, AppView, Note, LinkEntry } from './types';
+import { INITIAL_TASKS, INITIAL_NOTES } from './constants';
+import { Task, Message, ProjectType, Priority, AppView, Note } from './types';
 
 const STORAGE_KEY_TASKS = 'taskflow_tasks_v1';
 const STORAGE_KEY_NOTES = 'taskflow_notes_v1';
-const STORAGE_KEY_LINKS = 'taskflow_links_v1';
 const THEME_KEY = 'taskflow_theme';
 
 const App: React.FC = () => {
@@ -48,20 +46,6 @@ const App: React.FC = () => {
     return INITIAL_NOTES;
   });
 
-  // Links State
-  const [links, setLinks] = useState<LinkEntry[]>(() => {
-    try {
-      const saved = localStorage.getItem(STORAGE_KEY_LINKS);
-      if (saved) {
-        return JSON.parse(saved).map((l: any) => ({
-          ...l,
-          dateAdded: new Date(l.dateAdded)
-        }));
-      }
-    } catch (e) {}
-    return INITIAL_LINKS;
-  });
-
   const [selectedTaskId, setSelectedTaskId] = useState<string | null>(null);
   const [isNewTaskModalOpen, setIsNewTaskModalOpen] = useState(false);
   const [editingTask, setEditingTask] = useState<Task | null>(null);
@@ -86,10 +70,6 @@ const App: React.FC = () => {
   useEffect(() => {
     localStorage.setItem(STORAGE_KEY_NOTES, JSON.stringify(notes));
   }, [notes]);
-
-  useEffect(() => {
-    localStorage.setItem(STORAGE_KEY_LINKS, JSON.stringify(links));
-  }, [links]);
 
   // Handlers for Task App
   const handleTaskReorder = (newOrder: Task[]) => setTasks(newOrder);
@@ -125,7 +105,7 @@ const App: React.FC = () => {
   };
 
   const handleExportData = () => {
-    const data = { tasks, notes, links };
+    const data = { tasks, notes };
     const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
     const url = URL.createObjectURL(blob);
     const link = document.createElement('a');
@@ -141,7 +121,6 @@ const App: React.FC = () => {
         const data = JSON.parse(e.target?.result as string);
         if (data.tasks) setTasks(data.tasks.map((t: any) => ({ ...t, deadline: new Date(t.deadline), updates: t.updates.map((m: any) => ({ ...m, timestamp: new Date(m.timestamp) })) })));
         if (data.notes) setNotes(data.notes.map((n: any) => ({ ...n, lastModified: new Date(n.lastModified) })));
-        if (data.links) setLinks(data.links.map((l: any) => ({ ...l, dateAdded: new Date(l.dateAdded) })));
         alert("Backup restored!");
       } catch (err) { alert("Invalid backup file."); }
     };
@@ -233,22 +212,6 @@ const App: React.FC = () => {
               onSaveNotes={setNotes} 
               onGoHome={() => setCurrentView('home')}
               onNavigateToTask={handleNavigateToTask}
-            />
-          </motion.div>
-        )}
-
-        {currentView === 'links' && (
-          <motion.div 
-            key="links"
-            initial={{ y: '100%', opacity: 0 }}
-            animate={{ y: 0, opacity: 1 }}
-            exit={{ y: '100%', opacity: 0 }}
-            className="w-full h-full"
-          >
-            <LinksApp 
-              links={links}
-              onSaveLinks={setLinks}
-              onGoHome={() => setCurrentView('home')}
             />
           </motion.div>
         )}

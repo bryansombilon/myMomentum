@@ -1,7 +1,7 @@
 
 import React, { useState, useEffect, useRef } from 'react';
 import { motion } from 'framer-motion';
-import { CheckSquare, StickyNote, LayoutGrid, Clock, Calendar, Download, Upload, ShieldCheck, Link as LinkIcon } from 'lucide-react';
+import { CheckSquare, StickyNote, LayoutGrid, Clock, Calendar, Download, Upload, ShieldCheck } from 'lucide-react';
 import { AppView } from '../types';
 
 interface HomeProps {
@@ -56,21 +56,13 @@ export const Home: React.FC<HomeProps> = ({ onLaunchApp, onExport, onImport }) =
       shadow: 'shadow-amber-500/40',
       desc: 'Thoughts & docs' 
     },
-    { 
-      id: 'links' as AppView, 
-      name: 'Links Hub', 
-      icon: LinkIcon, 
-      color: 'bg-emerald-500', 
-      shadow: 'shadow-emerald-500/40',
-      desc: 'Shared resources' 
-    },
   ];
 
   return (
     <div className="relative w-full h-full flex flex-col items-center justify-center p-6 overflow-hidden bg-slate-100 dark:bg-slate-950">
       {/* Dynamic Background Accents */}
       <div className="absolute top-[-10%] left-[-10%] w-[40%] h-[40%] bg-indigo-500/10 blur-[120px] rounded-full" />
-      <div className="absolute bottom-[-10%] right-[-10%] w-[40%] h-[40%] bg-emerald-500/10 blur-[120px] rounded-full" />
+      <div className="absolute bottom-[-10%] right-[-10%] w-[40%] h-[40%] bg-amber-500/10 blur-[120px] rounded-full" />
 
       {/* Clock Widget */}
       <motion.div 
@@ -92,9 +84,9 @@ export const Home: React.FC<HomeProps> = ({ onLaunchApp, onExport, onImport }) =
         initial={{ opacity: 0, scale: 0.9 }}
         animate={{ opacity: 1, scale: 1 }}
         transition={{ delay: 0.1 }}
-        className="grid grid-cols-2 sm:grid-cols-3 gap-8 z-10"
+        className="grid grid-cols-2 sm:grid-cols-2 gap-8 z-10"
       >
-        {apps.map((app) => (
+        {apps.map((app, index) => (
           <motion.button
             key={app.id}
             whileHover={{ y: -8, scale: 1.05 }}
@@ -113,7 +105,7 @@ export const Home: React.FC<HomeProps> = ({ onLaunchApp, onExport, onImport }) =
         ))}
       </motion.div>
 
-      {/* System Actions Bar */}
+      {/* System Actions Bar (Backup & Restore) */}
       <motion.div 
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
@@ -122,7 +114,7 @@ export const Home: React.FC<HomeProps> = ({ onLaunchApp, onExport, onImport }) =
       >
         <div className="px-3 border-r border-slate-200 dark:border-slate-800 flex items-center gap-2">
           <ShieldCheck size={16} className="text-emerald-500" />
-          <span className="text-[10px] font-bold uppercase tracking-widest text-slate-500 dark:text-slate-400">System Ready</span>
+          <span className="text-[10px] font-bold uppercase tracking-widest text-slate-500 dark:text-slate-400">System Backup</span>
         </div>
         
         <input 
@@ -146,7 +138,7 @@ export const Home: React.FC<HomeProps> = ({ onLaunchApp, onExport, onImport }) =
           className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-indigo-500 hover:bg-indigo-600 text-white transition-colors shadow-lg shadow-indigo-500/20"
         >
           <Download size={14} />
-          <span className="text-xs font-bold">Export All</span>
+          <span className="text-xs font-bold">Export All Data</span>
         </button>
       </motion.div>
 

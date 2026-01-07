@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { ProjectType, Task, Priority } from '../types';
 import { PROJECT_CONFIG } from '../constants';
@@ -23,8 +22,7 @@ export const NewTaskModal: React.FC<NewTaskModalProps> = ({ isOpen, onClose, onS
   const [description, setDescription] = useState('');
   const [deadline, setDeadline] = useState('');
   const [clickupLink, setClickupLink] = useState('');
-  // Changed ProjectType.GALA to ProjectType.AWARDS to fix error
-  const [project, setProject] = useState<ProjectType>(ProjectType.AWARDS);
+  const [project, setProject] = useState<ProjectType>(ProjectType.GALA);
   const [priority, setPriority] = useState<Priority>('not-urgent');
 
   // Effect to populate form when modal opens or taskToEdit changes
@@ -47,8 +45,7 @@ export const NewTaskModal: React.FC<NewTaskModalProps> = ({ isOpen, onClose, onS
         setDescription('');
         setDeadline('');
         setClickupLink('');
-        // Changed ProjectType.GALA to ProjectType.AWARDS to fix error
-        setProject(ProjectType.AWARDS);
+        setProject(ProjectType.GALA);
         setPriority('not-urgent');
       }
     }
