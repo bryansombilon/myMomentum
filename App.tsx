@@ -169,6 +169,8 @@ const App: React.FC = () => {
               onLaunchApp={setCurrentView} 
               onExport={handleExportData}
               onImport={handleImportData}
+              isDarkMode={isDarkMode}
+              toggleTheme={() => setIsDarkMode(!isDarkMode)}
             />
           </motion.div>
         )}
@@ -193,9 +195,6 @@ const App: React.FC = () => {
             <div className="flex flex-col flex-1 min-w-0">
               <ProjectProgress 
                 tasks={tasks} 
-                isDarkMode={isDarkMode}
-                toggleTheme={() => setIsDarkMode(!isDarkMode)}
-                onGoHome={() => setCurrentView('home')}
               />
               <div className="flex-1 relative overflow-hidden">
                   <TaskDetail 

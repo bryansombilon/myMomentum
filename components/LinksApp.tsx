@@ -88,10 +88,14 @@ export const LinksApp: React.FC<LinksAppProps> = ({ links, onSaveLinks, onGoHome
       <div className="w-80 border-r border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 flex flex-col transition-colors">
         <div className="p-4 border-b border-slate-200 dark:border-slate-800 flex items-center justify-between bg-slate-50/50 dark:bg-slate-900/50">
           <div className="flex items-center gap-3">
-            <button onClick={onGoHome} className="p-2 hover:bg-slate-200 dark:hover:bg-slate-800 rounded-lg text-slate-500 transition-colors">
+            <button 
+              onClick={onGoHome} 
+              className="p-2 rounded-lg bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400 hover:text-emerald-600 dark:hover:text-emerald-400 hover:bg-white dark:hover:bg-slate-700 transition-all border border-slate-200 dark:border-slate-700 shadow-sm"
+              title="Return Home"
+            >
               <Home size={18} />
             </button>
-            <h1 className="text-2xl font-black tracking-tight uppercase bg-clip-text text-transparent bg-gradient-to-br from-emerald-400 via-teal-500 to-cyan-600">LinkFlow</h1>
+            <h1 className="text-2xl font-bold tracking-tighter uppercase bg-clip-text text-transparent bg-gradient-to-br from-emerald-500 to-teal-600">LinkFlow</h1>
           </div>
           <button onClick={() => handleOpenModal()} className="p-1.5 bg-indigo-600 hover:bg-indigo-500 text-white rounded-md shadow-sm transition-all active:scale-95">
             <Plus size={18} />
@@ -126,7 +130,7 @@ export const LinksApp: React.FC<LinksAppProps> = ({ links, onSaveLinks, onGoHome
 
       <div className="flex-1 flex flex-col overflow-hidden relative">
         <header className="p-8 border-b border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 transition-colors">
-          <h2 className="text-2xl font-black uppercase tracking-tight text-slate-900 dark:text-white">
+          <h2 className="text-2xl font-bold uppercase tracking-tight text-slate-900 dark:text-white">
             {activeCategory === 'All' ? 'Global Dashboard' : activeCategory}
           </h2>
         </header>
@@ -142,62 +146,64 @@ export const LinksApp: React.FC<LinksAppProps> = ({ links, onSaveLinks, onGoHome
                   animate={{ opacity: 1, scale: 1 }}
                   exit={{ opacity: 0, scale: 0.95 }}
                   transition={{ type: "spring", stiffness: 450, damping: 30 }}
-                  whileHover={{ scale: 1.03, y: -4 }}
-                  className="group relative bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl overflow-hidden flex shadow-sm hover:shadow-2xl hover:border-indigo-500 transition-all duration-300"
+                  whileHover={{ scale: 1.02, y: -2 }}
+                  className="group relative bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl overflow-hidden flex shadow-sm hover:shadow-xl hover:border-indigo-500 transition-all duration-300 min-h-[160px]"
                 >
                   <div className={`w-[6px] ${CATEGORY_COLORS[link.category] || 'bg-slate-400'} shrink-0`} />
                   
-                  {/* Entire content behaves as a primary launch button */}
-                  <div className="flex-1 flex flex-col min-w-0">
-                    <button 
-                      onClick={() => window.open(link.url, '_blank')}
-                      className="flex-1 text-left p-6 outline-none focus:bg-slate-50 dark:focus:bg-slate-800/50 transition-colors"
-                    >
-                      <div className="flex items-center justify-between gap-4 mb-2">
-                        <h3 className="font-bold text-[17px] text-slate-900 dark:text-white truncate flex-1 group-hover:text-indigo-600 transition-colors tracking-tight">
-                          {link.title}
-                        </h3>
-                        <ExternalLink size={16} className="text-slate-300 group-hover:text-indigo-500 transition-colors shrink-0" />
-                      </div>
-                      <div className="flex items-center gap-2 mb-6">
+                  <div className="flex-1 flex flex-col p-6 min-w-0 justify-between">
+                    <div>
+                      {/* Category moved to top */}
+                      <div className="flex items-center gap-2 mb-2">
                         <div className={`w-1.5 h-1.5 rounded-full ${CATEGORY_COLORS[link.category] || 'bg-slate-400'}`} />
-                        <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400 dark:text-slate-500">{link.category}</span>
+                        <span className="text-[9px] font-bold uppercase tracking-widest text-slate-400 dark:text-slate-500">{link.category}</span>
                       </div>
-                      <p className="text-xs text-slate-400 dark:text-slate-500 truncate italic font-medium opacity-60">
-                        {link.url.replace('https://', '').replace('http://', '')}
-                      </p>
-                    </button>
+                      
+                      {/* Title */}
+                      <h3 className="font-bold text-[18px] text-slate-900 dark:text-white leading-tight tracking-tight mb-4">
+                        {link.title}
+                      </h3>
+                    </div>
 
-                    {/* Secondary Actions Row */}
-                    <div className="px-6 py-4 border-t border-slate-50 dark:border-slate-800/60 bg-slate-50/30 dark:bg-slate-900/30 flex items-center justify-end gap-2">
+                    {/* Bottom Row: OPEN button and Action group */}
+                    <div className="flex items-center justify-between gap-4 mt-auto">
                       <button 
-                        onClick={(e) => { e.stopPropagation(); handleCopy(link.url, link.id); }} 
-                        className="p-2 hover:bg-white dark:hover:bg-slate-800 rounded-lg text-slate-400 hover:text-indigo-600 transition-colors border border-transparent hover:border-slate-200 dark:hover:border-slate-700 shadow-sm"
-                        title="Copy URL"
+                        onClick={() => window.open(link.url, '_blank')}
+                        className="flex items-center gap-2 px-5 py-2.5 bg-indigo-600 hover:bg-indigo-500 text-white rounded-xl text-[10px] font-bold uppercase tracking-[0.1em] shadow-lg shadow-indigo-500/20 active:scale-95 transition-all"
                       >
-                        {copiedId === link.id ? <Check size={14} className="text-emerald-500" /> : <Copy size={14} />}
+                        Open <ExternalLink size={12} />
                       </button>
-                      <button 
-                        onClick={(e) => { e.stopPropagation(); handleOpenModal(link); }} 
-                        className="p-2 hover:bg-white dark:hover:bg-slate-800 rounded-lg text-slate-400 hover:text-indigo-600 transition-colors border border-transparent hover:border-slate-200 dark:hover:border-slate-700 shadow-sm"
-                        title="Edit Resource"
-                      >
-                        <Pencil size={14} />
-                      </button>
-                      <button 
-                        onClick={(e) => { e.stopPropagation(); handleDelete(link.id); }} 
-                        className="p-2 hover:bg-red-50 dark:hover:bg-red-950 rounded-lg text-slate-400 hover:text-red-600 transition-colors border border-transparent hover:border-red-100 dark:hover:border-red-900 shadow-sm"
-                        title="Delete Resource"
-                      >
-                        <Trash2 size={14} />
-                      </button>
+
+                      <div className="flex items-center gap-1 opacity-60 group-hover:opacity-100 transition-opacity">
+                        <button 
+                          onClick={(e) => { e.stopPropagation(); handleCopy(link.url, link.id); }} 
+                          className="p-2 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg text-slate-400 hover:text-indigo-600 transition-all"
+                          title="Copy URL"
+                        >
+                          {copiedId === link.id ? <Check size={14} className="text-emerald-500" /> : <Copy size={14} />}
+                        </button>
+                        <button 
+                          onClick={(e) => { e.stopPropagation(); handleOpenModal(link); }} 
+                          className="p-2 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg text-slate-400 hover:text-indigo-600 transition-all"
+                          title="Edit Resource"
+                        >
+                          <Pencil size={14} />
+                        </button>
+                        <button 
+                          onClick={(e) => { e.stopPropagation(); handleDelete(link.id); }} 
+                          className="p-2 hover:bg-red-50 dark:hover:bg-red-950 rounded-lg text-slate-400 hover:text-red-600 transition-all"
+                          title="Delete Resource"
+                        >
+                          <Trash2 size={14} />
+                        </button>
+                      </div>
                     </div>
                   </div>
                 </motion.div>
               ))}
             </AnimatePresence>
           </div>
-          {filteredLinks.length === 0 && <div className="text-center py-40 text-slate-400 text-[12px] font-black uppercase tracking-[0.4em] opacity-10">No entries found</div>}
+          {filteredLinks.length === 0 && <div className="text-center py-40 text-slate-400 text-[12px] font-bold uppercase tracking-[0.4em] opacity-10">No entries found</div>}
         </div>
       </div>
 
@@ -206,7 +212,7 @@ export const LinksApp: React.FC<LinksAppProps> = ({ links, onSaveLinks, onGoHome
           <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/90 backdrop-blur-sm">
             <motion.div initial={{ opacity: 0, scale: 0.98 }} animate={{ opacity: 1, scale: 1 }} className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl shadow-2xl w-full max-w-md overflow-hidden">
               <div className="p-6 border-b border-slate-200 dark:border-slate-800 flex items-center justify-between bg-slate-50 dark:bg-slate-800/50">
-                <h2 className="text-[12px] font-black uppercase tracking-widest text-slate-800 dark:text-white">{editingLink ? 'Refine' : 'New'} Hub Resource</h2>
+                <h2 className="text-[12px] font-bold uppercase tracking-widest text-slate-800 dark:text-white">{editingLink ? 'Refine' : 'New'} Hub Resource</h2>
                 <button onClick={() => setShowModal(false)}><X size={20} className="text-slate-400 hover:text-slate-600 transition-colors" /></button>
               </div>
               <form onSubmit={handleSave} className="p-8 space-y-6">
@@ -225,8 +231,8 @@ export const LinksApp: React.FC<LinksAppProps> = ({ links, onSaveLinks, onGoHome
                   </select>
                 </div>
                 <div className="pt-6 flex gap-4">
-                  <button type="button" onClick={() => setShowModal(false)} className="flex-1 py-3 text-[11px] font-black uppercase tracking-widest text-slate-500 hover:text-slate-800 dark:hover:text-slate-200 transition-colors">Cancel</button>
-                  <button type="submit" className="flex-1 py-3 bg-indigo-600 text-white rounded-xl text-[11px] font-black uppercase tracking-widest active:scale-95 transition-all shadow-xl shadow-indigo-500/25">Confirm</button>
+                  <button type="button" onClick={() => setShowModal(false)} className="flex-1 py-3 text-[11px] font-bold uppercase tracking-widest text-slate-500 hover:text-slate-800 dark:hover:text-slate-200 transition-colors">Cancel</button>
+                  <button type="submit" className="flex-1 py-3 bg-indigo-600 text-white rounded-xl text-[11px] font-bold uppercase tracking-widest active:scale-95 transition-all shadow-xl shadow-indigo-500/25">Confirm</button>
                 </div>
               </form>
             </motion.div>

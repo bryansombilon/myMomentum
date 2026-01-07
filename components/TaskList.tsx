@@ -130,13 +130,17 @@ export const TaskList: React.FC<TaskListProps> = ({ tasks, setTasks, selectedTas
   return (
     <div className="h-full flex flex-col bg-slate-50 dark:bg-slate-900 border-r border-slate-200 dark:border-slate-800 w-64 md:w-80 flex-shrink-0">
       <div className="p-4 border-b border-slate-200 dark:border-slate-800 flex items-center justify-between bg-white dark:bg-slate-900">
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-3">
           {onGoHome && (
-            <button onClick={onGoHome} className="p-2 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-md text-slate-500 border border-slate-200 dark:border-slate-700">
-              <Home size={16} />
+            <button 
+              onClick={onGoHome} 
+              className="p-2 rounded-lg bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400 hover:text-indigo-600 dark:hover:text-indigo-400 hover:bg-white dark:hover:bg-slate-700 transition-all border border-slate-200 dark:border-slate-700 shadow-sm"
+              title="Return Home"
+            >
+              <Home size={18} />
             </button>
           )}
-          <h2 className="text-xl font-bold tracking-tight uppercase text-slate-800 dark:text-slate-100">Tasks</h2>
+          <h2 className="text-2xl font-bold tracking-tighter uppercase bg-clip-text text-transparent bg-gradient-to-br from-indigo-500 to-blue-600">TaskFlow</h2>
         </div>
         <div className="flex gap-2">
             <button 
@@ -171,7 +175,7 @@ export const TaskList: React.FC<TaskListProps> = ({ tasks, setTasks, selectedTas
             animate={{ height: 'auto', opacity: 1 }}
             className="space-y-3 pt-2 border-t border-slate-100 dark:border-slate-800 overflow-hidden"
           >
-            {/* Status Filter - Moved here */}
+            {/* Status Filter */}
             <div className="flex flex-col gap-1.5">
                 <label className="text-[9px] font-bold uppercase tracking-widest text-slate-400 flex items-center gap-1.5">
                     <Activity size={10} /> Status

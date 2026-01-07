@@ -1,15 +1,17 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { motion } from 'framer-motion';
-import { CheckSquare, StickyNote, LayoutGrid, Calendar, Download, Upload, ShieldCheck, Globe, Clock } from 'lucide-react';
+import { CheckSquare, StickyNote, LayoutGrid, Calendar, Download, Upload, ShieldCheck, Globe, Sun, Moon } from 'lucide-react';
 import { AppView } from '../types';
 
 interface HomeProps {
   onLaunchApp: (view: AppView) => void;
   onExport: () => void;
   onImport: (file: File) => void;
+  isDarkMode: boolean;
+  toggleTheme: () => void;
 }
 
-export const Home: React.FC<HomeProps> = ({ onLaunchApp, onExport, onImport }) => {
+export const Home: React.FC<HomeProps> = ({ onLaunchApp, onExport, onImport, isDarkMode, toggleTheme }) => {
   const [time, setTime] = useState(new Date());
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -39,6 +41,19 @@ export const Home: React.FC<HomeProps> = ({ onLaunchApp, onExport, onImport }) =
       <div className="absolute top-[-10%] left-[-10%] w-[50%] h-[50%] bg-indigo-500/10 blur-[120px] rounded-full" />
       <div className="absolute bottom-[-10%] right-[-10%] w-[50%] h-[50%] bg-amber-500/10 blur-[120px] rounded-full" />
 
+      {/* Top Right Actions */}
+      <div className="absolute top-8 right-8 z-20">
+        <motion.button
+          whileHover={{ scale: 1.1 }}
+          whileTap={{ scale: 0.9 }}
+          onClick={toggleTheme}
+          className="p-3 rounded-2xl bg-white/60 dark:bg-slate-900/60 backdrop-blur-xl border border-white/40 dark:border-slate-800/60 shadow-lg text-slate-600 dark:text-slate-300 hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors"
+          title={isDarkMode ? "Switch to Light Mode" : "Switch to Dark Mode"}
+        >
+          {isDarkMode ? <Sun size={20} /> : <Moon size={20} />}
+        </motion.button>
+      </div>
+
       <motion.div 
         initial={{ opacity: 0, y: -20 }} 
         animate={{ opacity: 1, y: 0 }} 
@@ -46,10 +61,10 @@ export const Home: React.FC<HomeProps> = ({ onLaunchApp, onExport, onImport }) =
       >
         <div className="mb-4">
           <span className="text-xl md:text-2xl font-medium text-slate-500 dark:text-slate-400 tracking-tight">
-            {getGreeting()}, <span className="font-black text-slate-900 dark:text-white">Bryan</span>
+            {getGreeting()}, <span className="font-bold text-slate-900 dark:text-white">Bryan</span>
           </span>
         </div>
-        <div className="text-[120px] leading-none font-black tracking-tightest text-slate-900 dark:text-white mb-6 select-none">
+        <div className="text-[120px] leading-none font-bold tracking-tightest text-slate-900 dark:text-white mb-6 select-none">
           {formatTime(time)}
         </div>
         <div className="text-sm font-bold uppercase tracking-[0.3em] text-slate-500 dark:text-slate-400 flex items-center justify-center gap-3">
