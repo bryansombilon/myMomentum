@@ -94,18 +94,19 @@ const TaskItem: React.FC<TaskItemProps> = React.memo(({
       dragListener={false}
       dragControls={controls}
       dragEnabled={isDragEnabled}
+      layoutId={task.id}
       className={containerClasses}
       initial={{ opacity: 0, y: 10 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ 
         type: "spring", 
-        stiffness: 600, 
-        damping: 35, 
+        stiffness: 700, 
+        damping: 40, 
         mass: 1
       }}
       whileDrag={{ 
-        scale: 1.05, 
-        rotate: 1,
+        scale: 1.04, 
+        rotate: 1.2,
         boxShadow: "0 25px 50px -12px rgba(0, 0, 0, 0.25)",
         zIndex: 50,
         backgroundColor: "rgb(255, 255, 255)",
@@ -219,7 +220,7 @@ export const TaskList: React.FC<TaskListProps> = ({ tasks, setTasks, selectedTas
       <div className="flex-1 overflow-y-auto p-4 custom-scrollbar">
         <Reorder.Group 
           axis="y" 
-          values={currentDisplayTasks} 
+          values={tasks} 
           onReorder={(newOrder) => {
             // Only update the main tasks state if we aren't filtering
             if (!isFiltered) setTasks(newOrder);
