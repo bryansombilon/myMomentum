@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { AnimatePresence, motion } from 'framer-motion';
 import { TaskList } from './components/TaskList';
@@ -19,18 +18,25 @@ const THEME_KEY = 'taskflow_theme';
 const App: React.FC = () => {
   const [currentView, setCurrentView] = useState<AppView>('home');
 
-  // Tasks State
+  // Tasks State with extra defensive mapping
   const [tasks, setTasks] = useState<Task[]>(() => {
     try {
       const saved = localStorage.getItem(STORAGE_KEY_TASKS);
       if (saved) {
-        return JSON.parse(saved).map((t: any) => ({
-          ...t,
-          deadline: new Date(t.deadline),
-          updates: t.updates.map((m: any) => ({ ...m, timestamp: new Date(m.timestamp) }))
-        }));
+        const parsed = JSON.parse(saved);
+        if (Array.isArray(parsed)) {
+          return parsed.map((t: any) => ({
+            ...t,
+            // Safety: Ensure project is valid or fallback to Awards
+            project: t.project === 'GALA' ? ProjectType.AWARDS : (t.project || ProjectType.AWARDS),
+            deadline: new Date(t.deadline),
+            updates: Array.isArray(t.updates) ? t.updates.map((m: any) => ({ ...m, timestamp: new Date(m.timestamp) })) : []
+          }));
+        }
       }
-    } catch (e) {}
+    } catch (e) {
+      console.error("Failed to load tasks from local storage", e);
+    }
     return INITIAL_TASKS;
   });
 
@@ -39,10 +45,13 @@ const App: React.FC = () => {
     try {
       const saved = localStorage.getItem(STORAGE_KEY_NOTES);
       if (saved) {
-        return JSON.parse(saved).map((n: any) => ({
-          ...n,
-          lastModified: new Date(n.lastModified)
-        }));
+        const parsed = JSON.parse(saved);
+        if (Array.isArray(parsed)) {
+          return parsed.map((n: any) => ({
+            ...n,
+            lastModified: new Date(n.lastModified)
+          }));
+        }
       }
     } catch (e) {}
     return INITIAL_NOTES;
@@ -53,10 +62,13 @@ const App: React.FC = () => {
     try {
       const saved = localStorage.getItem(STORAGE_KEY_LINKS);
       if (saved) {
-        return JSON.parse(saved).map((l: any) => ({
-          ...l,
-          dateAdded: new Date(l.dateAdded)
-        }));
+        const parsed = JSON.parse(saved);
+        if (Array.isArray(parsed)) {
+          return parsed.map((l: any) => ({
+            ...l,
+            dateAdded: new Date(l.dateAdded)
+          }));
+        }
       }
     } catch (e) {}
     return INITIAL_LINKS;
@@ -102,6 +114,7 @@ const App: React.FC = () => {
       if (taskIndex === -1) return prev;
       const updatedTask = { ...prev[taskIndex], status };
       const others = prev.filter(t => t.id !== taskId);
+      // If done, move to bottom, otherwise stay in place
       return status === 'done' ? [...others, updatedTask] : prev.map(t => t.id === taskId ? updatedTask : t);
     });
   };

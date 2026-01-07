@@ -1,8 +1,6 @@
-
 import React from 'react';
 import { Task, Message, Priority } from '../types';
 import { PROJECT_CONFIG, STATUS_CONFIG, PRIORITY_CONFIG } from '../constants';
-// Added Layout to the imports from lucide-react
 import { ExternalLink, Calendar, Trash2, Briefcase, Link as LinkIcon, Pencil, AlertTriangle, Clock, Check, Flag, ChevronRight, Layout } from 'lucide-react';
 import { ChatSection } from './ChatSection';
 
@@ -29,9 +27,10 @@ export const TaskDetail: React.FC<TaskDetailProps> = ({ task, onUpdateTask, onSt
     );
   }
 
-  const project = PROJECT_CONFIG[task.project];
+  // Safety: handle cases where local storage might have outdated/invalid project/status names
+  const project = PROJECT_CONFIG[task.project] || PROJECT_CONFIG['Awards' as any] || { name: 'Unknown', color: '#cbd5e1' };
   const isUrgent = task.priority === 'urgent';
-  const statusConfig = STATUS_CONFIG[task.status];
+  const statusConfig = STATUS_CONFIG[task.status] || STATUS_CONFIG['todo'];
 
   return (
     <div className="flex-1 h-full flex flex-col bg-white dark:bg-slate-950 overflow-hidden transition-colors">
