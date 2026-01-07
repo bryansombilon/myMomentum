@@ -47,6 +47,9 @@ export const TaskDetail: React.FC<TaskDetailProps> = ({ task, onUpdateTask, onSt
   const deadlineDay = new Date(deadlineDate.getFullYear(), deadlineDate.getMonth(), deadlineDate.getDate());
   const isOverdue = deadlineDay < today && task.status !== 'done';
   const isUrgent = task.priority === 'urgent';
+  
+  // Extract ID from full ClickUp link
+  const clickupId = task.clickupLink ? task.clickupLink.replace(/.*\/t\//, '') : '';
 
   return (
     <div className="flex-1 h-full overflow-y-auto bg-slate-50 dark:bg-slate-950 transition-colors">
@@ -59,6 +62,11 @@ export const TaskDetail: React.FC<TaskDetailProps> = ({ task, onUpdateTask, onSt
               <span className="px-2 py-0.5 bg-indigo-50 dark:bg-indigo-900/40 text-indigo-700 dark:text-indigo-300 text-[11px] font-semibold uppercase tracking-wider rounded border border-indigo-200 dark:border-indigo-800/50">
                 {task.project}
               </span>
+              {clickupId && (
+                <span className="px-2 py-0.5 bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400 text-[11px] font-mono font-bold uppercase tracking-tighter rounded border border-slate-200 dark:border-slate-700">
+                  #{clickupId}
+                </span>
+              )}
               {isUrgent && (
                 <span className="flex items-center gap-1 px-2 py-0.5 bg-red-600 text-white text-[11px] font-bold uppercase tracking-wider rounded shadow-sm shadow-red-500/20">
                   <AlertTriangle size={10} /> Urgent
@@ -116,7 +124,7 @@ export const TaskDetail: React.FC<TaskDetailProps> = ({ task, onUpdateTask, onSt
             <span className={isOverdue ? 'text-red-600 dark:text-red-400 font-bold' : 'font-bold'}>{deadlineDate.toLocaleDateString([], { month: 'long', day: 'numeric' })}</span>
           </MetadataCard>
           <MetadataCard icon={LinkIcon} label="Hub Access" onClick={task.clickupLink ? () => window.open(task.clickupLink, '_blank') : undefined} iconColor="text-emerald-600 dark:text-emerald-400">
-            {task.clickupLink ? 'View ClickUp' : 'None Linked'}
+            {task.clickupLink ? `ID: ${clickupId}` : 'None Linked'}
           </MetadataCard>
         </div>
 

@@ -30,6 +30,9 @@ const TaskItem: React.FC<TaskItemProps> = React.memo(({
   const controls = useDragControls();
   const statusStyle = STATUS_CONFIG[task.status] || STATUS_CONFIG['todo'];
   const isUrgent = task.priority === 'urgent';
+  
+  // Extract ID from full ClickUp link
+  const clickupId = task.clickupLink ? task.clickupLink.replace(/.*\/t\//, '') : '';
 
   const Content = (
     <>
@@ -65,8 +68,17 @@ const TaskItem: React.FC<TaskItemProps> = React.memo(({
               {new Intl.DateTimeFormat('en-US', { month: 'short', day: 'numeric' }).format(new Date(task.deadline))}
             </span>
           </div>
-          <div className={`text-[9px] px-2 py-0.5 rounded font-bold uppercase tracking-tighter ${statusStyle.color} ${statusStyle.text}`}>
-            {statusStyle.label}
+          <div className="flex items-center gap-1.5">
+            {clickupId && (
+              <div className="flex items-center px-1.5 py-0.5 rounded bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700">
+                <span className="text-[9px] font-mono text-slate-500 dark:text-slate-400 font-bold tracking-tighter">
+                  #{clickupId}
+                </span>
+              </div>
+            )}
+            <div className={`text-[9px] px-2 py-0.5 rounded font-bold uppercase tracking-tighter ${statusStyle.color} ${statusStyle.text}`}>
+              {statusStyle.label}
+            </div>
           </div>
         </div>
       </div>
@@ -99,7 +111,12 @@ export const TaskList: React.FC<TaskListProps> = ({ tasks, setTasks, selectedTas
 
   const filteredTasks = useMemo(() => {
     return tasks.filter(task => {
-      const matchSearch = !searchQuery || task.title.toLowerCase().includes(searchQuery.toLowerCase());
+      const q = searchQuery.toLowerCase();
+      // Search by title, clickup link, or raw ID part of the link
+      const matchSearch = !searchQuery || 
+        task.title.toLowerCase().includes(q) || 
+        (task.clickupLink && task.clickupLink.toLowerCase().includes(q));
+      
       const matchStatus = filterStatus === 'all' || task.status === filterStatus;
       const matchProject = filterProject === 'all' || task.project === filterProject;
       const matchPriority = filterPriority === 'all' || task.priority === filterPriority;
@@ -164,7 +181,7 @@ export const TaskList: React.FC<TaskListProps> = ({ tasks, setTasks, selectedTas
             type="text" 
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            placeholder="Search tasks..."
+            placeholder="Search tasks or ClickUp ID..."
             className="w-full bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-md pl-9 pr-3 py-2 text-[13px] font-semibold focus:border-indigo-500 dark:focus:border-indigo-400 outline-none text-slate-700 dark:text-slate-200 placeholder:text-slate-400 dark:placeholder:text-slate-600"
           />
         </div>
