@@ -43,6 +43,14 @@
       /* Ensure no list markers in Reorder.Group */
       ul { list-style: none; padding: 0; margin: 0; }
     </style>
+
+    <!-- Shim for process.env to prevent crashes in the browser if platform doesn't provide it -->
+    <script>
+      if (typeof window.process === 'undefined') {
+        window.process = { env: {} };
+      }
+    </script>
+
     <script type="importmap">
 {
   "imports": {
@@ -60,14 +68,25 @@
 </script>
   </head>
   <body class="bg-slate-50 text-slate-900 dark:bg-slate-950 dark:text-e2e8f0 transition-colors duration-300">
-    <div id="root"></div>
-    <!-- Simple Error Boundary to help debugging if it still fails -->
+    <div id="root">
+      <div class="flex items-center justify-center h-screen bg-slate-50 dark:bg-slate-950">
+        <div class="text-slate-400 animate-pulse font-black uppercase tracking-widest text-xs">Initializing TaskFlow...</div>
+      </div>
+    </div>
+
+    <!-- Robust Global Error Boundary -->
     <script type="text/javascript">
       window.onerror = function(message, source, lineno, colno, error) {
         console.error("Global error caught:", message, "at", source, ":", lineno);
         const root = document.getElementById('root');
-        if (root && root.innerHTML === "") {
-          root.innerHTML = '<div style="padding: 20px; color: red; font-family: sans-serif;"><h1>Application Error</h1><p>' + message + '</p><p>Please check the console for details.</p></div>';
+        if (root && (root.innerHTML === "" || root.innerText.includes("Initializing"))) {
+          root.innerHTML = `
+            <div style="padding: 40px; color: #ef4444; font-family: 'Inter', sans-serif; text-align: center; height: 100vh; display: flex; flex-direction: column; align-items: center; justify-content: center; background: #f8fafc;">
+              <h1 style="font-weight: 900; font-size: 24px; color: #1e293b; margin-bottom: 8px;">Application Failed to Load</h1>
+              <p style="color: #64748b; margin-bottom: 24px; max-width: 400px; font-size: 14px;">${message}</p>
+              <button onclick="location.reload()" style="padding: 12px 24px; background: #4f46e5; color: white; border: none; border-radius: 12px; font-weight: 700; cursor: pointer; box-shadow: 0 10px 15px -3px rgba(79, 70, 229, 0.4);">Try Again</button>
+            </div>
+          `;
         }
       };
     </script>
