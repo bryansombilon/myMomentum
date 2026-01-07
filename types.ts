@@ -1,6 +1,6 @@
 
 export enum ProjectType {
-  GALA = 'GALA',
+  AWARDS = 'Awards',
   MAKERS_MOVERS = 'Makers & Movers',
   ALCOTT_GLOBAL = 'Alcott Global',
   SOURCE_TO_SOLD = 'Source to Sold',
@@ -35,8 +35,7 @@ export interface Task {
   priority: Priority;
 }
 
-// New Types for multi-app system
-export type AppView = 'home' | 'tasks' | 'notes';
+export type AppView = 'home' | 'tasks' | 'notes' | 'links';
 
 export interface Note {
   id: string;
@@ -44,4 +43,13 @@ export interface Note {
   content: string;
   lastModified: Date;
   tags: string[];
+}
+
+export interface LinkEntry {
+  id: string;
+  title: string;
+  url: string;
+  project: ProjectType;
+  dateAdded: Date;
+  description?: string;
 }
