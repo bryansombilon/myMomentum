@@ -2,7 +2,7 @@ import React, { useState, useMemo } from 'react';
 import { Reorder, useDragControls, AnimatePresence, motion } from 'framer-motion';
 import { Task, ProjectType, Priority } from '../types';
 import { PROJECT_CONFIG, STATUS_CONFIG, PRIORITY_CONFIG } from '../constants';
-import { Calendar, GripVertical, ChevronRight, Plus, Filter, X, AlertTriangle, Clock, Search, Flag, Home, CheckCircle2, Layout } from 'lucide-react';
+import { Calendar, GripVertical, Plus, Filter, X, Search, Home } from 'lucide-react';
 
 interface TaskListProps {
   tasks: Task[];
@@ -50,7 +50,7 @@ const TaskItem: React.FC<TaskItemProps> = React.memo(({
         </div>
       )}
 
-      <div className="flex-1 min-w-0">
+      <div className="flex-1 min-w-0 pointer-events-none">
         <div className="flex items-center gap-2 mb-1">
           <div className="w-2 h-2 rounded-full shrink-0" style={{ backgroundColor: project.color }} />
           <span className="text-[9px] font-black uppercase tracking-widest text-slate-400 truncate">
@@ -81,7 +81,7 @@ const TaskItem: React.FC<TaskItemProps> = React.memo(({
   );
 
   const containerClasses = `
-    group relative mb-2 rounded-xl border transition-all duration-300 overflow-hidden cursor-pointer select-none
+    group relative mb-2 rounded-xl border transition-colors duration-300 overflow-hidden cursor-pointer select-none
     ${isSelected 
       ? 'bg-white dark:bg-slate-800 border-indigo-500 shadow-lg ring-1 ring-indigo-500/20 z-10' 
       : 'bg-white dark:bg-slate-800/50 border-slate-200 dark:border-slate-800 hover:border-slate-300 dark:hover:border-slate-700 hover:shadow-md'}
@@ -94,22 +94,21 @@ const TaskItem: React.FC<TaskItemProps> = React.memo(({
       dragListener={false}
       dragControls={controls}
       dragEnabled={isDragEnabled}
-      layout
       className={containerClasses}
       initial={{ opacity: 0, y: 10 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ 
         type: "spring", 
-        stiffness: 500, 
+        stiffness: 600, 
         damping: 35, 
         mass: 1
       }}
       whileDrag={{ 
-        scale: 1.04, 
-        rotate: 1.5,
+        scale: 1.05, 
+        rotate: 1,
         boxShadow: "0 25px 50px -12px rgba(0, 0, 0, 0.25)",
         zIndex: 50,
-        backgroundColor: isSelected ? undefined : "rgba(255, 255, 255, 0.95)"
+        backgroundColor: "rgb(255, 255, 255)",
       }}
       onClick={() => onSelect(task)}
     >
@@ -136,6 +135,9 @@ export const TaskList: React.FC<TaskListProps> = ({ tasks, setTasks, selectedTas
   }, [tasks]);
 
   const isFiltered = searchQuery !== '' || filterProject !== 'all';
+
+  // Reorder.Group requires the 'values' prop to match the list being rendered for smooth operation
+  const currentDisplayTasks = isFiltered ? filteredTasks : tasks;
 
   return (
     <div className="flex flex-col h-full bg-slate-50 dark:bg-slate-900 border-r border-slate-200 dark:border-slate-800 w-full md:w-80 lg:w-96 flex-shrink-0 transition-colors">
@@ -166,6 +168,7 @@ export const TaskList: React.FC<TaskListProps> = ({ tasks, setTasks, selectedTas
             <motion.div 
               initial={{ width: 0 }}
               animate={{ width: `${completionRate}%` }}
+              transition={{ type: "spring", stiffness: 100, damping: 20 }}
               className="h-full bg-indigo-600 rounded-full shadow-[0_0_10px_rgba(79,70,229,0.3)]"
             />
           </div>
@@ -216,12 +219,16 @@ export const TaskList: React.FC<TaskListProps> = ({ tasks, setTasks, selectedTas
       <div className="flex-1 overflow-y-auto p-4 custom-scrollbar">
         <Reorder.Group 
           axis="y" 
-          values={isFiltered ? filteredTasks : tasks} 
-          onReorder={setTasks} 
+          values={currentDisplayTasks} 
+          onReorder={(newOrder) => {
+            // Only update the main tasks state if we aren't filtering
+            if (!isFiltered) setTasks(newOrder);
+          }} 
           className="space-y-1"
+          style={{ listStyle: 'none' }}
         >
-          <AnimatePresence mode="popLayout">
-            {(isFiltered ? filteredTasks : tasks).map(task => (
+          <AnimatePresence mode="popLayout" initial={false}>
+            {currentDisplayTasks.map(task => (
               <TaskItem 
                 key={task.id} 
                 task={task} 
@@ -232,7 +239,7 @@ export const TaskList: React.FC<TaskListProps> = ({ tasks, setTasks, selectedTas
             ))}
           </AnimatePresence>
           
-          {isFiltered && filteredTasks.length === 0 && (
+          {isFiltered && currentDisplayTasks.length === 0 && (
             <div className="py-20 text-center">
               <div className="w-16 h-16 bg-white dark:bg-slate-800 rounded-2xl flex items-center justify-center mx-auto mb-4 border border-slate-100 dark:border-slate-800 shadow-sm">
                 <Search className="text-slate-200 dark:text-slate-700" size={32} />
