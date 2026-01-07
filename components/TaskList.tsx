@@ -44,7 +44,7 @@ const TaskItem: React.FC<TaskItemProps> = React.memo(({
       {isDragEnabled && (
         <div 
           onPointerDown={(e) => controls.start(e)}
-          className="cursor-grab active:cursor-grabbing p-1.5 -ml-1.5 rounded-md text-slate-300 dark:text-slate-600 hover:text-indigo-500 hover:bg-slate-100 dark:hover:bg-slate-700/50 transition-all pointer-events-auto"
+          className="cursor-grab active:cursor-grabbing p-1.5 -ml-1.5 rounded-md text-slate-300 dark:text-slate-600 hover:text-indigo-500 hover:bg-slate-100 dark:hover:bg-slate-700/50 transition-all pointer-events-auto z-20"
         >
           <GripVertical size={16} />
         </div>
@@ -81,7 +81,7 @@ const TaskItem: React.FC<TaskItemProps> = React.memo(({
   );
 
   const containerClasses = `
-    group relative mb-2 rounded-xl border transition-colors duration-300 overflow-hidden cursor-pointer select-none
+    group relative mb-2 rounded-xl border transition-all duration-300 overflow-hidden cursor-pointer select-none
     ${isSelected 
       ? 'bg-white dark:bg-slate-800 border-indigo-500 shadow-lg ring-1 ring-indigo-500/20 z-10' 
       : 'bg-white dark:bg-slate-800/50 border-slate-200 dark:border-slate-800 hover:border-slate-300 dark:hover:border-slate-700 hover:shadow-md'}
@@ -100,16 +100,16 @@ const TaskItem: React.FC<TaskItemProps> = React.memo(({
       animate={{ opacity: 1, y: 0 }}
       transition={{ 
         type: "spring", 
-        stiffness: 800, 
-        damping: 45, 
-        mass: 1
+        stiffness: 700, 
+        damping: 38, 
+        mass: 0.9
       }}
       whileDrag={{ 
-        scale: 1.05, 
+        scale: 1.04, 
         rotate: 1.5,
-        boxShadow: "0 25px 60px -15px rgba(0, 0, 0, 0.3)",
+        boxShadow: "0 20px 40px -10px rgba(0, 0, 0, 0.4)",
         zIndex: 100,
-        backgroundColor: "rgb(255, 255, 255)",
+        filter: "brightness(1.02)",
       }}
       onClick={() => onSelect(task)}
     >
@@ -137,7 +137,7 @@ export const TaskList: React.FC<TaskListProps> = ({ tasks, setTasks, selectedTas
 
   const isFiltered = searchQuery !== '' || filterProject !== 'all';
 
-  // Ensure Reorder.Group is only active when not filtering to avoid list corruption
+  // Important: Reorder.Group values must strictly match the items mapped for smooth Framer Motion performance
   const displayTasks = isFiltered ? filteredTasks : tasks;
 
   return (
@@ -222,6 +222,7 @@ export const TaskList: React.FC<TaskListProps> = ({ tasks, setTasks, selectedTas
           axis="y" 
           values={displayTasks} 
           onReorder={(newOrder) => {
+            // Reordering only allowed when not filtering to maintain persistent index integrity
             if (!isFiltered) setTasks(newOrder);
           }} 
           className="space-y-1"
