@@ -8,7 +8,7 @@ import { Home } from './components/Home';
 import { NotesApp } from './components/NotesApp';
 import { LinksApp } from './components/LinksApp';
 import { INITIAL_TASKS, INITIAL_NOTES, INITIAL_LINKS } from './constants';
-import { Task, Message, ProjectType, Priority, AppView, Note, LinkEntry } from './types';
+import { Task, Message, Priority, AppView, Note, LinkEntry } from './types';
 
 const STORAGE_KEY_TASKS = 'taskflow_tasks_v1';
 const STORAGE_KEY_NOTES = 'taskflow_notes_v1';
@@ -155,7 +155,7 @@ const App: React.FC = () => {
   const selectedTask = tasks.find(t => t.id === selectedTaskId) || null;
 
   return (
-    <div className="flex h-screen w-full bg-slate-50 dark:bg-slate-950 overflow-hidden font-inter transition-colors duration-300">
+    <div className="flex h-screen w-full bg-slate-50 dark:bg-slate-950 overflow-hidden font-sans transition-colors duration-300">
       <AnimatePresence mode="wait">
         {currentView === 'home' && (
           <motion.div 

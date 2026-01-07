@@ -1,9 +1,8 @@
-
 import React, { useState, useMemo } from 'react';
-import { Reorder, useDragControls, AnimatePresence, motion } from 'framer-motion';
-import { Task, ProjectType, Priority } from '../types';
-import { PROJECT_CONFIG, STATUS_CONFIG, PRIORITY_CONFIG } from '../constants';
-import { Calendar, GripVertical, ChevronRight, Plus, Filter, X, AlertTriangle, Clock, Search, Flag, Home } from 'lucide-react';
+import { Reorder, useDragControls, motion } from 'framer-motion';
+import { Task } from '../types';
+import { PROJECT_CONFIG, STATUS_CONFIG } from '../constants';
+import { Calendar, GripVertical, Plus, Search, Home } from 'lucide-react';
 
 interface TaskListProps {
   tasks: Task[];
@@ -21,7 +20,6 @@ interface TaskItemProps {
   isDragEnabled: boolean;
 }
 
-// Wrapped in React.memo to prevent unnecessary re-renders during drag operations
 const TaskItem: React.FC<TaskItemProps> = React.memo(({ 
   task, 
   isSelected, 
@@ -29,353 +27,136 @@ const TaskItem: React.FC<TaskItemProps> = React.memo(({
   isDragEnabled
 }) => {
   const controls = useDragControls();
-
-  const formatDate = (date: Date) => {
-    return new Intl.DateTimeFormat('en-US', { month: 'short', day: 'numeric' }).format(date);
-  };
-
   const statusStyle = STATUS_CONFIG[task.status] || STATUS_CONFIG['todo'];
   const isUrgent = task.priority === 'urgent';
 
-  // Common inner content
   const Content = (
     <>
-      {/* Prominent Status Strip */}
-      <div className={`absolute left-0 top-0 bottom-0 w-1.5 ${statusStyle.color} transition-colors duration-200`} />
-
-      <div className="flex items-start gap-3 p-3 pl-5">
-        {/* Drag Handle - Only visible if drag is enabled */}
-        {isDragEnabled ? (
-          <div 
-            onPointerDown={(e) => controls.start(e)}
-            className="mt-1.5 text-slate-400 dark:text-slate-600 hover:text-slate-600 dark:hover:text-slate-200 cursor-grab active:cursor-grabbing p-1.5 -ml-1.5 rounded hover:bg-slate-200 dark:hover:bg-slate-700/50 transition-colors touch-none"
-          >
-            <GripVertical size={16} />
-          </div>
-        ) : (
-          // Spacer if drag disabled to keep alignment
-          <div className="mt-1.5 w-[24px] h-[24px]" />
-        )}
-
-        <div className="flex-1 min-w-0">
-          <div className="flex items-center gap-2 mb-1.5">
-            <div 
-              className="w-2 h-2 rounded-full flex-shrink-0 shadow-[0_0_8px_currentColor]" 
-              style={{ backgroundColor: PROJECT_CONFIG[task.project].color, color: PROJECT_CONFIG[task.project].color }}
-            />
-            <span className="text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider truncate">
+      <div className={`w-[3px] ${statusStyle.color} shrink-0`} />
+      <div className="flex-1 p-3 flex flex-col min-w-0 gap-1">
+        {/* Top: Project & Urgency */}
+        <div className="flex items-center justify-between gap-2">
+          <div className="flex items-center gap-1.5 overflow-hidden">
+            <div className="w-1.5 h-1.5 rounded-full" style={{ backgroundColor: PROJECT_CONFIG[task.project].color }} />
+            <span className="text-[9px] font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400 truncate">
               {PROJECT_CONFIG[task.project].name}
             </span>
             {isUrgent && (
-              <span className="ml-auto flex items-center gap-1 text-[9px] font-bold uppercase tracking-wide text-red-600 dark:text-red-400 bg-red-100 dark:bg-red-500/10 px-1.5 py-0.5 rounded border border-red-200 dark:border-red-500/20">
-                <AlertTriangle size={10} /> Urgent
+              <span className="text-[8px] font-bold uppercase tracking-wider text-red-600 dark:text-red-400 bg-red-50 dark:bg-red-500/10 px-1 rounded border border-red-100 dark:border-red-500/20">
+                Urgent
               </span>
             )}
           </div>
-          
-          <h3 className={`font-medium text-sm mb-3 truncate leading-snug ${isSelected ? 'text-indigo-700 dark:text-indigo-100' : 'text-slate-700 dark:text-slate-200'}`}>
-            {task.title}
-          </h3>
+          {isDragEnabled && (
+            <div onPointerDown={(e) => controls.start(e)} className="text-slate-300 dark:text-slate-700 cursor-grab active:cursor-grabbing p-0.5 touch-none">
+              <GripVertical size={12} />
+            </div>
+          )}
+        </div>
 
-          <div className="flex items-center justify-between gap-2">
-            <div className="flex items-center gap-1.5 text-xs text-slate-500">
-              <Calendar size={12} />
-              <span className={new Date(task.deadline) < new Date() && task.status !== 'done' ? 'text-red-500 dark:text-red-400 font-bold' : ''}>
-                {formatDate(new Date(task.deadline))}
-              </span>
-            </div>
-            
-            <div className={`
-              text-[10px] px-2.5 py-1 rounded-md font-bold uppercase tracking-wide
-              ${statusStyle.color} ${statusStyle.text} shadow-sm bg-opacity-90 backdrop-blur-sm
-            `}>
-              {statusStyle.label}
-            </div>
+        {/* Middle: Title */}
+        <h3 className={`font-semibold text-[13px] leading-tight truncate ${isSelected ? 'text-indigo-900 dark:text-white' : 'text-slate-700 dark:text-slate-300'}`}>
+          {task.title}
+        </h3>
+
+        {/* Bottom: Date & Status */}
+        <div className="flex items-center justify-between mt-0.5">
+          <div className="flex items-center gap-1 text-[9px] font-medium text-slate-400 dark:text-slate-500 uppercase tracking-tight">
+            <Calendar size={10} />
+            <span className={new Date(task.deadline) < new Date() && task.status !== 'done' ? 'text-red-500 font-bold' : ''}>
+              {new Intl.DateTimeFormat('en-US', { month: 'short', day: 'numeric' }).format(new Date(task.deadline))}
+            </span>
+          </div>
+          <div className={`text-[8px] px-1.5 py-0.5 rounded font-bold uppercase tracking-tighter ${statusStyle.color} ${statusStyle.text}`}>
+            {statusStyle.label}
           </div>
         </div>
-        
-        {isSelected && (
-          <div className="absolute right-3 top-1/2 -translate-y-1/2 text-indigo-500">
-            <ChevronRight size={16} />
-          </div>
-        )}
       </div>
     </>
   );
 
-  // Using solid backgrounds to prevent transparency issues during drag
   const containerClasses = `
-    relative group rounded-xl border cursor-pointer select-none overflow-hidden touch-none transition-colors duration-200
+    relative group border cursor-pointer select-none overflow-hidden touch-none transition-all duration-200 rounded-lg flex mb-1.5
     ${isSelected 
-      ? 'bg-indigo-50 dark:bg-slate-800 border-indigo-500 shadow-md dark:shadow-indigo-500/10 z-10' 
-      : 'bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-700/80 hover:border-slate-300 dark:hover:border-slate-600'}
+      ? 'bg-white dark:bg-slate-800 border-indigo-500 dark:border-indigo-400 shadow-md ring-1 ring-indigo-500/20 z-10' 
+      : 'bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-800 hover:border-slate-300 shadow-sm'}
   `;
 
-  // Render Reorder.Item if draggable, otherwise standard motion.div
-  if (isDragEnabled) {
-    return (
-      <Reorder.Item
-        value={task}
-        id={task.id}
-        dragListener={false}
-        dragControls={controls}
-        layout
-        dragMomentum={false} // Prevents "sliding" after release for precise placement
-        initial={{ opacity: 0, y: 10 }}
-        animate={{ opacity: 1, y: 0, scale: 1 }}
-        exit={{ opacity: 0, scale: 0.95 }}
-        whileDrag={{ 
-          scale: 1.03, // Slight lift
-          zIndex: 100, // Ensure it floats above everything
-          boxShadow: "0px 15px 25px rgba(0,0,0,0.15)", // Deep, soft shadow
-          cursor: "grabbing",
-        }}
-        // Tuning spring for "buttery" feel: Lower stiffness = softer, higher damping = less bounce
-        transition={{ type: "spring", stiffness: 350, damping: 25, mass: 1 }}
-        className={containerClasses}
-        onClick={() => onSelect(task)}
-      >
-        {Content}
-      </Reorder.Item>
-    );
-  }
-
-  return (
-    <motion.div
-      layout
-      initial={{ opacity: 0, y: 10 }}
-      animate={{ opacity: 1, y: 0, scale: 1 }}
-      exit={{ opacity: 0, scale: 0.95 }}
-      transition={{ duration: 0.2 }}
-      className={containerClasses}
-      onClick={() => onSelect(task)}
-    >
+  return isDragEnabled ? (
+    <Reorder.Item value={task} id={task.id} dragListener={false} dragControls={controls} className={containerClasses} onClick={() => onSelect(task)}>
       {Content}
-    </motion.div>
+    </Reorder.Item>
+  ) : (
+    <motion.div className={containerClasses} onClick={() => onSelect(task)}>{Content}</motion.div>
   );
 });
 
 export const TaskList: React.FC<TaskListProps> = ({ tasks, setTasks, selectedTaskId, onSelectTask, onAddNewTask, onGoHome }) => {
-  const [filterProject, setFilterProject] = useState<string>('all');
-  const [filterStatus, setFilterStatus] = useState<string>('all');
-  const [filterDeadline, setFilterDeadline] = useState<string>('all');
-  const [filterPriority, setFilterPriority] = useState<string>('all');
-  const [searchQuery, setSearchQuery] = useState<string>('');
+  const [searchQuery, setSearchQuery] = useState('');
+  const [filterStatus, setFilterStatus] = useState('all');
 
   const filteredTasks = useMemo(() => {
-    // Return original reference if no filters are active to prevent unnecessary re-renders in Reorder.Group
-    if (filterProject === 'all' && filterStatus === 'all' && filterDeadline === 'all' && filterPriority === 'all' && !searchQuery) {
-      return tasks;
-    }
-
-    const now = new Date();
-    const lowerQuery = searchQuery.toLowerCase();
-    
     return tasks.filter(task => {
-      const matchProject = filterProject === 'all' || task.project === filterProject;
+      const matchSearch = !searchQuery || task.title.toLowerCase().includes(searchQuery.toLowerCase());
       const matchStatus = filterStatus === 'all' || task.status === filterStatus;
-      const matchPriority = filterPriority === 'all' || task.priority === filterPriority;
-      
-      let matchDeadline = true;
-      const deadline = new Date(task.deadline);
-
-      if (filterDeadline === 'due-soon') {
-        // Due within next 3 days and not completed
-        const threeDaysFromNow = new Date();
-        threeDaysFromNow.setDate(now.getDate() + 3);
-        matchDeadline = deadline >= now && deadline <= threeDaysFromNow && task.status !== 'done';
-      } else if (filterDeadline === 'overdue') {
-        // Past deadline and not completed
-        matchDeadline = deadline < now && task.status !== 'done';
-      }
-
-      const matchSearch = !searchQuery || 
-        task.title.toLowerCase().includes(lowerQuery) || 
-        (task.clickupLink && task.clickupLink.toLowerCase().includes(lowerQuery));
-
-      return matchProject && matchStatus && matchDeadline && matchPriority && matchSearch;
+      return matchSearch && matchStatus;
     });
-  }, [tasks, filterProject, filterStatus, filterDeadline, filterPriority, searchQuery]);
+  }, [tasks, searchQuery, filterStatus]);
 
-  const isFiltered = filterProject !== 'all' || filterStatus !== 'all' || filterDeadline !== 'all' || filterPriority !== 'all' || searchQuery !== '';
-
-  const clearFilters = () => {
-    setFilterProject('all');
-    setFilterStatus('all');
-    setFilterDeadline('all');
-    setFilterPriority('all');
-    setSearchQuery('');
-  };
+  const isFiltered = searchQuery !== '' || filterStatus !== 'all';
 
   return (
-    <div className="h-full flex flex-col bg-slate-50 dark:bg-slate-900 border-r border-slate-200 dark:border-slate-800 w-full md:w-80 lg:w-96 flex-shrink-0 transition-colors">
-      {/* Header */}
-      <div className="p-4 border-b border-slate-200 dark:border-slate-800 bg-white/50 dark:bg-slate-900/50 backdrop-blur-sm sticky top-0 z-10 space-y-3">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            {onGoHome && (
-              <button 
-                onClick={onGoHome}
-                className="p-2 hover:bg-slate-200 dark:hover:bg-slate-800 rounded-lg text-slate-500 transition-colors"
-                title="Back to Home Screen"
-              >
-                <Home size={20} />
-              </button>
-            )}
-            <h2 className="text-lg font-semibold text-slate-900 dark:text-slate-100 flex items-center gap-2">
-              TaskFlow
-              <span className="text-xs font-medium text-slate-500 dark:text-slate-400 bg-slate-200 dark:bg-slate-800 px-2 py-0.5 rounded-full ml-1 border border-slate-300 dark:border-slate-700">
-                {filteredTasks.length}
-              </span>
-            </h2>
-          </div>
-          
-          <button
-            onClick={onAddNewTask}
-            className="p-2 bg-indigo-600 hover:bg-indigo-500 text-white rounded-lg shadow-lg shadow-indigo-500/20 transition-all active:scale-95 border border-indigo-400/20"
-            title="Create New Task"
-          >
-            <Plus size={18} />
-          </button>
+    <div className="h-full flex flex-col bg-slate-50 dark:bg-slate-900 border-r border-slate-200 dark:border-slate-800 w-64 md:w-72 flex-shrink-0">
+      <div className="p-3.5 border-b border-slate-200 dark:border-slate-800 flex items-center justify-between bg-white dark:bg-slate-900">
+        <div className="flex items-center gap-2">
+          {onGoHome && (
+            <button onClick={onGoHome} className="p-1.5 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-md text-slate-500 border border-slate-200 dark:border-slate-700">
+              <Home size={14} />
+            </button>
+          )}
+          <h2 className="text-lg font-bold tracking-tight uppercase text-slate-800 dark:text-slate-100">Tasks</h2>
         </div>
+        <button onClick={onAddNewTask} className="p-1.5 bg-indigo-600 hover:bg-indigo-500 text-white rounded-md shadow transition-transform active:scale-95">
+          <Plus size={16} strokeWidth={3} />
+        </button>
+      </div>
 
-        {/* Search Bar */}
+      <div className="p-3 space-y-2">
         <div className="relative">
-          <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 dark:text-slate-500" />
+          <Search size={12} className="absolute left-2.5 top-1/2 -translate-y-1/2 text-slate-400" />
           <input 
             type="text" 
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             placeholder="Search tasks..."
-            className="w-full bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-lg pl-9 pr-8 py-2 text-sm text-slate-900 dark:text-slate-200 focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500/20 transition-all placeholder:text-slate-400 dark:placeholder:text-slate-600"
+            className="w-full bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-md pl-8 pr-2 py-1.5 text-[11px] font-medium focus:border-indigo-500 outline-none"
           />
-          {searchQuery && (
-            <button 
-              onClick={() => setSearchQuery('')}
-              className="absolute right-2 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 p-1 rounded-full transition-colors"
+        </div>
+        <div className="flex items-center gap-1 overflow-x-auto pb-1 no-scrollbar">
+          {['all', 'todo', 'in-progress', 'done'].map((s) => (
+            <button
+              key={s}
+              onClick={() => setFilterStatus(s)}
+              className={`px-2 py-1 rounded-md text-[8px] font-bold uppercase tracking-wider transition-all border ${filterStatus === s ? 'bg-indigo-600 text-white border-indigo-500' : 'bg-white dark:bg-slate-800 text-slate-500 border-slate-200 dark:border-slate-700'}`}
             >
-              <X size={12} />
+              {s}
             </button>
-          )}
-        </div>
-
-        {/* Filter Bar Row 1 */}
-        <div className="flex items-center gap-2">
-           {/* Project Filter */}
-           <div className="flex-1 relative min-w-0">
-             <select
-               value={filterProject}
-               onChange={(e) => setFilterProject(e.target.value)}
-               className="w-full appearance-none bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-700 text-[11px] text-slate-700 dark:text-slate-300 rounded-lg pl-3 pr-6 py-2 focus:outline-none focus:border-indigo-500 transition-colors cursor-pointer truncate"
-             >
-               <option value="all">All Projects</option>
-               {Object.values(PROJECT_CONFIG).map((proj) => (
-                 <option key={proj.name} value={proj.name}>{proj.name}</option>
-               ))}
-             </select>
-             <Filter size={10} className="absolute right-2 top-1/2 -translate-y-1/2 text-slate-400 dark:text-slate-500 pointer-events-none" />
-           </div>
-
-           {/* Status Filter */}
-           <div className="flex-1 relative min-w-0">
-             <select
-               value={filterStatus}
-               onChange={(e) => setFilterStatus(e.target.value)}
-               className="w-full appearance-none bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-700 text-[11px] text-slate-700 dark:text-slate-300 rounded-lg pl-3 pr-6 py-2 focus:outline-none focus:border-indigo-500 transition-colors cursor-pointer truncate"
-             >
-               <option value="all">All Status</option>
-               {Object.entries(STATUS_CONFIG).map(([key, config]) => (
-                 <option key={key} value={key}>{config.label}</option>
-               ))}
-             </select>
-             <Filter size={10} className="absolute right-2 top-1/2 -translate-y-1/2 text-slate-400 dark:text-slate-500 pointer-events-none" />
-           </div>
-        </div>
-
-        {/* Filter Bar Row 2 */}
-        <div className="flex items-center gap-2">
-           {/* Deadline Filter */}
-           <div className="flex-1 relative min-w-0">
-             <select
-               value={filterDeadline}
-               onChange={(e) => setFilterDeadline(e.target.value)}
-               className="w-full appearance-none bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-700 text-[11px] text-slate-700 dark:text-slate-300 rounded-lg pl-3 pr-6 py-2 focus:outline-none focus:border-indigo-500 transition-colors cursor-pointer truncate"
-             >
-               <option value="all">Any Time</option>
-               <option value="due-soon">Due Soon (3 Days)</option>
-               <option value="overdue">Overdue</option>
-             </select>
-             <Clock size={10} className="absolute right-2 top-1/2 -translate-y-1/2 text-slate-400 dark:text-slate-500 pointer-events-none" />
-           </div>
-
-           {/* Priority Filter */}
-           <div className="flex-1 relative min-w-0">
-             <select
-               value={filterPriority}
-               onChange={(e) => setFilterPriority(e.target.value)}
-               className="w-full appearance-none bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-700 text-[11px] text-slate-700 dark:text-slate-300 rounded-lg pl-3 pr-6 py-2 focus:outline-none focus:border-indigo-500 transition-colors cursor-pointer truncate"
-             >
-               <option value="all">All Priority</option>
-               <option value="urgent">Urgent</option>
-               <option value="not-urgent">Not Urgent</option>
-             </select>
-             <Flag size={10} className="absolute right-2 top-1/2 -translate-y-1/2 text-slate-400 dark:text-slate-500 pointer-events-none" />
-           </div>
-
-           {isFiltered && (
-             <button 
-               onClick={clearFilters}
-               className="p-2 bg-slate-200 dark:bg-slate-800 text-slate-500 dark:text-slate-400 hover:text-red-600 dark:hover:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg border border-slate-300 dark:border-slate-700 transition-colors flex-shrink-0"
-               title="Clear Filters"
-             >
-               <X size={14} />
-             </button>
-           )}
+          ))}
         </div>
       </div>
 
-      <div className="flex-1 overflow-y-auto p-3 scrollbar-hide">
+      <div className="flex-1 overflow-y-auto px-3 pb-3 space-y-1">
         {!isFiltered ? (
-          <Reorder.Group 
-            axis="y" 
-            values={tasks} 
-            onReorder={setTasks} 
-            className="space-y-3 relative"
-            layoutScroll
-          >
+          <Reorder.Group axis="y" values={tasks} onReorder={setTasks} className="space-y-1">
             {filteredTasks.map((task) => (
-              <TaskItem
-                key={task.id}
-                task={task}
-                isSelected={selectedTaskId === task.id}
-                onSelect={onSelectTask}
-                isDragEnabled={true}
-              />
+              <TaskItem key={task.id} task={task} isSelected={selectedTaskId === task.id} onSelect={onSelectTask} isDragEnabled={true} />
             ))}
           </Reorder.Group>
         ) : (
-          <div className="space-y-3">
-             <AnimatePresence initial={false} mode="popLayout">
-              {filteredTasks.length > 0 ? (
-                filteredTasks.map((task) => (
-                  <TaskItem
-                    key={task.id}
-                    task={task}
-                    isSelected={selectedTaskId === task.id}
-                    onSelect={onSelectTask}
-                    isDragEnabled={false}
-                  />
-                ))
-              ) : (
-                <motion.div 
-                  initial={{ opacity: 0 }} 
-                  animate={{ opacity: 1 }} 
-                  className="text-center py-10 text-slate-500 text-sm"
-                >
-                  No tasks match current filters.
-                </motion.div>
-              )}
-            </AnimatePresence>
+          <div className="space-y-1">
+            {filteredTasks.map((task) => (
+              <TaskItem key={task.id} task={task} isSelected={selectedTaskId === task.id} onSelect={onSelectTask} isDragEnabled={false} />
+            ))}
           </div>
         )}
       </div>
