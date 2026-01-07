@@ -1,3 +1,4 @@
+
 import React, { useState, useMemo } from 'react';
 import { Reorder, useDragControls, AnimatePresence, motion } from 'framer-motion';
 import { Task, ProjectType, Priority } from '../types';
@@ -44,7 +45,7 @@ const TaskItem: React.FC<TaskItemProps> = React.memo(({
       {isDragEnabled && (
         <div 
           onPointerDown={(e) => controls.start(e)}
-          className="cursor-grab active:cursor-grabbing p-1.5 -ml-1.5 rounded-md text-slate-300 dark:text-slate-600 hover:text-indigo-500 hover:bg-slate-100 dark:hover:bg-slate-700/50 transition-all"
+          className="cursor-grab active:cursor-grabbing text-slate-300 dark:text-slate-600 hover:text-indigo-500 transition-colors"
         >
           <GripVertical size={16} />
         </div>
@@ -63,7 +64,7 @@ const TaskItem: React.FC<TaskItemProps> = React.memo(({
           )}
         </div>
         
-        <h3 className={`text-sm font-bold truncate transition-colors duration-200 ${isSelected ? 'text-indigo-600 dark:text-indigo-400' : 'text-slate-700 dark:text-slate-200'}`}>
+        <h3 className={`text-sm font-bold truncate ${isSelected ? 'text-indigo-600 dark:text-indigo-400' : 'text-slate-700 dark:text-slate-200'}`}>
           {task.title}
         </h3>
 
@@ -81,40 +82,33 @@ const TaskItem: React.FC<TaskItemProps> = React.memo(({
   );
 
   const containerClasses = `
-    group relative mb-2 rounded-xl border transition-all duration-300 overflow-hidden cursor-pointer select-none
+    group relative mb-2 rounded-xl border transition-all duration-200 overflow-hidden cursor-pointer select-none
     ${isSelected 
-      ? 'bg-white dark:bg-slate-800 border-indigo-500 shadow-lg ring-1 ring-indigo-500/20 z-10' 
+      ? 'bg-white dark:bg-slate-800 border-indigo-500 shadow-lg ring-1 ring-indigo-500/20' 
       : 'bg-white dark:bg-slate-800/50 border-slate-200 dark:border-slate-800 hover:border-slate-300 dark:hover:border-slate-700 hover:shadow-md'}
   `;
 
+  if (isDragEnabled) {
+    return (
+      <Reorder.Item
+        value={task}
+        id={task.id}
+        dragListener={false}
+        dragControls={controls}
+        layout
+        className={containerClasses}
+        whileDrag={{ scale: 1.02, boxShadow: "0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04)" }}
+        onClick={() => onSelect(task)}
+      >
+        {content}
+      </Reorder.Item>
+    );
+  }
+
   return (
-    <Reorder.Item
-      value={task}
-      id={task.id}
-      dragListener={false}
-      dragControls={controls}
-      dragEnabled={isDragEnabled}
-      layout
-      className={containerClasses}
-      initial={{ opacity: 0, y: 10 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ 
-        type: "spring", 
-        stiffness: 500, 
-        damping: 35, 
-        mass: 1
-      }}
-      whileDrag={{ 
-        scale: 1.04, 
-        rotate: 1.5,
-        boxShadow: "0 25px 50px -12px rgba(0, 0, 0, 0.25)",
-        zIndex: 50,
-        backgroundColor: isSelected ? undefined : "rgba(255, 255, 255, 0.95)"
-      }}
-      onClick={() => onSelect(task)}
-    >
+    <motion.div layout className={containerClasses} onClick={() => onSelect(task)}>
       {content}
-    </Reorder.Item>
+    </motion.div>
   );
 });
 
@@ -214,33 +208,47 @@ export const TaskList: React.FC<TaskListProps> = ({ tasks, setTasks, selectedTas
 
       {/* Task List - Reorderable */}
       <div className="flex-1 overflow-y-auto p-4 custom-scrollbar">
-        <Reorder.Group 
-          axis="y" 
-          values={isFiltered ? filteredTasks : tasks} 
-          onReorder={setTasks} 
-          className="space-y-1"
-        >
-          <AnimatePresence mode="popLayout">
-            {(isFiltered ? filteredTasks : tasks).map(task => (
+        {!isFiltered ? (
+          <Reorder.Group 
+            axis="y" 
+            values={tasks} 
+            onReorder={setTasks} 
+            className="space-y-1"
+          >
+            {tasks.map(task => (
               <TaskItem 
                 key={task.id} 
                 task={task} 
                 isSelected={selectedTaskId === task.id} 
                 onSelect={onSelectTask}
-                isDragEnabled={!isFiltered}
+                isDragEnabled={true}
               />
             ))}
-          </AnimatePresence>
-          
-          {isFiltered && filteredTasks.length === 0 && (
-            <div className="py-20 text-center">
-              <div className="w-16 h-16 bg-white dark:bg-slate-800 rounded-2xl flex items-center justify-center mx-auto mb-4 border border-slate-100 dark:border-slate-800 shadow-sm">
-                <Search className="text-slate-200 dark:text-slate-700" size={32} />
-              </div>
-              <p className="text-sm font-bold text-slate-400">No matching tasks</p>
-            </div>
-          )}
-        </Reorder.Group>
+          </Reorder.Group>
+        ) : (
+          <div className="space-y-1">
+            <AnimatePresence mode="popLayout">
+              {filteredTasks.length > 0 ? (
+                filteredTasks.map(task => (
+                  <TaskItem 
+                    key={task.id} 
+                    task={task} 
+                    isSelected={selectedTaskId === task.id} 
+                    onSelect={onSelectTask}
+                    isDragEnabled={false}
+                  />
+                ))
+              ) : (
+                <div className="py-20 text-center">
+                  <div className="w-16 h-16 bg-white dark:bg-slate-800 rounded-2xl flex items-center justify-center mx-auto mb-4 border border-slate-100 dark:border-slate-800 shadow-sm">
+                    <Search className="text-slate-200 dark:text-slate-700" size={32} />
+                  </div>
+                  <p className="text-sm font-bold text-slate-400">No matching tasks</p>
+                </div>
+              )}
+            </AnimatePresence>
+          </div>
+        )}
       </div>
     </div>
   );
