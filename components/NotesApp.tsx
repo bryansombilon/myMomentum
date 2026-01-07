@@ -46,6 +46,7 @@ export const NotesApp: React.FC<NotesAppProps> = ({ notes, tasks, onSaveNotes, o
   const [showColorMenu, setShowColorMenu] = useState(false);
   const editorRef = useRef<HTMLDivElement>(null);
   const saveTimeoutRef = useRef<number | null>(null);
+  const autoLinkTimeoutRef = useRef<number | null>(null);
   const colorInputRef = useRef<HTMLInputElement>(null);
 
   const projectTags = useMemo(() => Object.values(ProjectType), []);
@@ -89,21 +90,107 @@ export const NotesApp: React.FC<NotesAppProps> = ({ notes, tasks, onSaveNotes, o
     onSaveNotes(notes.map(n => n.id === id ? { ...n, ...updates, lastModified: new Date() } : n));
   };
 
+  // Helper to save and restore cursor position when modifying content
+  const saveCaretPosition = (el: HTMLElement) => {
+    const selection = window.getSelection();
+    if (!selection || selection.rangeCount === 0) return null;
+    const range = selection.getRangeAt(0);
+    const preSelectionRange = range.cloneRange();
+    preSelectionRange.selectNodeContents(el);
+    preSelectionRange.setEnd(range.startContainer, range.startOffset);
+    const start = preSelectionRange.toString().length;
+    return {
+      start: start,
+      end: start + range.toString().length
+    };
+  };
+
+  const restoreCaretPosition = (el: HTMLElement, savedSel: { start: number, end: number } | null) => {
+    if (!savedSel) return;
+    const selection = window.getSelection();
+    if (!selection) return;
+    
+    let charIndex = 0;
+    const range = document.createRange();
+    range.setStart(el, 0);
+    range.collapse(true);
+    // Fix: Explicitly type nodeStack as Node[] to avoid "ChildNode not assignable to HTMLElement" error
+    const nodeStack: Node[] = [el];
+    let node: Node | undefined;
+    let foundStart = false;
+    let stop = false;
+
+    while (!stop && (node = nodeStack.pop())) {
+      if (node.nodeType === 3) {
+        const nextCharIndex = charIndex + (node as Text).length;
+        if (!foundStart && savedSel.start >= charIndex && savedSel.start <= nextCharIndex) {
+          range.setStart(node, savedSel.start - charIndex);
+          foundStart = true;
+        }
+        if (foundStart && savedSel.end >= charIndex && savedSel.end <= nextCharIndex) {
+          range.setEnd(node, savedSel.end - charIndex);
+          stop = true;
+        }
+        charIndex = nextCharIndex;
+      } else {
+        let i = node.childNodes.length;
+        while (i--) {
+          nodeStack.push(node.childNodes[i]);
+        }
+      }
+    }
+    selection.removeAllRanges();
+    selection.addRange(range);
+  };
+
+  const handleDetectLinks = (isAutomatic = false) => {
+    if (!editorRef.current || !activeNote) return;
+    const content = editorRef.current.innerHTML;
+    const urlRegex = /(?<!href="|">|src=")(https?:\/\/[^\s<]+|www\.[^\s<]+)/gi;
+    const newContent = content.replace(urlRegex, (match) => {
+      const href = match.toLowerCase().startsWith('http') ? match : `https://${match}`;
+      return `<a href="${href}" target="_blank" rel="noopener noreferrer" style="color: #4f46e5; text-decoration: underline;">${match}</a>`;
+    });
+    
+    if (newContent !== content) {
+      // Automatic detection should preserve the cursor
+      if (isAutomatic) {
+        const savedPos = saveCaretPosition(editorRef.current);
+        editorRef.current.innerHTML = newContent;
+        restoreCaretPosition(editorRef.current, savedPos);
+      } else {
+        editorRef.current.innerHTML = newContent;
+      }
+      handleContentChange();
+    }
+  };
+
   const handleContentChange = () => {
     if (editorRef.current && activeNote) {
       const newContent = editorRef.current.innerHTML;
       setPendingContent(newContent);
+      
+      // Clear existing timeouts
       if (saveTimeoutRef.current) window.clearTimeout(saveTimeoutRef.current);
+      if (autoLinkTimeoutRef.current) window.clearTimeout(autoLinkTimeoutRef.current);
+
+      // Save content after 2s of inactivity
       saveTimeoutRef.current = window.setTimeout(() => {
         handleUpdateNote(activeNote.id, { content: newContent });
         setPendingContent(null);
       }, 2000);
+
+      // Auto-detect links after 1s of inactivity
+      autoLinkTimeoutRef.current = window.setTimeout(() => {
+        handleDetectLinks(true);
+      }, 1000);
     }
   };
 
   const flushSave = () => {
     if (pendingContent !== null && activeNote) {
       if (saveTimeoutRef.current) window.clearTimeout(saveTimeoutRef.current);
+      if (autoLinkTimeoutRef.current) window.clearTimeout(autoLinkTimeoutRef.current);
       handleUpdateNote(activeNote.id, { content: pendingContent });
       setPendingContent(null);
     }
@@ -150,21 +237,6 @@ export const NotesApp: React.FC<NotesAppProps> = ({ notes, tasks, onSaveNotes, o
     handleUpdateNote(activeNote.id, { tags: activeNote.tags.filter(t => t !== tagToRemove) });
   };
 
-  const handleDetectLinks = () => {
-    if (!editorRef.current || !activeNote) return;
-    const content = editorRef.current.innerHTML;
-    const urlRegex = /(?<!href="|">)(https?:\/\/[^\s<]+|www\.[^\s<]+)/gi;
-    const newContent = content.replace(urlRegex, (match) => {
-      const href = match.toLowerCase().startsWith('http') ? match : `https://${match}`;
-      return `<a href="${href}" target="_blank" rel="noopener noreferrer" style="color: #4f46e5; text-decoration: underline;">${match}</a>`;
-    });
-    
-    if (newContent !== content) {
-      editorRef.current.innerHTML = newContent;
-      handleContentChange();
-    }
-  };
-
   const handleKeyDown = (e: React.KeyboardEvent<HTMLDivElement>) => {
     if (e.key === 'Enter') {
       const selection = window.getSelection();
@@ -178,8 +250,7 @@ export const NotesApp: React.FC<NotesAppProps> = ({ notes, tasks, onSaveNotes, o
 
       if (checklistItem) {
         e.preventDefault();
-        
-        const textContent = checklistItem.textContent?.trim() || '';
+        const textContent = (checklistItem as HTMLElement).innerText.trim();
 
         // If checklist item is essentially empty, convert to regular line
         if (textContent === '' || textContent === '\u00A0') {
@@ -365,11 +436,11 @@ export const NotesApp: React.FC<NotesAppProps> = ({ notes, tasks, onSaveNotes, o
                 <ToolbarButton icon={CheckSquare} onClick={() => execCommand('insertHTML', '<div class="checklist-item" style="display: flex; align-items: center; gap: 8px; margin-bottom: 4px;"><input type="checkbox" style="width: 14px; height: 14px; cursor: pointer;"><span>&nbsp;</span></div>')} title="Checklist" />
                 <ToolbarButton icon={LinkIcon} onClick={() => execCommand('createLink')} title="Insert Manual Link" />
                 <button 
-                  onClick={handleDetectLinks}
+                  onClick={() => handleDetectLinks(false)}
                   className="flex items-center gap-1.5 px-2.5 py-1.5 text-[10px] font-bold uppercase tracking-widest text-indigo-600 hover:bg-indigo-50 dark:text-indigo-400 dark:hover:bg-indigo-900/20 rounded-lg transition-all border border-indigo-100 dark:border-indigo-900/50 ml-1"
-                  title="Auto Detect Hyperlinks"
+                  title="Force Detect Hyperlinks"
                 >
-                  <Sparkles size={12} /> Detect Links
+                  <Sparkles size={12} /> Scan Links
                 </button>
 
                 <div className="w-px h-6 bg-slate-200 dark:bg-slate-800 mx-1.5" />

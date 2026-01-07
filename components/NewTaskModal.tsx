@@ -22,9 +22,11 @@ export const NewTaskModal: React.FC<NewTaskModalProps> = ({ isOpen, onClose, onS
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
   const [deadline, setDeadline] = useState('');
-  const [clickupLink, setClickupLink] = useState('');
+  const [clickupTaskId, setClickupTaskId] = useState('');
   const [project, setProject] = useState<ProjectType>(ProjectType.GALA);
   const [priority, setPriority] = useState<Priority>('not-urgent');
+
+  const BASE_CLICKUP_URL = 'https://app.clickup.com/t/';
 
   // Effect to populate form when modal opens or taskToEdit changes
   useEffect(() => {
@@ -37,7 +39,12 @@ export const NewTaskModal: React.FC<NewTaskModalProps> = ({ isOpen, onClose, onS
           ? taskToEdit.deadline.toISOString().split('T')[0] 
           : new Date(taskToEdit.deadline).toISOString().split('T')[0];
         setDeadline(dateStr);
-        setClickupLink(taskToEdit.clickupLink);
+        
+        // Extract Task ID from the full link
+        const fullLink = taskToEdit.clickupLink || '';
+        const idOnly = fullLink.replace('https://app.clickup.com/t/', '').replace('https://clickup.com/t/', '');
+        setClickupTaskId(idOnly);
+        
         setProject(taskToEdit.project);
         setPriority(taskToEdit.priority || 'not-urgent');
       } else {
@@ -45,7 +52,7 @@ export const NewTaskModal: React.FC<NewTaskModalProps> = ({ isOpen, onClose, onS
         setTitle('');
         setDescription('');
         setDeadline('');
-        setClickupLink('');
+        setClickupTaskId('');
         setProject(ProjectType.GALA);
         setPriority('not-urgent');
       }
@@ -58,17 +65,17 @@ export const NewTaskModal: React.FC<NewTaskModalProps> = ({ isOpen, onClose, onS
     e.preventDefault();
     if (!title || !deadline) return;
 
+    // Concatenate ID with base URL
+    const fullClickupLink = clickupTaskId.trim() ? `${BASE_CLICKUP_URL}${clickupTaskId.trim()}` : '';
+
     onSave({
       title,
       description,
       deadline: new Date(deadline),
-      clickupLink,
+      clickupLink: fullClickupLink,
       project,
       priority
     });
-    
-    // We don't reset here immediately because the parent handles closing, 
-    // and the useEffect handles resetting on next open.
   };
 
   const isEditing = !!taskToEdit;
@@ -189,18 +196,23 @@ export const NewTaskModal: React.FC<NewTaskModalProps> = ({ isOpen, onClose, onS
             </div>
           </div>
 
-          {/* ClickUp Link */}
+          {/* ClickUp Task ID */}
           <div className="space-y-1.5">
             <label className="text-[13px] font-medium text-slate-500 dark:text-slate-400 flex items-center gap-1.5">
-              <LinkIcon size={14} /> ClickUp URL
+              <LinkIcon size={14} /> ClickUp Task ID
             </label>
-            <input
-              type="url"
-              value={clickupLink}
-              onChange={(e) => setClickupLink(e.target.value)}
-              placeholder="https://clickup.com/t/..."
-              className="w-full bg-slate-50 dark:bg-slate-800/50 border border-slate-300 dark:border-slate-700 rounded-lg px-3 py-2 text-[15px] text-slate-900 dark:text-slate-200 focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500/20 transition-all placeholder:text-slate-400 dark:placeholder:text-slate-600"
-            />
+            <div className="flex items-center">
+              <span className="bg-slate-200 dark:bg-slate-800 text-[11px] font-mono text-slate-500 dark:text-slate-400 px-2 py-2 rounded-l-lg border-y border-l border-slate-300 dark:border-slate-700 whitespace-nowrap">
+                .../t/
+              </span>
+              <input
+                type="text"
+                value={clickupTaskId}
+                onChange={(e) => setClickupTaskId(e.target.value)}
+                placeholder="e.g. 8688y9mza"
+                className="w-full bg-slate-50 dark:bg-slate-800/50 border border-slate-300 dark:border-slate-700 rounded-r-lg px-3 py-2 text-[15px] text-slate-900 dark:text-slate-200 focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500/20 transition-all placeholder:text-slate-400 dark:placeholder:text-slate-600"
+              />
+            </div>
           </div>
 
           <div className="pt-4 flex justify-end gap-3">
