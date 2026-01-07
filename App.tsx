@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { AnimatePresence, motion } from 'framer-motion';
 import { TaskList } from './components/TaskList';
@@ -17,26 +18,19 @@ const THEME_KEY = 'taskflow_theme';
 
 const App: React.FC = () => {
   const [currentView, setCurrentView] = useState<AppView>('home');
-  const [hasError, setHasError] = useState<string | null>(null);
 
-  // Tasks State with extra defensive mapping
+  // Tasks State
   const [tasks, setTasks] = useState<Task[]>(() => {
     try {
       const saved = localStorage.getItem(STORAGE_KEY_TASKS);
       if (saved) {
-        const parsed = JSON.parse(saved);
-        if (Array.isArray(parsed)) {
-          return parsed.map((t: any) => ({
-            ...t,
-            project: t.project === 'GALA' ? ProjectType.AWARDS : (t.project || ProjectType.AWARDS),
-            deadline: new Date(t.deadline),
-            updates: Array.isArray(t.updates) ? t.updates.map((m: any) => ({ ...m, timestamp: new Date(m.timestamp) })) : []
-          }));
-        }
+        return JSON.parse(saved).map((t: any) => ({
+          ...t,
+          deadline: new Date(t.deadline),
+          updates: t.updates.map((m: any) => ({ ...m, timestamp: new Date(m.timestamp) }))
+        }));
       }
-    } catch (e) {
-      console.error("Failed to load tasks from local storage", e);
-    }
+    } catch (e) {}
     return INITIAL_TASKS;
   });
 
@@ -45,13 +39,10 @@ const App: React.FC = () => {
     try {
       const saved = localStorage.getItem(STORAGE_KEY_NOTES);
       if (saved) {
-        const parsed = JSON.parse(saved);
-        if (Array.isArray(parsed)) {
-          return parsed.map((n: any) => ({
-            ...n,
-            lastModified: new Date(n.lastModified)
-          }));
-        }
+        return JSON.parse(saved).map((n: any) => ({
+          ...n,
+          lastModified: new Date(n.lastModified)
+        }));
       }
     } catch (e) {}
     return INITIAL_NOTES;
@@ -62,13 +53,10 @@ const App: React.FC = () => {
     try {
       const saved = localStorage.getItem(STORAGE_KEY_LINKS);
       if (saved) {
-        const parsed = JSON.parse(saved);
-        if (Array.isArray(parsed)) {
-          return parsed.map((l: any) => ({
-            ...l,
-            dateAdded: new Date(l.dateAdded)
-          }));
-        }
+        return JSON.parse(saved).map((l: any) => ({
+          ...l,
+          dateAdded: new Date(l.dateAdded)
+        }));
       }
     } catch (e) {}
     return INITIAL_LINKS;
@@ -165,123 +153,108 @@ const App: React.FC = () => {
     setCurrentView('tasks');
   };
 
-  if (hasError) {
-    return (
-      <div className="flex flex-col items-center justify-center h-screen bg-white p-10 text-center">
-        <h1 className="text-xl font-black text-red-600 mb-4">View Rendering Error</h1>
-        <p className="text-slate-500 mb-6 max-w-md">{hasError}</p>
-        <button onClick={() => { localStorage.clear(); location.reload(); }} className="px-6 py-3 bg-indigo-600 text-white rounded-xl font-bold">Reset All Application Data</button>
-      </div>
-    );
-  }
-
   const selectedTask = tasks.find(t => t.id === selectedTaskId) || null;
 
-  try {
-    return (
-      <div className="flex h-screen w-full bg-slate-50 dark:bg-slate-950 overflow-hidden font-inter transition-colors duration-300">
-        <AnimatePresence mode="wait">
-          {currentView === 'home' && (
-            <motion.div 
-              key="home"
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0, scale: 1.1 }}
-              className="w-full h-full"
-            >
-              <Home 
-                onLaunchApp={setCurrentView} 
-                onExport={handleExportData}
-                onImport={handleImportData}
-              />
-            </motion.div>
-          )}
+  return (
+    <div className="flex h-screen w-full bg-slate-50 dark:bg-slate-950 overflow-hidden font-inter transition-colors duration-300">
+      <AnimatePresence mode="wait">
+        {currentView === 'home' && (
+          <motion.div 
+            key="home"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0, scale: 1.1 }}
+            className="w-full h-full"
+          >
+            <Home 
+              onLaunchApp={setCurrentView} 
+              onExport={handleExportData}
+              onImport={handleImportData}
+            />
+          </motion.div>
+        )}
 
-          {currentView === 'tasks' && (
-            <motion.div 
-              key="tasks"
-              initial={{ x: '100%' }}
-              animate={{ x: 0 }}
-              exit={{ x: '100%' }}
-              transition={{ type: 'spring', damping: 25, stiffness: 200 }}
-              className="w-full h-full flex flex-col md:flex-row"
-            >
-              <TaskList 
+        {currentView === 'tasks' && (
+          <motion.div 
+            key="tasks"
+            initial={{ x: '100%' }}
+            animate={{ x: 0 }}
+            exit={{ x: '100%' }}
+            transition={{ type: 'spring', damping: 25, stiffness: 200 }}
+            className="w-full h-full flex flex-col md:flex-row"
+          >
+            <TaskList 
+              tasks={tasks} 
+              setTasks={handleTaskReorder} 
+              selectedTaskId={selectedTaskId}
+              onSelectTask={(task) => setSelectedTaskId(task.id)}
+              onAddNewTask={() => { setEditingTask(null); setIsNewTaskModalOpen(true); }}
+              onGoHome={() => setCurrentView('home')}
+            />
+            <div className="flex flex-col flex-1 min-w-0">
+              <ProjectProgress 
                 tasks={tasks} 
-                setTasks={handleTaskReorder} 
-                selectedTaskId={selectedTaskId}
-                onSelectTask={(task) => setSelectedTaskId(task.id)}
-                onAddNewTask={() => { setEditingTask(null); setIsNewTaskModalOpen(true); }}
+                isDarkMode={isDarkMode}
+                toggleTheme={() => setIsDarkMode(!isDarkMode)}
                 onGoHome={() => setCurrentView('home')}
               />
-              <div className="flex flex-col flex-1 min-w-0">
-                <ProjectProgress 
-                  tasks={tasks} 
-                  isDarkMode={isDarkMode}
-                  toggleTheme={() => setIsDarkMode(!isDarkMode)}
-                  onGoHome={() => setCurrentView('home')}
-                />
-                <div className="flex-1 relative overflow-hidden">
-                    <TaskDetail 
-                      task={selectedTask} 
-                      onUpdateTask={handleUpdateTask}
-                      onStatusChange={handleStatusChange}
-                      onNavigateToTask={handleNavigateToTask}
-                      onPriorityChange={handlePriorityChange}
-                      onDeleteTask={handleDeleteTask}
-                      onEditTask={(t) => { setEditingTask(t); setIsNewTaskModalOpen(true); }}
-                    />
-                </div>
+              <div className="flex-1 relative overflow-hidden">
+                  <TaskDetail 
+                    task={selectedTask} 
+                    onUpdateTask={handleUpdateTask}
+                    onStatusChange={handleStatusChange}
+                    onNavigateToTask={handleNavigateToTask}
+                    onPriorityChange={handlePriorityChange}
+                    onDeleteTask={handleDeleteTask}
+                    onEditTask={(t) => { setEditingTask(t); setIsNewTaskModalOpen(true); }}
+                  />
               </div>
-              <NewTaskModal 
-                isOpen={isNewTaskModalOpen}
-                onClose={() => setIsNewTaskModalOpen(false)}
-                onSave={handleSaveTask}
-                taskToEdit={editingTask}
-              />
-            </motion.div>
-          )}
+            </div>
+            <NewTaskModal 
+              isOpen={isNewTaskModalOpen}
+              onClose={() => setIsNewTaskModalOpen(false)}
+              onSave={handleSaveTask}
+              taskToEdit={editingTask}
+            />
+          </motion.div>
+        )}
 
-          {currentView === 'notes' && (
-            <motion.div 
-              key="notes"
-              initial={{ scale: 0.8, opacity: 0 }}
-              animate={{ scale: 1, opacity: 1 }}
-              exit={{ scale: 0.8, opacity: 0 }}
-              className="w-full h-full"
-            >
-              <NotesApp 
-                notes={notes} 
-                tasks={tasks}
-                onSaveNotes={setNotes} 
-                onGoHome={() => setCurrentView('home')}
-                onNavigateToTask={handleNavigateToTask}
-              />
-            </motion.div>
-          )}
+        {currentView === 'notes' && (
+          <motion.div 
+            key="notes"
+            initial={{ scale: 0.8, opacity: 0 }}
+            animate={{ scale: 1, opacity: 1 }}
+            exit={{ scale: 0.8, opacity: 0 }}
+            className="w-full h-full"
+          >
+            <NotesApp 
+              notes={notes} 
+              tasks={tasks}
+              onSaveNotes={setNotes} 
+              onGoHome={() => setCurrentView('home')}
+              onNavigateToTask={handleNavigateToTask}
+            />
+          </motion.div>
+        )}
 
-          {currentView === 'links' && (
-            <motion.div 
-              key="links"
-              initial={{ y: '100%', opacity: 0 }}
-              animate={{ y: 0, opacity: 1 }}
-              exit={{ y: '100%', opacity: 0 }}
-              className="w-full h-full"
-            >
-              <LinksApp 
-                links={links}
-                onSaveLinks={setLinks}
-                onGoHome={() => setCurrentView('home')}
-              />
-            </motion.div>
-          )}
-        </AnimatePresence>
-      </div>
-    );
-  } catch (err: any) {
-    setHasError(err.message || "Unknown rendering error");
-    return null;
-  }
+        {currentView === 'links' && (
+          <motion.div 
+            key="links"
+            initial={{ y: '100%', opacity: 0 }}
+            animate={{ y: 0, opacity: 1 }}
+            exit={{ y: '100%', opacity: 0 }}
+            className="w-full h-full"
+          >
+            <LinksApp 
+              links={links}
+              onSaveLinks={setLinks}
+              onGoHome={() => setCurrentView('home')}
+            />
+          </motion.div>
+        )}
+      </AnimatePresence>
+    </div>
+  );
 };
 
 export default App;
