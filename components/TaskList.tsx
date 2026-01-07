@@ -44,7 +44,7 @@ const TaskItem: React.FC<TaskItemProps> = React.memo(({
       {isDragEnabled && (
         <div 
           onPointerDown={(e) => controls.start(e)}
-          className="cursor-grab active:cursor-grabbing p-1.5 -ml-1.5 rounded-md text-slate-300 dark:text-slate-600 hover:text-indigo-500 hover:bg-slate-100 dark:hover:bg-slate-700/50 transition-all"
+          className="cursor-grab active:cursor-grabbing p-1.5 -ml-1.5 rounded-md text-slate-300 dark:text-slate-600 hover:text-indigo-500 hover:bg-slate-100 dark:hover:bg-slate-700/50 transition-all pointer-events-auto"
         >
           <GripVertical size={16} />
         </div>
@@ -100,15 +100,15 @@ const TaskItem: React.FC<TaskItemProps> = React.memo(({
       animate={{ opacity: 1, y: 0 }}
       transition={{ 
         type: "spring", 
-        stiffness: 700, 
-        damping: 40, 
+        stiffness: 800, 
+        damping: 45, 
         mass: 1
       }}
       whileDrag={{ 
-        scale: 1.04, 
-        rotate: 1.2,
-        boxShadow: "0 25px 50px -12px rgba(0, 0, 0, 0.25)",
-        zIndex: 50,
+        scale: 1.05, 
+        rotate: 1.5,
+        boxShadow: "0 25px 60px -15px rgba(0, 0, 0, 0.3)",
+        zIndex: 100,
         backgroundColor: "rgb(255, 255, 255)",
       }}
       onClick={() => onSelect(task)}
@@ -123,7 +123,7 @@ export const TaskList: React.FC<TaskListProps> = ({ tasks, setTasks, selectedTas
   const [filterProject, setFilterProject] = useState('all');
 
   const filteredTasks = useMemo(() => {
-    const q = searchQuery.toLowerCase();
+    const q = searchQuery.toLowerCase().trim();
     return tasks.filter(t => 
       (t.title.toLowerCase().includes(q) || t.description.toLowerCase().includes(q)) &&
       (filterProject === 'all' || t.project === filterProject)
@@ -137,8 +137,8 @@ export const TaskList: React.FC<TaskListProps> = ({ tasks, setTasks, selectedTas
 
   const isFiltered = searchQuery !== '' || filterProject !== 'all';
 
-  // Reorder.Group requires the 'values' prop to match the list being rendered for smooth operation
-  const currentDisplayTasks = isFiltered ? filteredTasks : tasks;
+  // Ensure Reorder.Group is only active when not filtering to avoid list corruption
+  const displayTasks = isFiltered ? filteredTasks : tasks;
 
   return (
     <div className="flex flex-col h-full bg-slate-50 dark:bg-slate-900 border-r border-slate-200 dark:border-slate-800 w-full md:w-80 lg:w-96 flex-shrink-0 transition-colors">
@@ -220,16 +220,15 @@ export const TaskList: React.FC<TaskListProps> = ({ tasks, setTasks, selectedTas
       <div className="flex-1 overflow-y-auto p-4 custom-scrollbar">
         <Reorder.Group 
           axis="y" 
-          values={tasks} 
+          values={displayTasks} 
           onReorder={(newOrder) => {
-            // Only update the main tasks state if we aren't filtering
             if (!isFiltered) setTasks(newOrder);
           }} 
           className="space-y-1"
           style={{ listStyle: 'none' }}
         >
           <AnimatePresence mode="popLayout" initial={false}>
-            {currentDisplayTasks.map(task => (
+            {displayTasks.map(task => (
               <TaskItem 
                 key={task.id} 
                 task={task} 
@@ -240,7 +239,7 @@ export const TaskList: React.FC<TaskListProps> = ({ tasks, setTasks, selectedTas
             ))}
           </AnimatePresence>
           
-          {isFiltered && currentDisplayTasks.length === 0 && (
+          {isFiltered && displayTasks.length === 0 && (
             <div className="py-20 text-center">
               <div className="w-16 h-16 bg-white dark:bg-slate-800 rounded-2xl flex items-center justify-center mx-auto mb-4 border border-slate-100 dark:border-slate-800 shadow-sm">
                 <Search className="text-slate-200 dark:text-slate-700" size={32} />
