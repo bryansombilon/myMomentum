@@ -1,7 +1,6 @@
-
 import React, { useState, useEffect, useRef } from 'react';
 import { motion } from 'framer-motion';
-import { CheckSquare, StickyNote, LayoutGrid, Clock, Calendar, Download, Upload, ShieldCheck } from 'lucide-react';
+import { CheckSquare, StickyNote, LayoutGrid, Clock, Calendar, Download, Upload, ShieldCheck, Globe } from 'lucide-react';
 import { AppView } from '../types';
 
 interface HomeProps {
@@ -56,6 +55,14 @@ export const Home: React.FC<HomeProps> = ({ onLaunchApp, onExport, onImport }) =
       shadow: 'shadow-amber-500/40',
       desc: 'Thoughts & docs' 
     },
+    { 
+      id: 'links' as AppView, 
+      name: 'Link Hub', 
+      icon: Globe, 
+      color: 'bg-emerald-500', 
+      shadow: 'shadow-emerald-500/40',
+      desc: 'Quick access' 
+    },
   ];
 
   return (
@@ -84,7 +91,7 @@ export const Home: React.FC<HomeProps> = ({ onLaunchApp, onExport, onImport }) =
         initial={{ opacity: 0, scale: 0.9 }}
         animate={{ opacity: 1, scale: 1 }}
         transition={{ delay: 0.1 }}
-        className="grid grid-cols-2 sm:grid-cols-2 gap-8 z-10"
+        className="grid grid-cols-3 gap-8 z-10"
       >
         {apps.map((app, index) => (
           <motion.button

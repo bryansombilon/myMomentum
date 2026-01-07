@@ -1,5 +1,4 @@
-
-import { ProjectType, Task, Project, Priority, Note } from './types';
+import { ProjectType, Task, Project, Priority, Note, LinkEntry } from './types';
 
 export const PROJECT_CONFIG: Record<ProjectType, Project> = {
   [ProjectType.GALA]: { name: ProjectType.GALA, color: '#EAB308' }, 
@@ -70,5 +69,29 @@ export const INITIAL_NOTES: Note[] = [
     content: '- Coffee beans\n- Milk\n- High-end mechanical keyboard (budget approved)',
     lastModified: new Date(Date.now() - 86400000),
     tags: ['personal']
+  }
+];
+
+export const INITIAL_LINKS: LinkEntry[] = [
+  {
+    id: 'l-1',
+    title: 'ClickUp Dashboard',
+    url: 'https://app.clickup.com',
+    category: 'Tools',
+    dateAdded: new Date()
+  },
+  {
+    id: 'l-2',
+    title: 'Makers & Movers Awards',
+    url: 'https://makersmovers.com',
+    category: 'Awards',
+    dateAdded: new Date()
+  },
+  {
+    id: 'l-3',
+    title: 'Alcott Global Main Site',
+    url: 'https://alcottglobal.com',
+    category: 'Alcott Global',
+    dateAdded: new Date()
   }
 ];
