@@ -1,12 +1,11 @@
-
 import React, { useState, useMemo, useRef, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Note, Task, ProjectType } from '../types';
-import { PROJECT_CONFIG } from '../constants';
 import { 
   Plus, Trash2, Home, Search as SearchIcon, 
   FileText, Bold, Italic, Underline, Palette, CheckSquare, Tag as TagIcon, X as XIcon,
-  Strikethrough, List, IndentIncrease, IndentDecrease, ChevronDown, Briefcase
+  Strikethrough, List, IndentIncrease, IndentDecrease, ChevronDown, Briefcase,
+  Pin, PinOff, Link as LinkIcon, Filter, Sparkles, Check
 } from 'lucide-react';
 
 interface NotesAppProps {
@@ -26,9 +25,22 @@ const PRESET_COLORS = [
   { name: 'Slate', value: '#64748b' },
 ];
 
+const renderPreviewWithLinks = (text: string) => {
+  const urlRegex = /(https?:\/\/[^\s]+|www\.[^\s]+)/gi;
+  const parts = text.split(urlRegex);
+  return parts.map((part, index) => {
+    if (part.match(urlRegex)) {
+      return <span key={index} className="text-amber-600 dark:text-amber-400 underline">{part}</span>;
+    }
+    return part;
+  });
+};
+
 export const NotesApp: React.FC<NotesAppProps> = ({ notes, tasks, onSaveNotes, onGoHome, onNavigateToTask }) => {
   const [selectedNoteId, setSelectedNoteId] = useState<string | null>(notes[0]?.id || null);
   const [searchQuery, setSearchQuery] = useState('');
+  const [activeTagFilter, setActiveTagFilter] = useState<string | null>(null);
+  const [isFilterDropdownOpen, setIsFilterDropdownOpen] = useState(false);
   const [pendingContent, setPendingContent] = useState<string | null>(null);
   const [newTagInput, setNewTagInput] = useState('');
   const [showColorMenu, setShowColorMenu] = useState(false);
@@ -36,22 +48,33 @@ export const NotesApp: React.FC<NotesAppProps> = ({ notes, tasks, onSaveNotes, o
   const saveTimeoutRef = useRef<number | null>(null);
   const colorInputRef = useRef<HTMLInputElement>(null);
 
+  const projectTags = useMemo(() => Object.values(ProjectType), []);
+
+  const allAvailableTags = useMemo(() => {
+    const tagsSet = new Set<string>();
+    notes.forEach(n => n.tags.forEach(t => tagsSet.add(t)));
+    projectTags.forEach(t => tagsSet.add(t));
+    return Array.from(tagsSet).sort();
+  }, [notes, projectTags]);
+
   const filteredNotes = useMemo(() => {
     const q = searchQuery.toLowerCase();
-    return notes.filter(n => 
-      n.title.toLowerCase().includes(q) ||
-      n.content.toLowerCase().includes(q) ||
-      n.tags.some(tag => tag.toLowerCase().includes(q))
-    ).sort((a, b) => new Date(b.lastModified).getTime() - new Date(a.lastModified).getTime());
-  }, [notes, searchQuery]);
+    return notes.filter(n => {
+      const matchesSearch = n.title.toLowerCase().includes(q) ||
+        n.content.toLowerCase().includes(q) ||
+        n.tags.some(tag => tag.toLowerCase().includes(q));
+      
+      const matchesTag = !activeTagFilter || n.tags.includes(activeTagFilter);
+      
+      return matchesSearch && matchesTag;
+    }).sort((a, b) => {
+      if (a.isPinned && !b.isPinned) return -1;
+      if (!a.isPinned && b.isPinned) return 1;
+      return new Date(b.lastModified).getTime() - new Date(a.lastModified).getTime();
+    });
+  }, [notes, searchQuery, activeTagFilter]);
 
   const activeNote = notes.find(n => n.id === selectedNoteId);
-
-  // Suggested tags derived from active projects in TaskFlow
-  const projectTags = useMemo(() => {
-    const projects = Object.values(ProjectType);
-    return projects;
-  }, []);
 
   useEffect(() => {
     if (editorRef.current && activeNote) {
@@ -88,7 +111,7 @@ export const NotesApp: React.FC<NotesAppProps> = ({ notes, tasks, onSaveNotes, o
 
   const handleCreateNote = () => {
     flushSave();
-    const newNote: Note = { id: Date.now().toString(), title: 'New Note', content: '<div>Start writing...</div>', lastModified: new Date(), tags: [] };
+    const newNote: Note = { id: Date.now().toString(), title: '', content: '<div>Start writing...</div>', lastModified: new Date(), tags: [], isPinned: false };
     onSaveNotes([newNote, ...notes]);
     setSelectedNoteId(newNote.id);
   };
@@ -99,6 +122,11 @@ export const NotesApp: React.FC<NotesAppProps> = ({ notes, tasks, onSaveNotes, o
       onSaveNotes(updatedNotes);
       if (selectedNoteId === id) setSelectedNoteId(updatedNotes[0]?.id || null);
     }
+  };
+
+  const togglePin = (id: string) => {
+    const note = notes.find(n => n.id === id);
+    if (note) handleUpdateNote(id, { isPinned: !note.isPinned });
   };
 
   const toggleTag = (tag: string) => {
@@ -122,8 +150,77 @@ export const NotesApp: React.FC<NotesAppProps> = ({ notes, tasks, onSaveNotes, o
     handleUpdateNote(activeNote.id, { tags: activeNote.tags.filter(t => t !== tagToRemove) });
   };
 
+  const handleDetectLinks = () => {
+    if (!editorRef.current || !activeNote) return;
+    const content = editorRef.current.innerHTML;
+    const urlRegex = /(?<!href="|">)(https?:\/\/[^\s<]+|www\.[^\s<]+)/gi;
+    const newContent = content.replace(urlRegex, (match) => {
+      const href = match.toLowerCase().startsWith('http') ? match : `https://${match}`;
+      return `<a href="${href}" target="_blank" rel="noopener noreferrer" style="color: #4f46e5; text-decoration: underline;">${match}</a>`;
+    });
+    
+    if (newContent !== content) {
+      editorRef.current.innerHTML = newContent;
+      handleContentChange();
+    }
+  };
+
+  const handleKeyDown = (e: React.KeyboardEvent<HTMLDivElement>) => {
+    if (e.key === 'Enter') {
+      const selection = window.getSelection();
+      if (!selection || !selection.rangeCount) return;
+
+      const range = selection.getRangeAt(0);
+      let container = range.commonAncestorContainer as HTMLElement;
+      if (container.nodeType === Node.TEXT_NODE) container = container.parentElement!;
+
+      const checklistItem = container.closest('.checklist-item');
+
+      if (checklistItem) {
+        e.preventDefault();
+        
+        const textContent = checklistItem.textContent?.trim() || '';
+
+        // If checklist item is essentially empty, convert to regular line
+        if (textContent === '' || textContent === '\u00A0') {
+          const newLine = document.createElement('div');
+          newLine.innerHTML = '<br>';
+          checklistItem.replaceWith(newLine);
+          
+          const newRange = document.createRange();
+          newRange.setStart(newLine, 0);
+          newRange.collapse(true);
+          selection.removeAllRanges();
+          selection.addRange(newRange);
+        } else {
+          // Create new checklist item
+          const newItem = document.createElement('div');
+          newItem.className = 'checklist-item';
+          newItem.style.cssText = 'display: flex; align-items: center; gap: 8px; margin-bottom: 4px;';
+          newItem.innerHTML = '<input type="checkbox" style="width: 14px; height: 14px; cursor: pointer;"><span>&nbsp;</span>';
+          
+          checklistItem.after(newItem);
+
+          const span = newItem.querySelector('span')!;
+          const newRange = document.createRange();
+          newRange.setStart(span, 0);
+          newRange.collapse(true);
+          selection.removeAllRanges();
+          selection.addRange(newRange);
+        }
+        handleContentChange();
+      }
+    }
+  };
+
   const execCommand = (command: string, value: string = '') => {
-    document.execCommand(command, false, value);
+    if (command === 'createLink') {
+      const url = prompt('Enter the URL:');
+      if (!url) return;
+      document.execCommand(command, false, url);
+    } else {
+      document.execCommand(command, false, value);
+    }
     handleContentChange();
     editorRef.current?.focus();
   };
@@ -147,7 +244,7 @@ export const NotesApp: React.FC<NotesAppProps> = ({ notes, tasks, onSaveNotes, o
           </button>
         </div>
 
-        <div className="p-4 border-b border-slate-200 dark:border-slate-800">
+        <div className="p-4 border-b border-slate-200 dark:border-slate-800 space-y-3">
           <div className="relative">
             <SearchIcon className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 dark:text-slate-500" size={14} />
             <input 
@@ -158,14 +255,59 @@ export const NotesApp: React.FC<NotesAppProps> = ({ notes, tasks, onSaveNotes, o
               className="w-full pl-9 pr-4 py-2 bg-slate-100 dark:bg-slate-800 border-none rounded-md text-xs font-semibold focus:ring-2 focus:ring-amber-500/20 outline-none transition-all text-slate-700 dark:text-slate-200 placeholder:text-slate-400 dark:placeholder:text-slate-600"
             />
           </div>
+          
+          <div className="relative">
+            <button 
+              onClick={() => setIsFilterDropdownOpen(!isFilterDropdownOpen)}
+              className="w-full flex items-center justify-between px-3 py-2 bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700 rounded-md text-[10px] font-bold uppercase tracking-widest text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700 transition-all shadow-sm"
+            >
+              <div className="flex items-center gap-2">
+                <Filter size={12} className="text-amber-500" />
+                <span>{activeTagFilter || 'All Tags'}</span>
+              </div>
+              <ChevronDown size={12} className={`transition-transform duration-200 ${isFilterDropdownOpen ? 'rotate-180' : ''}`} />
+            </button>
+
+            <AnimatePresence>
+              {isFilterDropdownOpen && (
+                <>
+                  <div className="fixed inset-0 z-40" onClick={() => setIsFilterDropdownOpen(false)} />
+                  <motion.div 
+                    initial={{ opacity: 0, y: -4, scale: 0.95 }}
+                    animate={{ opacity: 1, y: 0, scale: 1 }}
+                    exit={{ opacity: 0, y: -4, scale: 0.95 }}
+                    className="absolute left-0 right-0 top-full mt-2 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg shadow-2xl z-50 max-h-60 overflow-y-auto no-scrollbar"
+                  >
+                    <button 
+                      onClick={() => { setActiveTagFilter(null); setIsFilterDropdownOpen(false); }}
+                      className={`w-full flex items-center justify-between px-4 py-2.5 text-[10px] font-bold uppercase tracking-widest text-left transition-colors ${!activeTagFilter ? 'bg-amber-50 dark:bg-amber-900/20 text-amber-600' : 'text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-700'}`}
+                    >
+                      All Tags
+                      {!activeTagFilter && <Check size={12} />}
+                    </button>
+                    {allAvailableTags.map(tag => (
+                      <button 
+                        key={tag}
+                        onClick={() => { setActiveTagFilter(tag); setIsFilterDropdownOpen(false); }}
+                        className={`w-full flex items-center justify-between px-4 py-2.5 text-[10px] font-bold uppercase tracking-widest text-left transition-colors ${activeTagFilter === tag ? 'bg-amber-50 dark:bg-amber-900/20 text-amber-600' : 'text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-700'}`}
+                      >
+                        {tag}
+                        {activeTagFilter === tag && <Check size={12} />}
+                      </button>
+                    ))}
+                  </motion.div>
+                </>
+              )}
+            </AnimatePresence>
+          </div>
         </div>
 
-        <div className="flex-1 overflow-y-auto space-y-1 p-3">
+        <div className="flex-1 overflow-y-auto space-y-1 p-3 scrollbar-hide">
           {filteredNotes.map(note => (
             <button
               key={note.id}
               onClick={() => { flushSave(); setSelectedNoteId(note.id); }}
-              className={`w-full p-4 rounded-md text-left transition-all border ${
+              className={`w-full p-4 rounded-md text-left group transition-all border relative ${
                 selectedNoteId === note.id 
                   ? 'bg-amber-50 dark:bg-amber-900/20 border-amber-200 dark:border-amber-700/50 shadow-sm' 
                   : 'hover:bg-slate-50 dark:hover:bg-slate-800 border-transparent'
@@ -175,20 +317,42 @@ export const NotesApp: React.FC<NotesAppProps> = ({ notes, tasks, onSaveNotes, o
                 <span className="text-[10px] font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
                   {new Date(note.lastModified).toLocaleDateString([], { month: 'short', day: 'numeric' })}
                 </span>
+                {note.isPinned && (
+                  <div className="flex items-center gap-1 text-amber-500">
+                    <Pin size={10} className="fill-amber-500" />
+                    <span className="text-[9px] font-bold uppercase tracking-tighter">Pinned</span>
+                  </div>
+                )}
               </div>
-              <h3 className="font-semibold text-sm truncate text-slate-900 dark:text-slate-100 leading-tight">{note.title || 'Untitled Note'}</h3>
+              <h3 className="font-semibold text-sm truncate text-slate-900 dark:text-slate-100 leading-tight pr-4">
+                {note.title || 'Untitled Note'}
+              </h3>
               <p className="text-[11px] text-slate-600 dark:text-slate-500 line-clamp-1 mt-2 font-semibold italic opacity-70">
-                {note.content.replace(/<[^>]*>?/gm, ' ')}
+                {renderPreviewWithLinks(note.content.replace(/<[^>]*>?/gm, ' '))}
               </p>
+              
+              <div 
+                onClick={(e) => { e.stopPropagation(); togglePin(note.id); }}
+                className={`absolute right-2 top-1/2 -translate-y-1/2 p-1.5 rounded-md hover:bg-amber-100 dark:hover:bg-amber-900/40 transition-all opacity-0 group-hover:opacity-100 ${note.isPinned ? 'text-amber-600' : 'text-slate-400'}`}
+                title={note.isPinned ? "Unpin Note" : "Pin Note"}
+              >
+                {note.isPinned ? <PinOff size={14} /> : <Pin size={14} />}
+              </div>
             </button>
           ))}
+          {filteredNotes.length === 0 && (
+            <div className="py-12 text-center opacity-30">
+               <FileText size={24} className="mx-auto mb-2" />
+               <p className="text-[10px] font-bold uppercase tracking-widest">No notes found</p>
+            </div>
+          )}
         </div>
       </div>
 
       <div className="flex-1 flex flex-col bg-white dark:bg-slate-950 transition-colors">
         {activeNote ? (
           <>
-            <div className="p-2 border-b border-slate-200 dark:border-slate-800 flex items-center justify-between bg-white dark:bg-slate-900 z-30">
+            <div className="p-2 border-b border-slate-200 dark:border-slate-800 flex items-center justify-between bg-white dark:bg-slate-900 z-30 shadow-sm">
               <div className="flex items-center gap-0.5">
                 <ToolbarButton icon={Bold} onClick={() => execCommand('bold')} title="Bold" />
                 <ToolbarButton icon={Italic} onClick={() => execCommand('italic')} title="Italic" />
@@ -198,8 +362,16 @@ export const NotesApp: React.FC<NotesAppProps> = ({ notes, tasks, onSaveNotes, o
                 <div className="w-px h-6 bg-slate-200 dark:bg-slate-800 mx-1.5" />
                 
                 <ToolbarButton icon={List} onClick={() => execCommand('insertUnorderedList')} title="Bullet List" />
-                <ToolbarButton icon={CheckSquare} onClick={() => execCommand('insertHTML', '<div class="checklist-item" style="display: flex; align-items: center; gap: 8px;"><input type="checkbox" style="width: 14px; height: 14px; cursor: pointer;"><span>&nbsp;</span></div>')} title="Checklist" />
-                
+                <ToolbarButton icon={CheckSquare} onClick={() => execCommand('insertHTML', '<div class="checklist-item" style="display: flex; align-items: center; gap: 8px; margin-bottom: 4px;"><input type="checkbox" style="width: 14px; height: 14px; cursor: pointer;"><span>&nbsp;</span></div>')} title="Checklist" />
+                <ToolbarButton icon={LinkIcon} onClick={() => execCommand('createLink')} title="Insert Manual Link" />
+                <button 
+                  onClick={handleDetectLinks}
+                  className="flex items-center gap-1.5 px-2.5 py-1.5 text-[10px] font-bold uppercase tracking-widest text-indigo-600 hover:bg-indigo-50 dark:text-indigo-400 dark:hover:bg-indigo-900/20 rounded-lg transition-all border border-indigo-100 dark:border-indigo-900/50 ml-1"
+                  title="Auto Detect Hyperlinks"
+                >
+                  <Sparkles size={12} /> Detect Links
+                </button>
+
                 <div className="w-px h-6 bg-slate-200 dark:bg-slate-800 mx-1.5" />
 
                 <ToolbarButton icon={IndentDecrease} onClick={() => execCommand('outdent')} title="Reverse Indent" />
@@ -258,8 +430,15 @@ export const NotesApp: React.FC<NotesAppProps> = ({ notes, tasks, onSaveNotes, o
                   </AnimatePresence>
                 </div>
               </div>
-              <div className="flex items-center gap-4 pr-3 shrink-0">
-                {pendingContent !== null && <span className="text-[10px] font-bold uppercase tracking-widest text-amber-600 animate-pulse">Syncing</span>}
+              <div className="flex items-center gap-2 pr-3 shrink-0">
+                <button 
+                  onClick={() => togglePin(activeNote.id)}
+                  className={`p-2 rounded-lg transition-all ${activeNote.isPinned ? 'bg-amber-100 dark:bg-amber-900/40 text-amber-600 shadow-inner' : 'text-slate-500 hover:bg-slate-100 dark:hover:bg-slate-800'}`}
+                  title={activeNote.isPinned ? "Unpin Note" : "Pin Note"}
+                >
+                  <Pin size={18} className={activeNote.isPinned ? 'fill-amber-600' : ''} />
+                </button>
+                {pendingContent !== null && <span className="text-[10px] font-bold uppercase tracking-widest text-amber-600 animate-pulse bg-amber-50 dark:bg-amber-900/20 px-2 py-1 rounded">Syncing</span>}
                 <button onClick={() => handleDeleteNote(activeNote.id)} className="p-2 text-slate-500 hover:text-red-500 rounded-lg hover:bg-red-50 dark:hover:bg-red-950 transition-all">
                   <Trash2 size={16} />
                 </button>
@@ -272,12 +451,11 @@ export const NotesApp: React.FC<NotesAppProps> = ({ notes, tasks, onSaveNotes, o
                 value={activeNote.title}
                 onChange={(e) => handleUpdateNote(activeNote.id, { title: e.target.value })}
                 onBlur={flushSave}
-                placeholder="Title"
+                placeholder="Untitled Note"
                 className="w-full text-5xl font-bold bg-transparent border-none outline-none mb-6 placeholder:text-slate-200 dark:placeholder:text-slate-800 text-slate-900 dark:text-white tracking-tight"
               />
 
               <div className="space-y-4 mb-10">
-                {/* Project-based Tag Suggestions */}
                 <div className="flex flex-wrap items-center gap-2">
                    <div className="flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-widest text-slate-400 mr-2">
                      <Briefcase size={10} /> Project Tags:
@@ -293,13 +471,12 @@ export const NotesApp: React.FC<NotesAppProps> = ({ notes, tasks, onSaveNotes, o
                    ))}
                 </div>
 
-                {/* Active Tags and Input */}
                 <div className="flex flex-wrap items-center gap-3 relative">
                   <TagIcon size={14} className="text-slate-500 dark:text-slate-400" />
                   {activeNote.tags.map(tag => (
                     <span key={tag} className="flex items-center gap-2 px-3 py-1 rounded-full text-[10px] font-semibold uppercase tracking-wider bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300">
                       {tag}
-                      <button onClick={() => handleRemoveTag(tag)} className="opacity-40 hover:opacity-100 transition-opacity"><XIcon size={10} /></button>
+                      <button onClick={() => handleRemoveTag(tag)} className="opacity-40 hover:opacity-100 transition-opacity p-0.5"><XIcon size={10} /></button>
                     </span>
                   ))}
                   <input 
@@ -317,6 +494,7 @@ export const NotesApp: React.FC<NotesAppProps> = ({ notes, tasks, onSaveNotes, o
                 ref={editorRef}
                 contentEditable
                 onInput={handleContentChange}
+                onKeyDown={handleKeyDown}
                 onBlur={flushSave}
                 className="w-full h-auto min-h-[60vh] bg-transparent border-none outline-none text-lg leading-relaxed prose dark:prose-invert max-w-none pb-40 text-slate-800 dark:text-slate-100"
                 style={{ outline: 'none' }}

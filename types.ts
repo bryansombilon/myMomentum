@@ -45,6 +45,7 @@ export interface Note {
   content: string;
   lastModified: Date;
   tags: string[];
+  isPinned?: boolean;
 }
 
 export interface LinkEntry {

@@ -69,6 +69,15 @@
       .view-transition {
         transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
       }
+
+      /* Checklist Styles for ContentEditable */
+      .checklist-item input[type="checkbox"] {
+        margin-right: 8px;
+        accent-color: #4f46e5;
+      }
+      .checklist-item {
+        margin-bottom: 4px;
+      }
     </style>
   <script type="importmap">
 {
@@ -76,7 +85,7 @@
     "react-dom/": "https://aistudiocdn.com/react-dom@^19.2.1/",
     "@google/genai": "https://aistudiocdn.com/@google/genai@^1.32.0",
     "lucide-react": "https://aistudiocdn.com/lucide-react@^0.556.0",
-    "framer-motion": "https://aistudiocdn.com/framer-motion@^12.23.25",
+    "framer-motion": "https://aistudiocdn.com/framer-motion@^11.18.2",
     "react/": "https://aistudiocdn.com/react@^19.2.1/",
     "react": "https://aistudiocdn.com/react@^19.2.1"
   }

@@ -192,6 +192,7 @@ export const TaskList: React.FC<TaskListProps> = ({ tasks, setTasks, selectedTas
                     <option value="on-hold">On Hold</option>
                     <option value="under-review">Under Review</option>
                     <option value="follow-up">Follow Up</option>
+                    <option value="watcher">Watcher</option>
                     <option value="done">Done</option>
                 </select>
             </div>
@@ -258,9 +259,9 @@ export const TaskList: React.FC<TaskListProps> = ({ tasks, setTasks, selectedTas
               <TaskItem key={task.id} task={task} isSelected={selectedTaskId === task.id} onSelect={onSelectTask} isDragEnabled={false} />
             ))}
             {filteredTasks.length === 0 && (
-                <div className="flex flex-col items-center justify-center py-12 text-slate-400 dark:text-slate-600">
-                    <Search size={24} className="mb-2 opacity-20" />
-                    <p className="text-[11px] font-bold uppercase tracking-widest">No matching results</p>
+                <div className="flex flex-col items-center justify-center py-12 text-slate-400 dark:text-slate-600 text-center">
+                    <Search size={24} className="mb-2 opacity-20 mx-auto" />
+                    <p className="text-[11px] font-bold uppercase tracking-widest">No matching results found</p>
                 </div>
             )}
           </div>
