@@ -88,12 +88,12 @@ const TaskItem: React.FC<TaskItemProps> = React.memo(({
   `;
 
   return (
+    /* Fix: Removed invalid dragEnabled prop from Reorder.Item. Draggability is managed via dragListener={false} and the conditional drag handle controls. */
     <Reorder.Item
       value={task}
       id={task.id}
       dragListener={false}
       dragControls={controls}
-      dragEnabled={isDragEnabled}
       layoutId={task.id}
       className={containerClasses}
       initial={{ opacity: 0, y: 10 }}
