@@ -2,7 +2,8 @@
 import React from 'react';
 import { Task, Message, Priority } from '../types';
 import { PROJECT_CONFIG, STATUS_CONFIG, PRIORITY_CONFIG } from '../constants';
-import { ExternalLink, Calendar, CheckCircle2, Trash2, Briefcase, Link as LinkIcon, Pencil, AlertTriangle, Clock, Check, Flag } from 'lucide-react';
+// Added Layout to the imports from lucide-react
+import { ExternalLink, Calendar, Trash2, Briefcase, Link as LinkIcon, Pencil, AlertTriangle, Clock, Check, Flag, ChevronRight, Layout } from 'lucide-react';
 import { ChatSection } from './ChatSection';
 
 interface TaskDetailProps {
@@ -15,282 +16,151 @@ interface TaskDetailProps {
   onNavigateToTask?: (taskId: string) => void;
 }
 
-// Sub-component for metadata items to ensure consistent layout and styling
-interface MetadataItemProps {
-  icon: React.ElementType;
-  label: string;
-  children: React.ReactNode;
-  iconBgClass?: string;
-  iconColorClass?: string;
-  className?: string;
-  onClick?: () => void;
-}
-
-const MetadataItem: React.FC<MetadataItemProps> = ({ 
-  icon: Icon, 
-  label, 
-  children, 
-  iconBgClass = "bg-slate-100 dark:bg-slate-800", 
-  iconColorClass = "text-slate-400 dark:text-slate-400",
-  className = "",
-  onClick
-}) => (
-  <div 
-    onClick={onClick}
-    className={`
-      flex items-center gap-3 p-3 rounded-xl 
-      bg-white/50 dark:bg-slate-900/50 
-      border border-slate-200 dark:border-slate-800/60 
-      transition-all duration-200
-      ${onClick 
-        ? 'cursor-pointer hover:border-indigo-400/50 dark:hover:border-indigo-500/50 hover:bg-white dark:hover:bg-slate-900 group shadow-sm hover:shadow-md hover:scale-[1.02] active:scale-95' 
-        : 'hover:border-slate-300 dark:hover:border-slate-700 hover:bg-white/80 dark:hover:bg-slate-900/80'} 
-      ${className}
-    `}
-  >
-    <div className={`p-2 rounded-lg flex-shrink-0 transition-colors ${iconBgClass} ${iconColorClass}`}>
-      <Icon size={18} />
-    </div>
-    <div className="min-w-0 flex-1">
-      <div className="text-[10px] font-semibold text-slate-500 uppercase tracking-wider mb-0.5">{label}</div>
-      <div className="text-sm font-medium text-slate-900 dark:text-slate-200 flex items-center gap-2 truncate">
-        {children}
-      </div>
-    </div>
-  </div>
-);
-
-export const TaskDetail: React.FC<TaskDetailProps> = ({ task, onUpdateTask, onStatusChange, onPriorityChange, onDeleteTask, onEditTask, onNavigateToTask }) => {
+export const TaskDetail: React.FC<TaskDetailProps> = ({ task, onUpdateTask, onStatusChange, onPriorityChange, onDeleteTask, onEditTask }) => {
   if (!task) {
     return (
-      <div className="flex-1 flex flex-col items-center justify-center bg-slate-50 dark:bg-slate-950 text-slate-400 dark:text-slate-500 select-none transition-colors">
-        <div className="w-24 h-24 bg-white dark:bg-slate-900 rounded-full flex items-center justify-center mb-6 shadow-inner border border-slate-200 dark:border-slate-800">
-           <CheckCircle2 size={40} className="opacity-20" />
+      <div className="flex-1 flex flex-col items-center justify-center bg-slate-50 dark:bg-slate-950 p-12 text-center transition-colors">
+        <div className="w-32 h-32 bg-white dark:bg-slate-900 rounded-[2.5rem] flex items-center justify-center mb-8 border border-slate-100 dark:border-slate-800 shadow-2xl shadow-indigo-500/5">
+          <Layout size={48} className="text-slate-200 dark:text-slate-800" />
         </div>
-        <h2 className="text-xl font-semibold mb-2 text-slate-500 dark:text-slate-400">No Task Selected</h2>
-        <p className="text-sm">Select a task from the list to view details.</p>
+        <h2 className="text-2xl font-black text-slate-900 dark:text-white tracking-tight">Select a Task</h2>
+        <p className="text-slate-500 dark:text-slate-400 mt-2 max-w-xs text-sm">Pick an item from the organizer to start tracking progress and adding updates.</p>
       </div>
     );
   }
 
   const project = PROJECT_CONFIG[task.project];
-  const deadlineDate = new Date(task.deadline);
-  
-  // Deadline Logic
-  const now = new Date();
-  // Reset time for accurate date comparison
-  const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
-  const deadlineDay = new Date(deadlineDate.getFullYear(), deadlineDate.getMonth(), deadlineDate.getDate());
-  
-  const isOverdue = deadlineDay < today && task.status !== 'done';
-  
-  // Due soon logic: not overdue, not done, and within next 3 days
-  const threeDaysFromNow = new Date(today);
-  threeDaysFromNow.setDate(today.getDate() + 3);
-  const isDueSoon = !isOverdue && task.status !== 'done' && deadlineDay <= threeDaysFromNow && deadlineDay >= today;
-
-  const priorityConfig = PRIORITY_CONFIG[task.priority] || PRIORITY_CONFIG['not-urgent'];
   const isUrgent = task.priority === 'urgent';
-
-  const handleDeleteClick = (e: React.MouseEvent) => {
-    e.stopPropagation();
-    if (window.confirm('Are you sure you want to permanently delete this task?')) {
-      onDeleteTask(task.id);
-    }
-  };
+  const statusConfig = STATUS_CONFIG[task.status];
 
   return (
-    <div className={`flex-1 h-full flex flex-col overflow-hidden transition-all duration-500 relative border-l-4 ${
-      isUrgent 
-        ? 'bg-red-50/10 dark:bg-red-950/5 border-red-500/40 shadow-[inset_0_0_80px_rgba(239,68,68,0.02)]' 
-        : 'bg-slate-50 dark:bg-slate-950 border-transparent'
-    }`}>
-      {/* Header Section */}
-      <div className={`p-4 md:p-6 xl:p-8 border-b border-slate-200 dark:border-slate-800 relative shrink-0 transition-colors ${
-        isUrgent ? 'bg-red-500/5 dark:bg-red-500/5' : 'bg-white/30 dark:bg-slate-900/30'
-      }`}>
-        {/* Background Accent */}
-        <div className={`absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-transparent ${
-          isUrgent ? 'via-red-500' : 'via-slate-200 dark:via-slate-800'
-        } to-transparent ${isUrgent ? 'opacity-100 scale-x-110' : 'opacity-50'} transition-all duration-700`}></div>
-        
-        <div className="flex flex-col xl:flex-row xl:items-start justify-between gap-4 md:gap-6 mb-5 md:mb-8">
-            {/* Title & Description (Left Side) */}
-            <div className="flex-1 min-w-0 space-y-2 md:space-y-3">
-                <div className="flex items-start gap-3">
-                   <h1 className="text-xl md:text-2xl xl:text-3xl font-bold text-slate-900 dark:text-white tracking-tight leading-tight break-words flex items-center gap-3">
-                     {isUrgent && <AlertTriangle className="text-red-500 animate-pulse hidden md:block" size={24} />}
-                     {task.title}
-                   </h1>
-                </div>
-
-                {/* Quick Actions */}
-                <div className="flex items-center gap-2 pt-1 pb-1">
-                  <button
-                    onClick={() => onEditTask(task)}
-                    className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-slate-600 dark:text-slate-300 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-md hover:bg-slate-50 dark:hover:bg-slate-700 hover:border-slate-300 dark:hover:border-slate-600 transition-colors shadow-sm"
-                  >
-                    <Pencil size={12} />
-                    Edit Task
-                  </button>
-                  
-                  {task.status !== 'done' && (
-                    <button
-                      onClick={() => onStatusChange(task.id, 'done')}
-                      className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-emerald-600 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-500/10 border border-emerald-200 dark:border-emerald-500/20 rounded-md hover:bg-emerald-100 dark:hover:bg-emerald-500/20 hover:border-emerald-300 dark:hover:border-emerald-500/30 transition-colors shadow-sm"
-                    >
-                      <Check size={12} />
-                      Mark as Done
-                    </button>
-                  )}
-                </div>
-
-                <p className="text-slate-600 dark:text-slate-400 text-sm md:text-base leading-relaxed line-clamp-3 md:line-clamp-none">
-                  {task.description}
-                </p>
+    <div className="flex-1 h-full flex flex-col bg-white dark:bg-slate-950 overflow-hidden transition-colors">
+      {/* Header Area */}
+      <div className="p-6 lg:p-10 border-b border-slate-100 dark:border-slate-900 space-y-8">
+        <div className="flex flex-col lg:flex-row lg:items-start justify-between gap-6">
+          <div className="space-y-4 max-w-2xl">
+            <div className="flex items-center gap-3">
+              <span className="flex items-center gap-2 px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest border" 
+                    style={{ backgroundColor: `${project.color}10`, borderColor: `${project.color}30`, color: project.color }}>
+                <Briefcase size={12} />
+                {project.name}
+              </span>
+              {isUrgent && (
+                <span className="flex items-center gap-1.5 px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest bg-red-500 text-white shadow-lg shadow-red-500/20 animate-pulse">
+                  <AlertTriangle size={12} /> Urgent
+                </span>
+              )}
             </div>
 
-            {/* Actions & Status (Right Side) */}
-            <div className="flex flex-col items-start xl:items-end gap-3 flex-shrink-0 w-full xl:w-auto">
-                <div className="flex flex-wrap items-center gap-2 md:gap-3 w-full xl:w-auto">
-                    {/* Status Buttons */}
-                    <div className="flex-1 xl:flex-none flex items-center bg-white/50 dark:bg-slate-900/80 rounded-lg p-1 border border-slate-200 dark:border-slate-800 shadow-sm backdrop-blur-sm overflow-x-auto max-w-full no-scrollbar transition-colors">
-                        {(['todo', 'in-progress', 'under-review', 'on-hold', 'follow-up', 'done'] as const).map((s) => {
-                            const config = STATUS_CONFIG[s];
-                            const isActive = task.status === s;
-                            return (
-                                <button
-                                    key={s}
-                                    onClick={() => onStatusChange(task.id, s)}
-                                    className={`
-                                      px-2.5 py-1.5 md:px-3 text-[10px] md:text-xs font-bold rounded-md transition-all capitalize tracking-wide whitespace-nowrap flex-shrink-0
-                                      ${isActive 
-                                        ? `${config.color} ${config.text} shadow-md scale-105` 
-                                        : 'text-slate-500 dark:text-slate-500 hover:text-slate-700 dark:hover:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800'}
-                                    `}
-                                >
-                                    {config.label}
-                                </button>
-                            );
-                        })}
-                    </div>
+            <h1 className="text-3xl lg:text-4xl font-black text-slate-900 dark:text-white tracking-tight leading-none">
+              {task.title}
+            </h1>
+            
+            <p className="text-slate-500 dark:text-slate-400 text-lg leading-relaxed">
+              {task.description}
+            </p>
+          </div>
 
-                    {/* Divider */}
-                    <div className="w-px h-8 bg-slate-200 dark:bg-slate-800 hidden md:block"></div>
-                    
-                    {/* Delete Action */}
-                    <div className="flex items-center gap-1 ml-auto xl:ml-0">
-                        <button
-                            onClick={handleDeleteClick}
-                            className="p-2.5 text-slate-500 hover:text-red-600 dark:hover:text-red-400 hover:bg-red-50 dark:hover:bg-red-500/10 rounded-xl border border-transparent hover:border-red-200 dark:hover:border-red-500/20 transition-all shadow-sm hover:shadow-md active:scale-90"
-                            title="Delete Task"
-                        >
-                            <Trash2 size={20} />
-                        </button>
-                    </div>
-                </div>
-            </div>
+          <div className="flex items-center gap-3 shrink-0">
+             <button 
+              onClick={() => onEditTask(task)}
+              className="p-3 bg-slate-50 dark:bg-slate-800 text-slate-500 hover:text-indigo-600 rounded-2xl border border-slate-200 dark:border-slate-700 transition-all shadow-sm"
+              title="Edit Task"
+            >
+              <Pencil size={20} />
+            </button>
+            <button 
+              onClick={() => { if(window.confirm('Delete this task?')) onDeleteTask(task.id); }}
+              className="p-3 bg-slate-50 dark:bg-slate-800 text-slate-400 hover:text-red-500 rounded-2xl border border-slate-200 dark:border-slate-700 transition-all shadow-sm"
+              title="Delete Task"
+            >
+              <Trash2 size={20} />
+            </button>
+          </div>
         </div>
 
-        {/* Refactored Metadata Grid: 4 Columns on XL for clean row */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-3 md:gap-4">
-            {/* Project Card */}
-            <MetadataItem 
-                icon={Briefcase} 
-                label="Project"
-            >
-                <span 
-                    className="w-2 h-2 rounded-full shadow-[0_0_8px_currentColor] flex-shrink-0" 
-                    style={{ backgroundColor: project.color, color: project.color }} 
-                />
-                <span className="truncate">{project.name}</span>
-            </MetadataItem>
+        {/* Tracker Metadata Bar */}
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+          <DetailStat 
+            icon={Clock} 
+            label="Current Status" 
+            value={statusConfig.label} 
+            colorClass={statusConfig.color}
+            isPill
+          />
+          <DetailStat 
+            icon={Calendar} 
+            label="Deadline" 
+            value={new Date(task.deadline).toLocaleDateString([], { month: 'short', day: 'numeric', year: 'numeric' })} 
+          />
+          <DetailStat 
+            icon={Flag} 
+            label="Priority" 
+            value={isUrgent ? 'Urgent' : 'Standard'} 
+            onClick={() => onPriorityChange(task.id, isUrgent ? 'not-urgent' : 'urgent')}
+            isInteractive
+          />
+          <DetailStat 
+            icon={LinkIcon} 
+            label="Reference" 
+            value={task.clickupLink ? 'ClickUp' : 'None'} 
+            onClick={task.clickupLink ? () => window.open(task.clickupLink, '_blank') : undefined}
+            isInteractive={!!task.clickupLink}
+          />
+        </div>
 
-            {/* Priority Card - Enhanced Prominence & Toggle Interaction */}
-            <MetadataItem 
-                icon={Flag}
-                label="Priority"
-                onClick={() => onPriorityChange(task.id, isUrgent ? 'not-urgent' : 'urgent')}
-                className={isUrgent 
-                  ? "bg-red-100 dark:bg-red-900/30 border-red-300 dark:border-red-700 shadow-[0_0_15px_rgba(239,68,68,0.15)] dark:shadow-none" 
-                  : "hover:bg-slate-100/50"}
-                iconBgClass={isUrgent 
-                  ? "bg-red-600 text-white shadow-lg shadow-red-600/40 ring-2 ring-red-100 dark:ring-red-900 scale-110" 
-                  : "bg-slate-200 dark:bg-slate-700"}
-                iconColorClass={isUrgent ? "text-white" : "text-slate-500 dark:text-slate-400"}
-            >
-                <span className={`truncate uppercase tracking-wide flex-1 ${
-                  isUrgent 
-                    ? "text-lg font-black text-red-700 dark:text-red-400 drop-shadow-sm" 
-                    : "font-bold text-slate-600 dark:text-slate-400"
-                }`}>
-                    {priorityConfig.label}
-                </span>
-                <span className="text-[10px] text-slate-400 dark:text-slate-500 opacity-0 group-hover:opacity-100 transition-opacity uppercase font-semibold">
-                  {isUrgent ? 'Set Low' : 'Set High'}
-                </span>
-            </MetadataItem>
-
-            {/* Deadline Card */}
-            <MetadataItem 
-                icon={Calendar} 
-                label={isOverdue ? 'Deadline (Overdue)' : isDueSoon ? 'Deadline (Soon)' : 'Deadline'}
-                iconBgClass={
-                  isOverdue ? 'bg-red-100 dark:bg-red-500/10' : 
-                  isDueSoon ? 'bg-amber-100 dark:bg-amber-500/10' : 
-                  'bg-slate-100 dark:bg-slate-800'
-                }
-                iconColorClass={
-                  isOverdue ? 'text-red-600 dark:text-red-400' : 
-                  isDueSoon ? 'text-amber-600 dark:text-amber-400' :
-                  'text-slate-400 dark:text-slate-400'
-                }
-            >
-                <span className={`truncate ${
-                  isOverdue ? 'text-red-600 dark:text-red-400 font-bold' : 
-                  isDueSoon ? 'text-amber-600 dark:text-amber-400 font-bold' : 
-                  ''
-                }`}>
-                    {deadlineDate.toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' })}
-                </span>
-                {isOverdue && (
-                    <span className="ml-auto text-[10px] bg-red-100 dark:bg-red-500/20 text-red-600 dark:text-red-400 px-1.5 py-0.5 rounded uppercase font-bold tracking-wide">
-                        Overdue
-                    </span>
-                )}
-                {isDueSoon && (
-                    <span className="ml-auto text-[10px] bg-amber-100 dark:bg-amber-500/20 text-amber-600 dark:text-amber-400 px-1.5 py-0.5 rounded uppercase font-bold tracking-wide flex items-center gap-1">
-                        <Clock size={10} /> Soon
-                    </span>
-                )}
-            </MetadataItem>
-
-            {/* Reference/Link Card */}
-            <MetadataItem 
-                icon={LinkIcon} 
-                label="Reference"
-                onClick={task.clickupLink ? () => window.open(task.clickupLink, '_blank') : undefined}
-                iconBgClass="group-hover:bg-indigo-50 dark:group-hover:bg-indigo-500/10 transition-colors"
-                iconColorClass="group-hover:text-indigo-600 dark:group-hover:text-indigo-400 transition-colors"
-            >
-                 {task.clickupLink ? (
-                    <>
-                      <span className="truncate text-indigo-600 dark:text-indigo-400 group-hover:underline">Open in ClickUp</span>
-                      <ExternalLink size={12} className="text-indigo-400 flex-shrink-0" />
-                    </>
-                ) : (
-                    <span className="text-slate-400 dark:text-slate-500 italic">No link attached</span>
-                )}
-            </MetadataItem>
+        {/* Status Quick Switcher */}
+        <div className="flex flex-wrap items-center gap-2 p-1.5 bg-slate-50 dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 overflow-x-auto no-scrollbar">
+           {(['todo', 'in-progress', 'under-review', 'on-hold', 'done'] as const).map(s => (
+             <button
+                key={s}
+                onClick={() => onStatusChange(task.id, s)}
+                className={`flex-1 min-w-[100px] px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${
+                  task.status === s 
+                    ? `${STATUS_CONFIG[s].color} ${STATUS_CONFIG[s].text} shadow-lg shadow-indigo-500/10` 
+                    : 'text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 hover:bg-white dark:hover:bg-slate-800'
+                }`}
+             >
+               {STATUS_CONFIG[s].label}
+             </button>
+           ))}
         </div>
       </div>
 
-      {/* Content Body: Chat/Updates */}
-      <div className={`flex-1 p-4 md:p-6 lg:p-8 min-h-0 transition-colors ${
-        isUrgent ? 'bg-gradient-to-b from-red-50/10 to-transparent dark:from-red-950/5 dark:to-transparent' : 'bg-gradient-to-b from-slate-50 to-white dark:from-slate-950 dark:to-slate-900/50'
-      }`}>
+      {/* Tracking Content / Chat */}
+      <div className="flex-1 min-h-0 bg-slate-50 dark:bg-slate-950 p-6 lg:p-10">
         <ChatSection task={task} onUpdateTask={onUpdateTask} />
       </div>
     </div>
   );
 };
+
+interface DetailStatProps {
+  icon: React.ElementType;
+  label: string;
+  value: string;
+  colorClass?: string;
+  isPill?: boolean;
+  isInteractive?: boolean;
+  onClick?: () => void;
+}
+
+const DetailStat: React.FC<DetailStatProps> = ({ icon: Icon, label, value, colorClass, isPill, isInteractive, onClick }) => (
+  <div 
+    onClick={onClick}
+    className={`p-4 rounded-2xl border transition-all ${
+      onClick ? 'cursor-pointer hover:bg-white dark:hover:bg-slate-900 hover:shadow-md' : 'bg-white/40 dark:bg-slate-900/40'
+    } border-slate-100 dark:border-slate-800 flex items-center gap-4`}
+  >
+    <div className={`p-2.5 rounded-xl bg-slate-100 dark:bg-slate-800 text-slate-400 ${onClick ? 'group-hover:text-indigo-600' : ''}`}>
+      <Icon size={18} />
+    </div>
+    <div className="min-w-0">
+      <div className="text-[9px] font-black uppercase tracking-widest text-slate-400 mb-0.5">{label}</div>
+      <div className={`text-sm font-bold truncate ${isPill ? `${colorClass} px-2 py-0.5 rounded text-white text-[10px] uppercase` : 'text-slate-700 dark:text-slate-200'}`}>
+        {value}
+      </div>
+    </div>
+    {isInteractive && <ChevronRight size={14} className="ml-auto text-slate-300" />}
+  </div>
+);
