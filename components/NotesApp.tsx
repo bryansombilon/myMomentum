@@ -1,12 +1,12 @@
 
 import React, { useState, useMemo, useRef, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Note, Task } from '../types';
+import { Note, Task, ProjectType } from '../types';
 import { PROJECT_CONFIG } from '../constants';
 import { 
   Plus, Trash2, Home, Search as SearchIcon, 
   FileText, Bold, Italic, Underline, Palette, CheckSquare, Tag as TagIcon, X as XIcon,
-  Strikethrough, List, IndentIncrease, IndentDecrease, ChevronDown
+  Strikethrough, List, IndentIncrease, IndentDecrease, ChevronDown, Briefcase
 } from 'lucide-react';
 
 interface NotesAppProps {
@@ -46,6 +46,12 @@ export const NotesApp: React.FC<NotesAppProps> = ({ notes, tasks, onSaveNotes, o
   }, [notes, searchQuery]);
 
   const activeNote = notes.find(n => n.id === selectedNoteId);
+
+  // Suggested tags derived from active projects in TaskFlow
+  const projectTags = useMemo(() => {
+    const projects = Object.values(ProjectType);
+    return projects;
+  }, []);
 
   useEffect(() => {
     if (editorRef.current && activeNote) {
@@ -92,6 +98,16 @@ export const NotesApp: React.FC<NotesAppProps> = ({ notes, tasks, onSaveNotes, o
       const updatedNotes = notes.filter(n => n.id !== id);
       onSaveNotes(updatedNotes);
       if (selectedNoteId === id) setSelectedNoteId(updatedNotes[0]?.id || null);
+    }
+  };
+
+  const toggleTag = (tag: string) => {
+    if (!activeNote) return;
+    const cleanTag = tag.trim();
+    if (activeNote.tags.includes(cleanTag)) {
+      handleUpdateNote(activeNote.id, { tags: activeNote.tags.filter(t => t !== cleanTag) });
+    } else {
+      handleUpdateNote(activeNote.id, { tags: [...activeNote.tags, cleanTag] });
     }
   };
 
@@ -257,25 +273,44 @@ export const NotesApp: React.FC<NotesAppProps> = ({ notes, tasks, onSaveNotes, o
                 onChange={(e) => handleUpdateNote(activeNote.id, { title: e.target.value })}
                 onBlur={flushSave}
                 placeholder="Title"
-                className="w-full text-5xl font-bold bg-transparent border-none outline-none mb-10 placeholder:text-slate-200 dark:placeholder:text-slate-800 text-slate-900 dark:text-white tracking-tight"
+                className="w-full text-5xl font-bold bg-transparent border-none outline-none mb-6 placeholder:text-slate-200 dark:placeholder:text-slate-800 text-slate-900 dark:text-white tracking-tight"
               />
 
-              <div className="flex flex-wrap items-center gap-3 mb-12 relative">
-                <TagIcon size={14} className="text-slate-500 dark:text-slate-400" />
-                {activeNote.tags.map(tag => (
-                  <span key={tag} className="flex items-center gap-2 px-3 py-1 rounded-full text-[10px] font-semibold uppercase tracking-wider bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300">
-                    {tag}
-                    <button onClick={() => handleRemoveTag(tag)} className="opacity-40 hover:opacity-100 transition-opacity"><XIcon size={10} /></button>
-                  </span>
-                ))}
-                <input 
-                  type="text"
-                  placeholder="Add Tag"
-                  value={newTagInput}
-                  onChange={(e) => setNewTagInput(e.target.value)}
-                  onKeyDown={(e) => e.key === 'Enter' && addTag(newTagInput)}
-                  className="bg-transparent border-none outline-none text-[10px] font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400 w-24 focus:text-slate-800 dark:focus:text-slate-200 transition-colors"
-                />
+              <div className="space-y-4 mb-10">
+                {/* Project-based Tag Suggestions */}
+                <div className="flex flex-wrap items-center gap-2">
+                   <div className="flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-widest text-slate-400 mr-2">
+                     <Briefcase size={10} /> Project Tags:
+                   </div>
+                   {projectTags.map(proj => (
+                     <button
+                       key={proj}
+                       onClick={() => toggleTag(proj)}
+                       className={`px-2 py-0.5 rounded border text-[9px] font-bold uppercase tracking-tighter transition-all ${activeNote.tags.includes(proj) ? 'bg-indigo-600 border-indigo-500 text-white shadow-sm' : 'bg-slate-100 dark:bg-slate-800 border-slate-200 dark:border-slate-700 text-slate-500 hover:border-indigo-400'}`}
+                     >
+                       {proj}
+                     </button>
+                   ))}
+                </div>
+
+                {/* Active Tags and Input */}
+                <div className="flex flex-wrap items-center gap-3 relative">
+                  <TagIcon size={14} className="text-slate-500 dark:text-slate-400" />
+                  {activeNote.tags.map(tag => (
+                    <span key={tag} className="flex items-center gap-2 px-3 py-1 rounded-full text-[10px] font-semibold uppercase tracking-wider bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300">
+                      {tag}
+                      <button onClick={() => handleRemoveTag(tag)} className="opacity-40 hover:opacity-100 transition-opacity"><XIcon size={10} /></button>
+                    </span>
+                  ))}
+                  <input 
+                    type="text"
+                    placeholder="Add custom tag..."
+                    value={newTagInput}
+                    onChange={(e) => setNewTagInput(e.target.value)}
+                    onKeyDown={(e) => e.key === 'Enter' && addTag(newTagInput)}
+                    className="bg-transparent border-none outline-none text-[10px] font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400 w-32 focus:text-slate-800 dark:focus:text-slate-200 transition-colors"
+                  />
+                </div>
               </div>
 
               <div 

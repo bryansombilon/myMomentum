@@ -1,3 +1,4 @@
+
 import { ProjectType, Task, Project, Priority, Note, LinkEntry } from './types';
 
 export const PROJECT_CONFIG: Record<ProjectType, Project> = {
@@ -7,6 +8,7 @@ export const PROJECT_CONFIG: Record<ProjectType, Project> = {
   [ProjectType.SOURCE_TO_SOLD]: { name: ProjectType.SOURCE_TO_SOLD, color: '#F97316' }, 
   [ProjectType.SUPPLIFY]: { name: ProjectType.SUPPLIFY, color: '#3B82F6' }, 
   [ProjectType.EXECUTIVE_SEARCH]: { name: ProjectType.EXECUTIVE_SEARCH, color: '#22C55E' }, 
+  [ProjectType.PODCAST]: { name: ProjectType.PODCAST, color: '#F43F5E' }, 
 };
 
 export const STATUS_CONFIG = {
@@ -15,6 +17,7 @@ export const STATUS_CONFIG = {
   'on-hold': { label: 'On Hold', color: 'bg-amber-600', text: 'text-white' },
   'under-review': { label: 'Under Review', color: 'bg-fuchsia-600', text: 'text-white' },
   'follow-up': { label: 'Follow Up', color: 'bg-violet-600', text: 'text-white' },
+  'watcher': { label: 'Watcher', color: 'bg-rose-600', text: 'text-white' },
   'done': { label: 'Done', color: 'bg-emerald-600', text: 'text-white' }
 };
 

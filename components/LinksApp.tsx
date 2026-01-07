@@ -1,10 +1,11 @@
+
 import React, { useState, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { LinkEntry } from '../types';
 import { 
   Plus, Search, ExternalLink, Copy, Trash2, Home, 
   Globe, Wrench, Trophy, Rocket, Building2, Package, Layers, Users,
-  Check, X, Pencil
+  Check, X, Pencil, Mic
 } from 'lucide-react';
 
 interface LinksAppProps {
@@ -13,10 +14,10 @@ interface LinksAppProps {
   onGoHome: () => void;
 }
 
-const CATEGORIES = ['Awards', 'Makers & Movers', 'Alcott Global', 'Source to Sold', 'Supplify', 'Executive Search', 'Tools'] as const;
+const CATEGORIES = ['Awards', 'Makers & Movers', 'Alcott Global', 'Source to Sold', 'Supplify', 'Executive Search', 'Podcast', 'Tools'] as const;
 const CATEGORY_COLORS: Record<string, string> = {
   'Awards': 'bg-yellow-500', 'Makers & Movers': 'bg-purple-600', 'Alcott Global': 'bg-teal-500',
-  'Source to Sold': 'bg-orange-500', 'Supplify': 'bg-blue-500', 'Executive Search': 'bg-emerald-600', 'Tools': 'bg-slate-500',
+  'Source to Sold': 'bg-orange-500', 'Supplify': 'bg-blue-500', 'Executive Search': 'bg-emerald-600', 'Podcast': 'bg-rose-500', 'Tools': 'bg-slate-500',
 };
 
 export const LinksApp: React.FC<LinksAppProps> = ({ links, onSaveLinks, onGoHome }) => {
@@ -78,6 +79,7 @@ export const LinksApp: React.FC<LinksAppProps> = ({ links, onSaveLinks, onGoHome
       case 'Source to Sold': return <Package size={14} />;
       case 'Supplify': return <Layers size={14} />;
       case 'Executive Search': return <Users size={14} />;
+      case 'Podcast': return <Mic size={14} />;
       case 'Tools': return <Wrench size={14} />;
       default: return <Globe size={14} />;
     }
