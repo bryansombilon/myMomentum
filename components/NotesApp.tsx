@@ -5,7 +5,7 @@ import { Note, Task, ProjectType } from '../types';
 import { PROJECT_CONFIG } from '../constants';
 import { 
   Search, Plus, Trash2, Home, Search as SearchIcon, 
-  FileText, Clock, Bold, Italic, Underline,
+  FileText, Clock, Bold, Italic, Underline, Strikethrough,
   List, ListOrdered, Quote, Share2, Palette, CheckSquare, ChevronDown, RemoveFormatting, Tag as TagIcon, X as XIcon, Languages,
   ChevronUp
 } from 'lucide-react';
@@ -216,6 +216,20 @@ export const NotesApp: React.FC<NotesAppProps> = ({ notes, tasks, onSaveNotes, o
     document.execCommand(command, false, value);
     handleContentChange();
     if (editorRef.current) editorRef.current.focus();
+  };
+
+  const handleEditorClick = (e: React.MouseEvent) => {
+    const target = e.target as HTMLElement;
+    // Handle checklist checkbox toggling to persist state in HTML
+    if (target.classList.contains('checklist-checkbox')) {
+      const checkbox = target as HTMLInputElement;
+      if (checkbox.checked) {
+        checkbox.setAttribute('checked', 'checked');
+      } else {
+        checkbox.removeAttribute('checked');
+      }
+      handleContentChange();
+    }
   };
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
@@ -484,9 +498,16 @@ export const NotesApp: React.FC<NotesAppProps> = ({ notes, tasks, onSaveNotes, o
                 <ToolbarButton icon={Bold} onClick={() => execCommand('bold')} onMouseDown={(e) => e.preventDefault()} title="Bold (Ctrl+B)" />
                 <ToolbarButton icon={Italic} onClick={() => execCommand('italic')} onMouseDown={(e) => e.preventDefault()} title="Italic (Ctrl+I)" />
                 <ToolbarButton icon={Underline} onClick={() => execCommand('underline')} onMouseDown={(e) => e.preventDefault()} title="Underline (Ctrl+U)" />
+                <ToolbarButton icon={Strikethrough} onClick={() => execCommand('strikethrough')} onMouseDown={(e) => e.preventDefault()} title="Crossout" />
                 <div className="w-px h-6 bg-slate-200 dark:bg-slate-800 mx-1" />
                 <ToolbarButton icon={List} onClick={() => execCommand('insertUnorderedList')} onMouseDown={(e) => e.preventDefault()} title="Bullet List" />
                 <ToolbarButton icon={ListOrdered} onClick={() => execCommand('insertOrderedList')} onMouseDown={(e) => e.preventDefault()} title="Numbered List" />
+                <ToolbarButton 
+                  icon={CheckSquare} 
+                  onClick={() => execCommand('insertHTML', '<div class="checklist-item"><input type="checkbox" class="checklist-checkbox"><span>&nbsp;</span></div>')} 
+                  onMouseDown={(e) => e.preventDefault()} 
+                  title="Checklist" 
+                />
                 <ToolbarButton icon={Quote} onClick={() => execCommand('formatBlock', 'blockquote')} onMouseDown={(e) => e.preventDefault()} title="Quote" />
                 
                 <div className="w-px h-6 bg-slate-200 dark:bg-slate-800 mx-1" />
@@ -716,6 +737,7 @@ export const NotesApp: React.FC<NotesAppProps> = ({ notes, tasks, onSaveNotes, o
                 contentEditable
                 spellCheck={spellcheckEnabled}
                 onInput={handleContentChange}
+                onClick={handleEditorClick}
                 onKeyDown={handleKeyDown}
                 onPaste={handlePaste}
                 onBlur={flushSave}
@@ -814,6 +836,24 @@ export const NotesApp: React.FC<NotesAppProps> = ({ notes, tasks, onSaveNotes, o
                 }
                 .prose div {
                   margin-bottom: 0.5em;
+                }
+                .checklist-item {
+                  display: flex;
+                  align-items: flex-start;
+                  gap: 0.75rem;
+                  margin-bottom: 0.5rem;
+                }
+                .checklist-checkbox {
+                  margin-top: 0.45rem;
+                  width: 1.25rem;
+                  height: 1.25rem;
+                  cursor: pointer;
+                  accent-color: #4f46e5;
+                  flex-shrink: 0;
+                }
+                .checklist-checkbox:checked + span {
+                  text-decoration: line-through;
+                  opacity: 0.5;
                 }
               `}</style>
             </div>
