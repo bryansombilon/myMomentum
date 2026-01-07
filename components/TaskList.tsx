@@ -38,11 +38,11 @@ const TaskItem: React.FC<TaskItemProps> = React.memo(({
         <div className="flex items-center justify-between gap-2">
           <div className="flex items-center gap-1.5 overflow-hidden">
             <div className="w-1.5 h-1.5 rounded-full" style={{ backgroundColor: PROJECT_CONFIG[task.project].color }} />
-            <span className="text-[13px] font-semibold uppercase tracking-wider text-slate-600 dark:text-slate-300 truncate">
+            <span className="text-[11px] font-semibold uppercase tracking-wider text-slate-600 dark:text-slate-300 truncate">
               {PROJECT_CONFIG[task.project].name}
             </span>
             {isUrgent && (
-              <span className="text-[11px] font-semibold uppercase tracking-wider text-red-600 dark:text-red-400 bg-red-50 dark:bg-red-500/10 px-1.5 py-0.5 rounded border border-red-100 dark:border-red-500/20">
+              <span className="text-[9px] font-semibold uppercase tracking-wider text-red-600 dark:text-red-400 bg-red-50 dark:bg-red-500/10 px-1.5 py-0.5 rounded border border-red-100 dark:border-red-500/20">
                 Urgent
               </span>
             )}
@@ -54,18 +54,18 @@ const TaskItem: React.FC<TaskItemProps> = React.memo(({
           )}
         </div>
 
-        <h3 className={`font-semibold text-[18px] leading-tight break-words ${isSelected ? 'text-indigo-950 dark:text-white' : 'text-slate-800 dark:text-slate-100'}`}>
+        <h3 className={`font-semibold text-[15px] leading-tight break-words ${isSelected ? 'text-indigo-950 dark:text-white' : 'text-slate-800 dark:text-slate-100'}`}>
           {task.title}
         </h3>
 
         <div className="flex items-center justify-between mt-1">
-          <div className="flex items-center gap-1 text-[14px] font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-tight">
+          <div className="flex items-center gap-1 text-[12px] font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-tight">
             <Calendar size={12} className="text-slate-400 dark:text-slate-500" />
             <span className={new Date(task.deadline) < new Date() && task.status !== 'done' ? 'text-red-600 dark:text-red-400 font-bold' : ''}>
               {new Intl.DateTimeFormat('en-US', { month: 'short', day: 'numeric' }).format(new Date(task.deadline))}
             </span>
           </div>
-          <div className={`text-[11px] px-2 py-0.5 rounded font-bold uppercase tracking-tighter ${statusStyle.color} ${statusStyle.text}`}>
+          <div className={`text-[9px] px-2 py-0.5 rounded font-bold uppercase tracking-tighter ${statusStyle.color} ${statusStyle.text}`}>
             {statusStyle.label}
           </div>
         </div>
@@ -141,7 +141,7 @@ export const TaskList: React.FC<TaskListProps> = ({ tasks, setTasks, selectedTas
               <Home size={18} />
             </button>
           )}
-          <h2 className="text-3xl font-bold tracking-tighter uppercase bg-clip-text text-transparent bg-gradient-to-br from-indigo-500 to-blue-600">TaskFlow</h2>
+          <h2 className="text-2xl font-bold tracking-tighter uppercase bg-clip-text text-transparent bg-gradient-to-br from-indigo-500 to-blue-600">TaskFlow</h2>
         </div>
         <div className="flex gap-2">
             <button 
@@ -165,7 +165,7 @@ export const TaskList: React.FC<TaskListProps> = ({ tasks, setTasks, selectedTas
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             placeholder="Search tasks..."
-            className="w-full bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-md pl-9 pr-3 py-2 text-[15px] font-semibold focus:border-indigo-500 dark:focus:border-indigo-400 outline-none text-slate-700 dark:text-slate-200 placeholder:text-slate-400 dark:placeholder:text-slate-600"
+            className="w-full bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-md pl-9 pr-3 py-2 text-[13px] font-semibold focus:border-indigo-500 dark:focus:border-indigo-400 outline-none text-slate-700 dark:text-slate-200 placeholder:text-slate-400 dark:placeholder:text-slate-600"
           />
         </div>
 
@@ -178,13 +178,13 @@ export const TaskList: React.FC<TaskListProps> = ({ tasks, setTasks, selectedTas
           >
             {/* Status Filter */}
             <div className="flex flex-col gap-1.5">
-                <label className="text-[11px] font-bold uppercase tracking-widest text-slate-500 dark:text-slate-400 flex items-center gap-1.5">
+                <label className="text-[9px] font-bold uppercase tracking-widest text-slate-500 dark:text-slate-400 flex items-center gap-1.5">
                     <Activity size={10} /> Status
                 </label>
                 <select 
                     value={filterStatus} 
                     onChange={(e) => setFilterStatus(e.target.value)}
-                    className="w-full bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-md px-2 py-1.5 text-[14px] font-semibold outline-none cursor-pointer focus:border-indigo-500 dark:text-slate-200"
+                    className="w-full bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-md px-2 py-1.5 text-[12px] font-semibold outline-none cursor-pointer focus:border-indigo-500 dark:text-slate-200"
                 >
                     <option value="all">All Statuses</option>
                     <option value="todo">To Do</option>
@@ -197,13 +197,13 @@ export const TaskList: React.FC<TaskListProps> = ({ tasks, setTasks, selectedTas
             </div>
 
             <div className="flex flex-col gap-1.5">
-                <label className="text-[11px] font-bold uppercase tracking-widest text-slate-500 dark:text-slate-400 flex items-center gap-1.5">
+                <label className="text-[9px] font-bold uppercase tracking-widest text-slate-500 dark:text-slate-400 flex items-center gap-1.5">
                     <Briefcase size={10} /> Project
                 </label>
                 <select 
                     value={filterProject} 
                     onChange={(e) => setFilterProject(e.target.value)}
-                    className="w-full bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-md px-2 py-1.5 text-[14px] font-semibold outline-none cursor-pointer focus:border-indigo-500 dark:text-slate-200"
+                    className="w-full bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-md px-2 py-1.5 text-[12px] font-semibold outline-none cursor-pointer focus:border-indigo-500 dark:text-slate-200"
                 >
                     <option value="all">All Projects</option>
                     {Object.values(ProjectType).map(p => <option key={p} value={p}>{p}</option>)}
@@ -212,13 +212,13 @@ export const TaskList: React.FC<TaskListProps> = ({ tasks, setTasks, selectedTas
 
             <div className="grid grid-cols-2 gap-2">
                 <div className="flex flex-col gap-1.5">
-                    <label className="text-[11px] font-bold uppercase tracking-widest text-slate-500 dark:text-slate-400 flex items-center gap-1.5">
+                    <label className="text-[9px] font-bold uppercase tracking-widest text-slate-500 dark:text-slate-400 flex items-center gap-1.5">
                         <Flag size={10} /> Priority
                     </label>
                     <select 
                         value={filterPriority} 
                         onChange={(e) => setFilterPriority(e.target.value)}
-                        className="w-full bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-md px-2 py-1.5 text-[14px] font-semibold outline-none cursor-pointer focus:border-indigo-500 dark:text-slate-200"
+                        className="w-full bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-md px-2 py-1.5 text-[12px] font-semibold outline-none cursor-pointer focus:border-indigo-500 dark:text-slate-200"
                     >
                         <option value="all">Any</option>
                         <option value="urgent">Urgent</option>
@@ -226,13 +226,13 @@ export const TaskList: React.FC<TaskListProps> = ({ tasks, setTasks, selectedTas
                     </select>
                 </div>
                 <div className="flex flex-col gap-1.5">
-                    <label className="text-[11px] font-bold uppercase tracking-widest text-slate-500 dark:text-slate-400 flex items-center gap-1.5">
+                    <label className="text-[9px] font-bold uppercase tracking-widest text-slate-500 dark:text-slate-400 flex items-center gap-1.5">
                         <Clock size={10} /> Schedule
                     </label>
                     <select 
                         value={filterTime} 
                         onChange={(e) => setFilterTime(e.target.value)}
-                        className="w-full bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-md px-2 py-1.5 text-[14px] font-semibold outline-none cursor-pointer focus:border-indigo-500 dark:text-slate-200"
+                        className="w-full bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-md px-2 py-1.5 text-[12px] font-semibold outline-none cursor-pointer focus:border-indigo-500 dark:text-slate-200"
                     >
                         <option value="all">Anytime</option>
                         <option value="overdue">Overdue</option>
@@ -260,7 +260,7 @@ export const TaskList: React.FC<TaskListProps> = ({ tasks, setTasks, selectedTas
             {filteredTasks.length === 0 && (
                 <div className="flex flex-col items-center justify-center py-12 text-slate-400 dark:text-slate-600">
                     <Search size={24} className="mb-2 opacity-20" />
-                    <p className="text-[13px] font-bold uppercase tracking-widest">No matching results</p>
+                    <p className="text-[11px] font-bold uppercase tracking-widest">No matching results</p>
                 </div>
             )}
           </div>

@@ -21,8 +21,8 @@ const MetadataCard: React.FC<{ icon: React.ElementType; label: string; children:
   <div onClick={onClick} className={`flex items-center gap-3 p-3.5 rounded-xl bg-white dark:bg-slate-900/60 border border-slate-200 dark:border-slate-800/60 transition-all ${onClick ? 'cursor-pointer hover:bg-slate-50 dark:hover:bg-slate-800 active:scale-95 hover:border-indigo-200 dark:hover:border-indigo-900' : ''}`}>
     <div className={`p-2 rounded-lg bg-slate-100 dark:bg-slate-800 ${iconColor}`}><Icon size={16} /></div>
     <div className="min-w-0">
-      <div className="text-[11px] font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-widest leading-none mb-1">{label}</div>
-      <div className="text-[16px] font-bold text-slate-800 dark:text-slate-100 truncate leading-none">{children}</div>
+      <div className="text-[9px] font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-widest leading-none mb-1">{label}</div>
+      <div className="text-[14px] font-bold text-slate-800 dark:text-slate-100 truncate leading-none">{children}</div>
     </div>
   </div>
 );
@@ -34,8 +34,8 @@ export const TaskDetail: React.FC<TaskDetailProps> = ({ task, onUpdateTask, onSt
         <div className="w-16 h-16 bg-white dark:bg-slate-900 rounded-2xl flex items-center justify-center mb-4 shadow-sm border border-slate-200 dark:border-slate-800">
            <CheckCircle2 size={32} className="opacity-20" />
         </div>
-        <h2 className="text-xl font-bold tracking-tight text-slate-600 dark:text-slate-300">Select a Task</h2>
-        <p className="text-[13px] font-semibold uppercase tracking-widest opacity-50">Choose from the list to begin</p>
+        <h2 className="text-lg font-bold tracking-tight text-slate-600 dark:text-slate-300">Select a Task</h2>
+        <p className="text-[11px] font-semibold uppercase tracking-widest opacity-50">Choose from the list to begin</p>
       </div>
     );
   }
@@ -56,16 +56,16 @@ export const TaskDetail: React.FC<TaskDetailProps> = ({ task, onUpdateTask, onSt
         <div className="flex flex-col md:flex-row items-start justify-between gap-4">
           <div className="space-y-2 flex-1 min-w-0">
             <div className="flex items-center gap-2">
-              <span className="px-2 py-0.5 bg-indigo-50 dark:bg-indigo-900/40 text-indigo-700 dark:text-indigo-300 text-[13px] font-semibold uppercase tracking-wider rounded border border-indigo-200 dark:border-indigo-800/50">
+              <span className="px-2 py-0.5 bg-indigo-50 dark:bg-indigo-900/40 text-indigo-700 dark:text-indigo-300 text-[11px] font-semibold uppercase tracking-wider rounded border border-indigo-200 dark:border-indigo-800/50">
                 {task.project}
               </span>
               {isUrgent && (
-                <span className="flex items-center gap-1 px-2 py-0.5 bg-red-600 text-white text-[13px] font-bold uppercase tracking-wider rounded shadow-sm shadow-red-500/20">
+                <span className="flex items-center gap-1 px-2 py-0.5 bg-red-600 text-white text-[11px] font-bold uppercase tracking-wider rounded shadow-sm shadow-red-500/20">
                   <AlertTriangle size={10} /> Urgent
                 </span>
               )}
             </div>
-            <h1 className="text-4xl font-bold text-slate-900 dark:text-white tracking-tight leading-snug break-words">
+            <h1 className="text-3xl font-bold text-slate-900 dark:text-white tracking-tight leading-snug break-words">
               {task.title}
             </h1>
           </div>
@@ -75,7 +75,7 @@ export const TaskDetail: React.FC<TaskDetailProps> = ({ task, onUpdateTask, onSt
               <Pencil size={18} />
             </button>
             {task.status !== 'done' && (
-              <button onClick={() => onStatusChange(task.id, 'done')} className="px-4 py-2 text-[15px] font-bold text-white bg-emerald-600 dark:bg-emerald-600 rounded-lg hover:bg-emerald-500 transition-all shadow-md shadow-emerald-500/20 active:scale-95 uppercase tracking-widest">
+              <button onClick={() => onStatusChange(task.id, 'done')} className="px-4 py-2 text-[13px] font-bold text-white bg-emerald-600 dark:bg-emerald-600 rounded-lg hover:bg-emerald-500 transition-all shadow-md shadow-emerald-500/20 active:scale-95 uppercase tracking-widest">
                 Mark Done
               </button>
             )}
@@ -95,7 +95,7 @@ export const TaskDetail: React.FC<TaskDetailProps> = ({ task, onUpdateTask, onSt
               <button
                 key={s}
                 onClick={() => onStatusChange(task.id, s)}
-                className={`px-4 py-2 text-[13px] font-semibold rounded-lg transition-all uppercase tracking-wider whitespace-nowrap ${isActive ? `${config.color} ${config.text} shadow-md` : 'text-slate-500 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800'}`}
+                className={`px-4 py-2 text-[11px] font-semibold rounded-lg transition-all uppercase tracking-wider whitespace-nowrap ${isActive ? `${config.color} ${config.text} shadow-md` : 'text-slate-500 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800'}`}
               >
                 {config.label}
               </button>
@@ -122,8 +122,8 @@ export const TaskDetail: React.FC<TaskDetailProps> = ({ task, onUpdateTask, onSt
 
         {/* Description Section */}
         <div className="bg-white dark:bg-slate-900/30 p-5 md:p-6 rounded-xl border border-slate-200 dark:border-slate-800/60 shadow-sm">
-          <div className="text-[13px] font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-widest mb-2.5">Task Overview</div>
-          <p className="text-slate-800 dark:text-slate-200 text-[19px] leading-relaxed font-medium">
+          <div className="text-[11px] font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-widest mb-2.5">Task Overview</div>
+          <p className="text-slate-800 dark:text-slate-200 text-[16px] leading-relaxed font-medium">
             {task.description || 'No detailed briefing available.'}
           </p>
         </div>

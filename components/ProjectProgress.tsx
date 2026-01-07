@@ -38,11 +38,11 @@ export const ProjectProgress: React.FC<ProjectProgressProps> = ({
                   className="w-2.5 h-2.5 rounded-full shadow-[0_0_8px_currentColor]" 
                   style={{ backgroundColor: stat.color, color: stat.color }} 
                 />
-                <span className="text-[13px] font-bold text-slate-600 dark:text-slate-300 uppercase tracking-wider truncate max-w-[90px]" title={stat.name}>
+                <span className="text-[11px] font-bold text-slate-600 dark:text-slate-300 uppercase tracking-wider truncate max-w-[90px]" title={stat.name}>
                   {stat.name}
                 </span>
               </div>
-              <span className={`text-[13px] font-medium px-1.5 py-0.5 rounded-md bg-white dark:bg-slate-700/50 text-slate-500 dark:text-slate-400 group-hover:text-slate-800 dark:group-hover:text-slate-200 border border-slate-200 dark:border-transparent transition-colors`}>
+              <span className={`text-[11px] font-medium px-1.5 py-0.5 rounded-md bg-white dark:bg-slate-700/50 text-slate-500 dark:text-slate-400 group-hover:text-slate-800 dark:group-hover:text-slate-200 border border-slate-200 dark:border-transparent transition-colors`}>
                 {stat.done}/{stat.total}
               </span>
             </div>
@@ -55,16 +55,16 @@ export const ProjectProgress: React.FC<ProjectProgressProps> = ({
             </div>
 
             <div className="flex items-center justify-between">
-              <span className="text-[15px] text-slate-500 dark:text-slate-500 font-medium group-hover:text-slate-600 dark:group-hover:text-slate-400 transition-colors">Completion</span>
-              <span className="text-[15px] font-bold text-slate-700 dark:text-slate-200">{stat.percentage}%</span>
+              <span className="text-[13px] text-slate-500 dark:text-slate-500 font-medium group-hover:text-slate-600 dark:group-hover:text-slate-400 transition-colors">Completion</span>
+              <span className="text-[13px] font-bold text-slate-700 dark:text-slate-200">{stat.percentage}%</span>
             </div>
           </div>
         ))}
         
         <div className="flex-shrink-0 flex items-center justify-center min-w-[100px] p-3 rounded-xl border border-dashed border-slate-300 dark:border-slate-700/50 text-slate-400 dark:text-slate-500 transition-colors">
              <div className="text-center">
-                 <div className="text-[15px] font-medium mb-0.5">Total Tasks</div>
-                 <div className="text-[22.5px] font-bold text-slate-600 dark:text-slate-300">{tasks.length}</div>
+                 <div className="text-[13px] font-medium mb-0.5">Total Tasks</div>
+                 <div className="text-[19px] font-bold text-slate-600 dark:text-slate-300">{tasks.length}</div>
              </div>
         </div>
       </div>
