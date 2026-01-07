@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect, useRef } from 'react';
 import { Task, Message } from '../types';
 import { Send, Sparkles, Loader2, StickyNote, PenLine, ExternalLink, Clock } from 'lucide-react';
@@ -61,9 +62,9 @@ export const ChatSection: React.FC<ChatSectionProps> = ({ task, onUpdateTask }) 
       <div className="p-3 border-b border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 flex items-center justify-between">
         <div className="flex items-center gap-2">
           <StickyNote size={14} className="text-amber-500" />
-          <h3 className="text-[10px] font-semibold text-slate-800 dark:text-slate-100 uppercase tracking-widest">Insights</h3>
+          <h3 className="text-[13px] font-semibold text-slate-800 dark:text-slate-100 uppercase tracking-widest">Insights</h3>
         </div>
-        <div className="flex items-center gap-2 text-[8px] font-semibold tracking-widest text-slate-500 dark:text-slate-400 uppercase">
+        <div className="flex items-center gap-2 text-[10px] font-semibold tracking-widest text-slate-500 dark:text-slate-400 uppercase">
           <Clock size={10} /> {task.updates.length} Updates
         </div>
       </div>
@@ -72,17 +73,17 @@ export const ChatSection: React.FC<ChatSectionProps> = ({ task, onUpdateTask }) 
         {task.updates.length === 0 ? (
           <div className="h-full flex flex-col items-center justify-center text-slate-400 dark:text-slate-600 py-10">
              <PenLine size={20} className="mb-2 opacity-30" />
-             <p className="text-[10px] font-semibold uppercase tracking-widest">No activity yet</p>
+             <p className="text-[13px] font-semibold uppercase tracking-widest">No activity yet</p>
           </div>
         ) : (
           task.updates.map((msg) => (
             <div key={msg.id} className="relative pl-6">
               <div className={`absolute left-0 top-1.5 w-1.5 h-1.5 rounded-full ${msg.sender === 'ai' ? 'bg-indigo-500' : 'bg-slate-400 dark:bg-slate-600'}`}></div>
               <div className="absolute left-[2.5px] top-3 bottom-[-15px] w-[1px] bg-slate-200 dark:bg-slate-800"></div>
-              <div className="text-[8px] font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-1">
+              <div className="text-[10px] font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-1">
                 {msg.sender === 'ai' ? 'AI Assistant' : 'Team Update'} • {new Intl.DateTimeFormat('en-US', { hour: 'numeric', minute: 'numeric' }).format(new Date(msg.timestamp))}
               </div>
-              <div className={`text-xs p-3 rounded-lg border ${msg.sender === 'ai' ? 'bg-indigo-600 text-white border-indigo-500 font-medium' : 'bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-200 shadow-sm'}`}>
+              <div className={`text-[15px] p-3 rounded-lg border ${msg.sender === 'ai' ? 'bg-indigo-600 text-white border-indigo-500 font-medium' : 'bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-200 shadow-sm'}`}>
                 {renderTextWithLinks(msg.text)}
               </div>
             </div>
@@ -98,10 +99,10 @@ export const ChatSection: React.FC<ChatSectionProps> = ({ task, onUpdateTask }) 
             onChange={(e) => setInputValue(e.target.value)}
             onKeyDown={(e) => e.key === 'Enter' && !e.shiftKey && (e.preventDefault(), handleSend())}
             placeholder="Add update or ask AI..."
-            className="w-full bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-lg p-3 pr-24 text-[11px] font-semibold text-slate-800 dark:text-slate-200 focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500/20 transition-all resize-none h-16 placeholder:text-slate-400 dark:placeholder:text-slate-600"
+            className="w-full bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-lg p-3 pr-24 text-[14px] font-semibold text-slate-800 dark:text-slate-200 focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500/20 transition-all resize-none h-16 placeholder:text-slate-400 dark:placeholder:text-slate-600"
           />
           <div className="absolute bottom-2 right-2 flex items-center gap-1.5">
-             <button onClick={handleAskAI} disabled={isAiProcessing} className="flex items-center gap-1 px-2 py-1 rounded bg-indigo-50 dark:bg-indigo-900/40 text-indigo-700 dark:text-indigo-300 text-[9px] font-bold uppercase tracking-tight hover:bg-indigo-100 dark:hover:bg-indigo-900/60 transition-colors border border-indigo-100 dark:border-indigo-800/50">
+             <button onClick={handleAskAI} disabled={isAiProcessing} className="flex items-center gap-1 px-2 py-1 rounded bg-indigo-50 dark:bg-indigo-900/40 text-indigo-700 dark:text-indigo-300 text-[11px] font-bold uppercase tracking-tight hover:bg-indigo-100 dark:hover:bg-indigo-900/60 transition-colors border border-indigo-100 dark:border-indigo-800/50">
                {isAiProcessing ? <Loader2 size={10} className="animate-spin" /> : <Sparkles size={10} />} AI
              </button>
              {inputValue.trim() && (
