@@ -1,8 +1,8 @@
 import React, { useState, useMemo } from 'react';
 import { Reorder, useDragControls, motion } from 'framer-motion';
-import { Task } from '../types';
+import { Task, ProjectType } from '../types';
 import { PROJECT_CONFIG, STATUS_CONFIG } from '../constants';
-import { Calendar, GripVertical, Plus, Search, Home } from 'lucide-react';
+import { Calendar, GripVertical, Plus, Search, Home, Filter, Clock, Flag, Briefcase, Activity } from 'lucide-react';
 
 interface TaskListProps {
   tasks: Task[];
@@ -32,42 +32,39 @@ const TaskItem: React.FC<TaskItemProps> = React.memo(({
 
   const Content = (
     <>
-      <div className={`w-[3px] ${statusStyle.color} shrink-0`} />
-      <div className="flex-1 p-3 flex flex-col min-w-0 gap-1">
-        {/* Top: Project & Urgency */}
+      <div className={`w-[3.5px] ${statusStyle.color} shrink-0`} />
+      <div className="flex-1 p-3.5 flex flex-col min-w-0 gap-1.5">
         <div className="flex items-center justify-between gap-2">
           <div className="flex items-center gap-1.5 overflow-hidden">
             <div className="w-1.5 h-1.5 rounded-full" style={{ backgroundColor: PROJECT_CONFIG[task.project].color }} />
-            <span className="text-[9px] font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400 truncate">
+            <span className="text-[10px] font-medium uppercase tracking-wider text-slate-500 dark:text-slate-400 truncate">
               {PROJECT_CONFIG[task.project].name}
             </span>
             {isUrgent && (
-              <span className="text-[8px] font-bold uppercase tracking-wider text-red-600 dark:text-red-400 bg-red-50 dark:bg-red-500/10 px-1 rounded border border-red-100 dark:border-red-500/20">
+              <span className="text-[9px] font-bold uppercase tracking-wider text-red-600 dark:text-red-400 bg-red-50 dark:bg-red-500/10 px-1.5 py-0.5 rounded border border-red-100 dark:border-red-500/20">
                 Urgent
               </span>
             )}
           </div>
           {isDragEnabled && (
             <div onPointerDown={(e) => controls.start(e)} className="text-slate-300 dark:text-slate-700 cursor-grab active:cursor-grabbing p-0.5 touch-none">
-              <GripVertical size={12} />
+              <GripVertical size={14} />
             </div>
           )}
         </div>
 
-        {/* Middle: Title */}
-        <h3 className={`font-semibold text-[13px] leading-tight truncate ${isSelected ? 'text-indigo-900 dark:text-white' : 'text-slate-700 dark:text-slate-300'}`}>
+        <h3 className={`font-semibold text-[14px] leading-tight break-words ${isSelected ? 'text-indigo-950 dark:text-white' : 'text-slate-700 dark:text-slate-200'}`}>
           {task.title}
         </h3>
 
-        {/* Bottom: Date & Status */}
-        <div className="flex items-center justify-between mt-0.5">
-          <div className="flex items-center gap-1 text-[9px] font-medium text-slate-400 dark:text-slate-500 uppercase tracking-tight">
-            <Calendar size={10} />
+        <div className="flex items-center justify-between mt-1">
+          <div className="flex items-center gap-1 text-[11px] font-medium text-slate-400 dark:text-slate-500 uppercase tracking-tight">
+            <Calendar size={12} />
             <span className={new Date(task.deadline) < new Date() && task.status !== 'done' ? 'text-red-500 font-bold' : ''}>
               {new Intl.DateTimeFormat('en-US', { month: 'short', day: 'numeric' }).format(new Date(task.deadline))}
             </span>
           </div>
-          <div className={`text-[8px] px-1.5 py-0.5 rounded font-bold uppercase tracking-tighter ${statusStyle.color} ${statusStyle.text}`}>
+          <div className={`text-[9px] px-2 py-0.5 rounded font-bold uppercase tracking-tighter ${statusStyle.color} ${statusStyle.text}`}>
             {statusStyle.label}
           </div>
         </div>
@@ -76,9 +73,9 @@ const TaskItem: React.FC<TaskItemProps> = React.memo(({
   );
 
   const containerClasses = `
-    relative group border cursor-pointer select-none overflow-hidden touch-none transition-all duration-200 rounded-lg flex mb-1.5
+    relative group border cursor-pointer select-none overflow-hidden touch-none transition-all duration-200 rounded-lg flex mb-2
     ${isSelected 
-      ? 'bg-white dark:bg-slate-800 border-indigo-500 dark:border-indigo-400 shadow-md ring-1 ring-indigo-500/20 z-10' 
+      ? 'bg-white dark:bg-slate-800 border-indigo-500 dark:border-indigo-400 shadow-md ring-1 ring-indigo-500/10 z-10' 
       : 'bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-800 hover:border-slate-300 shadow-sm'}
   `;
 
@@ -94,58 +91,156 @@ const TaskItem: React.FC<TaskItemProps> = React.memo(({
 export const TaskList: React.FC<TaskListProps> = ({ tasks, setTasks, selectedTaskId, onSelectTask, onAddNewTask, onGoHome }) => {
   const [searchQuery, setSearchQuery] = useState('');
   const [filterStatus, setFilterStatus] = useState('all');
+  const [filterProject, setFilterProject] = useState('all');
+  const [filterPriority, setFilterPriority] = useState('all');
+  const [filterTime, setFilterTime] = useState('all');
+  const [showFilters, setShowFilters] = useState(false);
 
   const filteredTasks = useMemo(() => {
     return tasks.filter(task => {
       const matchSearch = !searchQuery || task.title.toLowerCase().includes(searchQuery.toLowerCase());
       const matchStatus = filterStatus === 'all' || task.status === filterStatus;
-      return matchSearch && matchStatus;
-    });
-  }, [tasks, searchQuery, filterStatus]);
+      const matchProject = filterProject === 'all' || task.project === filterProject;
+      const matchPriority = filterPriority === 'all' || task.priority === filterPriority;
 
-  const isFiltered = searchQuery !== '' || filterStatus !== 'all';
+      let matchTime = true;
+      if (filterTime !== 'all') {
+        const deadline = new Date(task.deadline);
+        const now = new Date();
+        const startOfDay = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+        const endOfDay = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 23, 59, 59);
+
+        if (filterTime === 'overdue') {
+          matchTime = deadline < startOfDay && task.status !== 'done';
+        } else if (filterTime === 'today') {
+          matchTime = deadline >= startOfDay && deadline <= endOfDay;
+        } else if (filterTime === 'week') {
+          const nextWeek = new Date(startOfDay);
+          nextWeek.setDate(nextWeek.getDate() + 7);
+          matchTime = deadline >= startOfDay && deadline <= nextWeek;
+        }
+      }
+
+      return matchSearch && matchStatus && matchProject && matchPriority && matchTime;
+    });
+  }, [tasks, searchQuery, filterStatus, filterProject, filterPriority, filterTime]);
+
+  const isFiltered = searchQuery !== '' || filterStatus !== 'all' || filterProject !== 'all' || filterPriority !== 'all' || filterTime !== 'all';
 
   return (
-    <div className="h-full flex flex-col bg-slate-50 dark:bg-slate-900 border-r border-slate-200 dark:border-slate-800 w-64 md:w-72 flex-shrink-0">
-      <div className="p-3.5 border-b border-slate-200 dark:border-slate-800 flex items-center justify-between bg-white dark:bg-slate-900">
+    <div className="h-full flex flex-col bg-slate-50 dark:bg-slate-900 border-r border-slate-200 dark:border-slate-800 w-64 md:w-80 flex-shrink-0">
+      <div className="p-4 border-b border-slate-200 dark:border-slate-800 flex items-center justify-between bg-white dark:bg-slate-900">
         <div className="flex items-center gap-2">
           {onGoHome && (
-            <button onClick={onGoHome} className="p-1.5 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-md text-slate-500 border border-slate-200 dark:border-slate-700">
-              <Home size={14} />
+            <button onClick={onGoHome} className="p-2 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-md text-slate-500 border border-slate-200 dark:border-slate-700">
+              <Home size={16} />
             </button>
           )}
-          <h2 className="text-lg font-bold tracking-tight uppercase text-slate-800 dark:text-slate-100">Tasks</h2>
+          <h2 className="text-xl font-bold tracking-tight uppercase text-slate-800 dark:text-slate-100">Tasks</h2>
         </div>
-        <button onClick={onAddNewTask} className="p-1.5 bg-indigo-600 hover:bg-indigo-500 text-white rounded-md shadow transition-transform active:scale-95">
-          <Plus size={16} strokeWidth={3} />
-        </button>
+        <div className="flex gap-2">
+            <button 
+                onClick={() => setShowFilters(!showFilters)}
+                className={`p-2 rounded-md transition-all border ${showFilters ? 'bg-indigo-50 border-indigo-200 text-indigo-600 shadow-inner' : 'bg-white border-slate-200 text-slate-500 dark:bg-slate-800 dark:border-slate-700'}`}
+                title="Toggle Filters"
+            >
+                <Filter size={18} />
+            </button>
+            <button onClick={onAddNewTask} className="p-2 bg-indigo-600 hover:bg-indigo-500 text-white rounded-md shadow transition-transform active:scale-95">
+                <Plus size={18} strokeWidth={3} />
+            </button>
+        </div>
       </div>
 
-      <div className="p-3 space-y-2">
+      <div className="p-4 space-y-4">
         <div className="relative">
-          <Search size={12} className="absolute left-2.5 top-1/2 -translate-y-1/2 text-slate-400" />
+          <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
           <input 
             type="text" 
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             placeholder="Search tasks..."
-            className="w-full bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-md pl-8 pr-2 py-1.5 text-[11px] font-medium focus:border-indigo-500 outline-none"
+            className="w-full bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-md pl-9 pr-3 py-2 text-xs font-medium focus:border-indigo-500 outline-none"
           />
         </div>
-        <div className="flex items-center gap-1 overflow-x-auto pb-1 no-scrollbar">
-          {['all', 'todo', 'in-progress', 'done'].map((s) => (
-            <button
-              key={s}
-              onClick={() => setFilterStatus(s)}
-              className={`px-2 py-1 rounded-md text-[8px] font-bold uppercase tracking-wider transition-all border ${filterStatus === s ? 'bg-indigo-600 text-white border-indigo-500' : 'bg-white dark:bg-slate-800 text-slate-500 border-slate-200 dark:border-slate-700'}`}
-            >
-              {s}
-            </button>
-          ))}
-        </div>
+
+        {/* Advanced Filters Panel */}
+        {showFilters && (
+          <motion.div 
+            initial={{ height: 0, opacity: 0 }}
+            animate={{ height: 'auto', opacity: 1 }}
+            className="space-y-3 pt-2 border-t border-slate-100 dark:border-slate-800 overflow-hidden"
+          >
+            {/* Status Filter - Moved here */}
+            <div className="flex flex-col gap-1.5">
+                <label className="text-[9px] font-bold uppercase tracking-widest text-slate-400 flex items-center gap-1.5">
+                    <Activity size={10} /> Status
+                </label>
+                <select 
+                    value={filterStatus} 
+                    onChange={(e) => setFilterStatus(e.target.value)}
+                    className="w-full bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-md px-2 py-1.5 text-[11px] font-medium outline-none cursor-pointer focus:border-indigo-500"
+                >
+                    <option value="all">All Statuses</option>
+                    <option value="todo">To Do</option>
+                    <option value="in-progress">In Progress</option>
+                    <option value="on-hold">On Hold</option>
+                    <option value="under-review">Under Review</option>
+                    <option value="follow-up">Follow Up</option>
+                    <option value="done">Done</option>
+                </select>
+            </div>
+
+            <div className="flex flex-col gap-1.5">
+                <label className="text-[9px] font-bold uppercase tracking-widest text-slate-400 flex items-center gap-1.5">
+                    <Briefcase size={10} /> Project
+                </label>
+                <select 
+                    value={filterProject} 
+                    onChange={(e) => setFilterProject(e.target.value)}
+                    className="w-full bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-md px-2 py-1.5 text-[11px] font-medium outline-none cursor-pointer focus:border-indigo-500"
+                >
+                    <option value="all">All Projects</option>
+                    {Object.values(ProjectType).map(p => <option key={p} value={p}>{p}</option>)}
+                </select>
+            </div>
+
+            <div className="grid grid-cols-2 gap-2">
+                <div className="flex flex-col gap-1.5">
+                    <label className="text-[9px] font-bold uppercase tracking-widest text-slate-400 flex items-center gap-1.5">
+                        <Flag size={10} /> Priority
+                    </label>
+                    <select 
+                        value={filterPriority} 
+                        onChange={(e) => setFilterPriority(e.target.value)}
+                        className="w-full bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-md px-2 py-1.5 text-[11px] font-medium outline-none cursor-pointer focus:border-indigo-500"
+                    >
+                        <option value="all">Any</option>
+                        <option value="urgent">Urgent</option>
+                        <option value="not-urgent">Normal</option>
+                    </select>
+                </div>
+                <div className="flex flex-col gap-1.5">
+                    <label className="text-[9px] font-bold uppercase tracking-widest text-slate-400 flex items-center gap-1.5">
+                        <Clock size={10} /> Schedule
+                    </label>
+                    <select 
+                        value={filterTime} 
+                        onChange={(e) => setFilterTime(e.target.value)}
+                        className="w-full bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-md px-2 py-1.5 text-[11px] font-medium outline-none cursor-pointer focus:border-indigo-500"
+                    >
+                        <option value="all">Anytime</option>
+                        <option value="overdue">Overdue</option>
+                        <option value="today">Today</option>
+                        <option value="week">This Week</option>
+                    </select>
+                </div>
+            </div>
+          </motion.div>
+        )}
       </div>
 
-      <div className="flex-1 overflow-y-auto px-3 pb-3 space-y-1">
+      <div className="flex-1 overflow-y-auto px-4 pb-4 space-y-1">
         {!isFiltered ? (
           <Reorder.Group axis="y" values={tasks} onReorder={setTasks} className="space-y-1">
             {filteredTasks.map((task) => (
@@ -157,6 +252,12 @@ export const TaskList: React.FC<TaskListProps> = ({ tasks, setTasks, selectedTas
             {filteredTasks.map((task) => (
               <TaskItem key={task.id} task={task} isSelected={selectedTaskId === task.id} onSelect={onSelectTask} isDragEnabled={false} />
             ))}
+            {filteredTasks.length === 0 && (
+                <div className="flex flex-col items-center justify-center py-12 text-slate-400">
+                    <Search size={24} className="mb-2 opacity-20" />
+                    <p className="text-[10px] font-bold uppercase tracking-widest">No matching results</p>
+                </div>
+            )}
           </div>
         )}
       </div>
