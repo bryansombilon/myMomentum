@@ -124,13 +124,13 @@ export const LinksApp: React.FC<LinksAppProps> = ({ links, onSaveLinks, onGoHome
           <button onClick={onGoHome} className="p-2 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg text-slate-500 transition-colors">
             <Home size={20} />
           </button>
-          <h1 className="text-xl font-black tracking-tight text-slate-800 dark:text-white uppercase text-[15px]">Link Hub</h1>
+          <h1 className="text-xl font-black tracking-tighter text-slate-900 dark:text-white uppercase text-[15px]">Link Hub</h1>
         </div>
 
         <div className="space-y-1 overflow-y-auto pr-2 no-scrollbar">
           <button 
             onClick={() => setActiveCategory('All')}
-            className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl text-xs font-black uppercase tracking-widest transition-all ${
+            className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg text-xs font-black uppercase tracking-widest transition-all ${
               activeCategory === 'All' ? 'bg-indigo-600 text-white shadow-lg shadow-indigo-500/20' : 'text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800'
             }`}
           >
@@ -141,7 +141,7 @@ export const LinksApp: React.FC<LinksAppProps> = ({ links, onSaveLinks, onGoHome
             <button 
               key={cat}
               onClick={() => setActiveCategory(cat)}
-              className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl text-xs font-black uppercase tracking-widest transition-all ${
+              className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg text-xs font-black uppercase tracking-widest transition-all ${
                 activeCategory === cat ? 'bg-indigo-600 text-white shadow-lg shadow-indigo-500/20' : 'text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800'
               }`}
             >
@@ -161,12 +161,12 @@ export const LinksApp: React.FC<LinksAppProps> = ({ links, onSaveLinks, onGoHome
               placeholder="Search links..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg pl-10 pr-4 py-2.5 text-sm focus:ring-2 focus:ring-indigo-500/20 outline-none transition-all"
+              className="w-full bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-md pl-10 pr-4 py-2.5 text-sm focus:ring-2 focus:ring-indigo-500/20 outline-none transition-all dark:text-white"
             />
           </div>
           <button 
             onClick={() => handleOpenModal()}
-            className="flex items-center gap-2 px-5 py-2.5 bg-indigo-600 hover:bg-indigo-500 text-white rounded-lg shadow-lg shadow-indigo-500/20 font-bold transition-all active:scale-95"
+            className="flex items-center gap-2 px-5 py-2.5 bg-indigo-600 hover:bg-indigo-500 text-white rounded-md shadow-lg shadow-indigo-500/20 font-bold transition-all active:scale-95 text-sm"
           >
             <Plus size={18} /> New Link
           </button>
@@ -179,38 +179,40 @@ export const LinksApp: React.FC<LinksAppProps> = ({ links, onSaveLinks, onGoHome
                 <motion.div 
                   layout
                   key={link.id}
-                  initial={{ opacity: 0, scale: 0.98 }}
-                  animate={{ opacity: 1, scale: 1 }}
-                  exit={{ opacity: 0, scale: 0.98 }}
-                  className="group relative bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-lg overflow-hidden flex shadow-sm hover:shadow-md transition-all hover:border-slate-300 dark:hover:border-slate-700"
+                  initial={{ opacity: 0, y: 15, scale: 0.98 }}
+                  animate={{ opacity: 1, y: 0, scale: 1 }}
+                  exit={{ opacity: 0, scale: 0.95, transition: { duration: 0.15 } }}
+                  transition={{ type: "spring", stiffness: 450, damping: 30 }}
+                  whileHover={{ y: -4, transition: { duration: 0.2 } }}
+                  className="group relative bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-md overflow-hidden flex shadow-sm hover:shadow-xl transition-all duration-300 hover:border-slate-300 dark:hover:border-slate-700"
                 >
-                  {/* Banner Stripe on Left */}
-                  <div className={`w-1.5 ${CATEGORY_COLORS[link.category] || 'bg-slate-400'} shrink-0`} />
+                  {/* Banner Stripe on Absolute Left */}
+                  <div className={`w-[6px] ${CATEGORY_COLORS[link.category] || 'bg-slate-400'} shrink-0`} />
                   
-                  <div className="flex-1 p-4 flex flex-col">
-                    <div className="flex items-start justify-between gap-4 mb-1">
-                      <h3 className="font-bold text-slate-800 dark:text-slate-100 truncate group-hover:text-indigo-600 dark:group-hover:text-indigo-400 transition-colors">
+                  <div className="flex-1 p-4 flex flex-col min-w-0">
+                    <div className="flex items-center justify-between gap-3 mb-1">
+                      <h3 className="font-bold text-[16px] text-slate-900 dark:text-white truncate flex-1 group-hover:text-indigo-600 dark:group-hover:text-indigo-400 transition-colors">
                         {link.title}
                       </h3>
                       
-                      <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                      <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-all duration-200 shrink-0 translate-x-2 group-hover:translate-x-0">
                         <button 
                           onClick={() => handleCopy(link.url, link.id)}
-                          className="p-1.5 hover:bg-slate-100 dark:hover:bg-slate-800 rounded text-slate-400 hover:text-indigo-500 transition-all"
+                          className="p-1.5 hover:bg-slate-100 dark:hover:bg-slate-800 rounded text-slate-400 hover:text-indigo-600 dark:hover:text-indigo-400 transition-all"
                           title="Copy Link"
                         >
-                          {copiedId === link.id ? <Check size={14} /> : <Copy size={14} />}
+                          {copiedId === link.id ? <Check size={14} className="text-emerald-500" /> : <Copy size={14} />}
                         </button>
                         <button 
                           onClick={() => handleOpenModal(link)}
-                          className="p-1.5 hover:bg-slate-100 dark:hover:bg-slate-800 rounded text-slate-400 hover:text-indigo-500 transition-all"
+                          className="p-1.5 hover:bg-slate-100 dark:hover:bg-slate-800 rounded text-slate-400 hover:text-indigo-600 dark:hover:text-indigo-400 transition-all"
                           title="Edit Link"
                         >
                           <Pencil size={14} />
                         </button>
                         <button 
                           onClick={() => handleDelete(link.id)}
-                          className="p-1.5 hover:bg-red-50 dark:hover:bg-red-950/20 rounded text-slate-400 hover:text-red-500 transition-all"
+                          className="p-1.5 hover:bg-red-50 dark:hover:bg-red-900/30 rounded text-slate-400 hover:text-red-600 transition-all"
                           title="Delete Link"
                         >
                           <Trash2 size={14} />
@@ -219,22 +221,22 @@ export const LinksApp: React.FC<LinksAppProps> = ({ links, onSaveLinks, onGoHome
                     </div>
 
                     {/* Category Tag Below Title */}
-                    <div className="flex items-center gap-1.5 mb-4">
-                      <span className={`w-1.5 h-1.5 rounded-full ${CATEGORY_COLORS[link.category] || 'bg-slate-400'}`} />
-                      <span className="text-[10px] font-black uppercase tracking-widest text-slate-500 dark:text-slate-400">
+                    <div className="flex items-center gap-1.5 mb-5">
+                      <div className={`w-1.5 h-1.5 rounded-full ${CATEGORY_COLORS[link.category] || 'bg-slate-400'}`} />
+                      <span className="text-[10px] font-black uppercase tracking-widest text-slate-500 dark:text-slate-400/80">
                         {link.category}
                       </span>
                     </div>
 
-                    <div className="mt-auto flex items-center justify-between border-t border-slate-100 dark:border-slate-800 pt-3">
-                      <p className="text-xs text-slate-400 dark:text-slate-500 truncate italic max-w-[80%]">
+                    <div className="mt-auto flex items-center justify-between border-t border-slate-100 dark:border-slate-800/60 pt-3">
+                      <p className="text-xs text-slate-400 dark:text-slate-500 truncate italic max-w-[80%] font-medium">
                         {link.url.replace('https://', '').replace('http://', '')}
                       </p>
                       <a 
                         href={link.url} 
                         target="_blank" 
                         rel="noopener noreferrer"
-                        className="p-1.5 bg-slate-50 dark:bg-slate-800 text-slate-400 dark:text-slate-500 hover:bg-indigo-600 hover:text-white rounded transition-all"
+                        className="p-2 bg-slate-50 dark:bg-slate-800/50 text-slate-400 dark:text-slate-500 hover:bg-indigo-600 hover:text-white rounded transition-all flex items-center justify-center shadow-sm"
                       >
                         <ExternalLink size={14} />
                       </a>
@@ -246,9 +248,9 @@ export const LinksApp: React.FC<LinksAppProps> = ({ links, onSaveLinks, onGoHome
           </div>
 
           {filteredLinks.length === 0 && (
-            <div className="flex flex-col items-center justify-center h-64 text-slate-400">
-              <Globe size={48} className="mb-4 opacity-10" />
-              <p className="text-sm font-bold uppercase tracking-widest opacity-40">No entries found</p>
+            <div className="flex flex-col items-center justify-center h-80 text-slate-400">
+              <Globe size={64} className="mb-6 opacity-5 animate-pulse" />
+              <p className="text-sm font-black uppercase tracking-[0.2em] opacity-30">Collection Empty</p>
             </div>
           )}
         </div>
@@ -257,61 +259,65 @@ export const LinksApp: React.FC<LinksAppProps> = ({ links, onSaveLinks, onGoHome
       {/* Add/Edit Modal */}
       <AnimatePresence>
         {showModal && (
-          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/80 backdrop-blur-sm">
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/90 backdrop-blur-sm">
             <motion.div 
               initial={{ opacity: 0, scale: 0.98, y: 10 }}
               animate={{ opacity: 1, scale: 1, y: 0 }}
               exit={{ opacity: 0, scale: 0.98, y: 10 }}
-              className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-lg shadow-2xl w-full max-w-md overflow-hidden"
+              className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-md shadow-2xl w-full max-w-md overflow-hidden"
             >
               <div className="p-6 border-b border-slate-200 dark:border-slate-800 flex items-center justify-between bg-slate-50 dark:bg-slate-800/50">
                 <h2 className="text-sm font-black uppercase tracking-widest text-slate-800 dark:text-white">
-                  {editingLink ? 'Edit Link Entry' : 'Add New Link'}
+                  {editingLink ? 'Update Entry' : 'Create New Entry'}
                 </h2>
-                <button onClick={() => setShowModal(false)} className="text-slate-400 hover:text-slate-600 p-2">
+                <button onClick={() => setShowModal(false)} className="text-slate-400 hover:text-slate-800 dark:hover:text-white p-2 transition-colors">
                   <X size={20} />
                 </button>
               </div>
 
-              <form onSubmit={handleSave} className="p-6 space-y-4">
+              <form onSubmit={handleSave} className="p-6 space-y-5">
                 <div>
-                  <label className="block text-[10px] font-black uppercase tracking-widest text-slate-400 mb-2">Title</label>
+                  <label className="block text-[10px] font-black uppercase tracking-widest text-slate-400 mb-2">Display Title</label>
                   <input 
                     required
+                    autoFocus
                     value={title}
                     onChange={(e) => setTitle(e.target.value)}
-                    placeholder="e.g. Design Inspiration"
-                    className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-md px-4 py-3 text-sm outline-none focus:ring-2 focus:ring-indigo-500/20 transition-all"
+                    placeholder="e.g. Alcott Global Portal"
+                    className="w-full bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-md px-4 py-3 text-sm outline-none focus:ring-2 focus:ring-indigo-500/20 transition-all dark:text-white"
                   />
                 </div>
                 <div>
-                  <label className="block text-[10px] font-black uppercase tracking-widest text-slate-400 mb-2">URL</label>
+                  <label className="block text-[10px] font-black uppercase tracking-widest text-slate-400 mb-2">Target URL</label>
                   <input 
                     required
                     value={url}
                     onChange={(e) => setUrl(e.target.value)}
-                    placeholder="e.g. example.com"
-                    className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-md px-4 py-3 text-sm outline-none focus:ring-2 focus:ring-indigo-500/20 transition-all"
+                    placeholder="e.g. alcottglobal.com"
+                    className="w-full bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-md px-4 py-3 text-sm outline-none focus:ring-2 focus:ring-indigo-500/20 transition-all dark:text-white"
                   />
                 </div>
                 <div>
-                  <label className="block text-[10px] font-black uppercase tracking-widest text-slate-400 mb-2">Assign Category</label>
-                  <select 
-                    value={category}
-                    onChange={(e) => setCategory(e.target.value as LinkEntry['category'])}
-                    className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-md px-4 py-3 text-sm outline-none focus:ring-2 focus:ring-indigo-500/20 appearance-none cursor-pointer"
-                  >
-                    {CATEGORIES.map(cat => (
-                      <option key={cat} value={cat}>{cat}</option>
-                    ))}
-                  </select>
+                  <label className="block text-[10px] font-black uppercase tracking-widest text-slate-400 mb-2">Category Assignment</label>
+                  <div className="relative">
+                    <select 
+                      value={category}
+                      onChange={(e) => setCategory(e.target.value as LinkEntry['category'])}
+                      className="w-full bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-md px-4 py-3 text-sm outline-none focus:ring-2 focus:ring-indigo-500/20 appearance-none cursor-pointer dark:text-white font-medium"
+                    >
+                      {CATEGORIES.map(cat => (
+                        <option key={cat} value={cat}>{cat}</option>
+                      ))}
+                    </select>
+                    <ChevronDown size={14} className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" />
+                  </div>
                 </div>
 
                 <div className="pt-4 flex gap-3">
                   <button 
                     type="button"
                     onClick={() => setShowModal(false)}
-                    className="flex-1 py-3 text-[10px] font-black uppercase tracking-widest text-slate-500 hover:bg-slate-50 dark:hover:bg-slate-800 rounded-md transition-all"
+                    className="flex-1 py-3 text-[10px] font-black uppercase tracking-widest text-slate-500 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-md transition-all"
                   >
                     Cancel
                   </button>
@@ -319,7 +325,7 @@ export const LinksApp: React.FC<LinksAppProps> = ({ links, onSaveLinks, onGoHome
                     type="submit"
                     className="flex-1 py-3 bg-indigo-600 hover:bg-indigo-500 text-white rounded-md shadow-lg shadow-indigo-500/20 text-[10px] font-black uppercase tracking-widest transition-all active:scale-95"
                   >
-                    {editingLink ? 'Update Entry' : 'Add Link'}
+                    {editingLink ? 'Update Entry' : 'Save Link'}
                   </button>
                 </div>
               </form>
@@ -330,3 +336,21 @@ export const LinksApp: React.FC<LinksAppProps> = ({ links, onSaveLinks, onGoHome
     </div>
   );
 };
+
+interface ChevronDownProps { size: number; className?: string }
+const ChevronDown: React.FC<ChevronDownProps> = ({ size, className }) => (
+  <svg 
+    xmlns="http://www.w3.org/2000/svg" 
+    width={size} 
+    height={size} 
+    viewBox="0 0 24 24" 
+    fill="none" 
+    stroke="currentColor" 
+    strokeWidth="2" 
+    strokeLinecap="round" 
+    strokeLinejoin="round" 
+    className={className}
+  >
+    <path d="m6 9 6 6 6-6"/>
+  </svg>
+);
