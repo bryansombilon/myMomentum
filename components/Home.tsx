@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect, useRef } from 'react';
 import { motion } from 'framer-motion';
 import { CheckSquare, StickyNote, LayoutGrid, Calendar, Download, Upload, ShieldCheck, Globe, Sun, Moon } from 'lucide-react';
@@ -44,9 +43,9 @@ export const Home: React.FC<HomeProps> = ({ onLaunchApp, onExport, onImport, isD
 
       {/* Top Right Actions */}
       <div className="absolute top-8 right-8 z-20">
-        {/* Fix: Using as any to bypass whileHover/whileTap type check on motion.button which are valid in framer-motion */}
         <motion.button
-          {...({ whileHover: { scale: 1.1 }, whileTap: { scale: 0.9 } } as any)}
+          whileHover={{ scale: 1.1 }}
+          whileTap={{ scale: 0.9 }}
           onClick={toggleTheme}
           className="p-3 rounded-2xl bg-white/60 dark:bg-slate-900/60 backdrop-blur-xl border border-white/40 dark:border-slate-800/60 shadow-lg text-slate-700 dark:text-slate-200 hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors"
           title={isDarkMode ? "Switch to Light Mode" : "Switch to Dark Mode"}
@@ -55,9 +54,9 @@ export const Home: React.FC<HomeProps> = ({ onLaunchApp, onExport, onImport, isD
         </motion.button>
       </div>
 
-      {/* Fix: Using as any to bypass initial/animate type check on motion.div */}
       <motion.div 
-        {...({ initial: { opacity: 0, y: -20 }, animate: { opacity: 1, y: 0 } } as any)}
+        initial={{ opacity: 0, y: -20 }} 
+        animate={{ opacity: 1, y: 0 }} 
         className="mb-16 text-center z-10"
       >
         <div className="mb-4">
@@ -74,22 +73,20 @@ export const Home: React.FC<HomeProps> = ({ onLaunchApp, onExport, onImport, isD
         </div>
       </motion.div>
 
-      {/* Fix: Using as any to bypass initial/animate/transition type check on motion.div */}
       <motion.div 
-        {...({ initial: { opacity: 0, scale: 0.95 }, animate: { opacity: 1, scale: 1 }, transition: { delay: 0.1, duration: 0.5 } } as any)}
+        initial={{ opacity: 0, scale: 0.95 }} 
+        animate={{ opacity: 1, scale: 1 }} 
+        transition={{ delay: 0.1, duration: 0.5 }} 
         className="grid grid-cols-1 md:grid-cols-3 gap-16 z-10"
       >
         {apps.map((app, index) => (
-          /* Fix: Using as any to bypass motion props type check on motion.button */
           <motion.button
             key={app.id}
-            {...({ 
-              initial: { opacity: 0, y: 20 }, 
-              animate: { opacity: 1, y: 0 }, 
-              transition: { delay: 0.2 + (index * 0.1) },
-              whileHover: { y: -12, scale: 1.02 },
-              whileTap: { scale: 0.96 }
-            } as any)}
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.2 + (index * 0.1) }}
+            whileHover={{ y: -12, scale: 1.02 }}
+            whileTap={{ scale: 0.96 }}
             onClick={() => onLaunchApp(app.id)}
             className="group flex flex-col items-center gap-8 outline-none"
           >
@@ -108,9 +105,10 @@ export const Home: React.FC<HomeProps> = ({ onLaunchApp, onExport, onImport, isD
         ))}
       </motion.div>
 
-      {/* Fix: Using as any to bypass initial/animate/transition type check on motion.div */}
       <motion.div 
-        {...({ initial: { opacity: 0, y: 40 }, animate: { opacity: 1, y: 0 }, transition: { delay: 0.5 } } as any)}
+        initial={{ opacity: 0, y: 40 }} 
+        animate={{ opacity: 1, y: 0 }} 
+        transition={{ delay: 0.5 }} 
         className="mt-32 z-10 flex flex-col md:flex-row items-center gap-6 p-3 bg-white/60 dark:bg-slate-900/60 backdrop-blur-2xl rounded-3xl border border-white/40 dark:border-slate-800/60 shadow-2xl"
       >
         <div className="px-5 border-b md:border-b-0 md:border-r border-slate-200 dark:border-slate-800 flex items-center gap-3 py-2">

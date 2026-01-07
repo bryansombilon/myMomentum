@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { AnimatePresence, motion } from 'framer-motion';
 import { TaskList } from './components/TaskList';
@@ -10,7 +9,6 @@ import { NotesApp } from './components/NotesApp';
 import { LinksApp } from './components/LinksApp';
 import { INITIAL_TASKS, INITIAL_NOTES, INITIAL_LINKS } from './constants';
 import { Task, Message, Priority, AppView, Note, LinkEntry } from './types';
-import { Home as HomeIcon, CheckSquare, StickyNote, Globe } from 'lucide-react';
 
 const STORAGE_KEY_TASKS = 'taskflow_tasks_v1';
 const STORAGE_KEY_NOTES = 'taskflow_notes_v1';
@@ -19,14 +17,6 @@ const THEME_KEY = 'taskflow_theme';
 
 const App: React.FC = () => {
   const [currentView, setCurrentView] = useState<AppView>('home');
-  const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
-  const [showMobileDetail, setShowMobileDetail] = useState(false);
-
-  useEffect(() => {
-    const handleResize = () => setIsMobile(window.innerWidth < 768);
-    window.addEventListener('resize', handleResize);
-    return () => window.removeEventListener('resize', handleResize);
-  }, []);
 
   // Tasks State
   const [tasks, setTasks] = useState<Task[]>(() => {
@@ -100,6 +90,7 @@ const App: React.FC = () => {
     localStorage.setItem(STORAGE_KEY_LINKS, JSON.stringify(links));
   }, [links]);
 
+  // Handlers for Task App
   const handleTaskReorder = (newOrder: Task[]) => setTasks(newOrder);
   const handleUpdateTask = (taskId: string, updates: Message[]) => {
     setTasks(prev => prev.map(t => t.id === taskId ? { ...t, updates } : t));
@@ -118,10 +109,7 @@ const App: React.FC = () => {
   };
   const handleDeleteTask = (taskId: string) => {
     setTasks(prev => prev.filter(t => t.id !== taskId));
-    if (selectedTaskId === taskId) {
-      setSelectedTaskId(null);
-      setShowMobileDetail(false);
-    }
+    if (selectedTaskId === taskId) setSelectedTaskId(null);
   };
   const handleSaveTask = (taskData: any) => {
     if (editingTask) {
@@ -131,7 +119,6 @@ const App: React.FC = () => {
       const newTask: Task = { id: Date.now().toString(), ...taskData, status: 'todo', updates: [] };
       setTasks(prev => [newTask, ...prev]);
       setSelectedTaskId(newTask.id);
-      if (isMobile) setShowMobileDetail(true);
     }
     setIsNewTaskModalOpen(false);
   };
@@ -163,37 +150,23 @@ const App: React.FC = () => {
   const handleNavigateToTask = (taskId: string) => {
     setSelectedTaskId(taskId);
     setCurrentView('tasks');
-    if (isMobile) setShowMobileDetail(true);
-  };
-
-  const handleLaunchApp = (view: AppView) => {
-    setCurrentView(view);
-    setShowMobileDetail(false);
   };
 
   const selectedTask = tasks.find(t => t.id === selectedTaskId) || null;
 
-  const MobileNav = () => (
-    <div className="md:hidden fixed bottom-0 left-0 right-0 h-16 bg-white/80 dark:bg-slate-900/80 backdrop-blur-xl border-t border-slate-200 dark:border-slate-800 z-50 flex items-center justify-around px-2">
-      <NavButton active={currentView === 'home'} onClick={() => handleLaunchApp('home')} icon={HomeIcon} label="Home" />
-      <NavButton active={currentView === 'tasks'} onClick={() => handleLaunchApp('tasks')} icon={CheckSquare} label="Tasks" />
-      <NavButton active={currentView === 'notes'} onClick={() => handleLaunchApp('notes')} icon={StickyNote} label="Notes" />
-      <NavButton active={currentView === 'links'} onClick={() => handleLaunchApp('links')} icon={Globe} label="Hub" />
-    </div>
-  );
-
   return (
-    <div className="flex h-screen w-full bg-slate-50 dark:bg-slate-950 overflow-hidden font-sans transition-colors duration-300 pb-16 md:pb-0">
+    <div className="flex h-screen w-full bg-slate-50 dark:bg-slate-950 overflow-hidden font-sans transition-colors duration-300">
       <AnimatePresence mode="wait">
         {currentView === 'home' && (
-          // Fix: Using as any to bypass TypeScript error on initial/animate/exit props on motion.div
           <motion.div 
             key="home"
-            {...({ initial: { opacity: 0 }, animate: { opacity: 1 }, exit: { opacity: 0 } } as any)}
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0, scale: 1.1 }}
             className="w-full h-full"
           >
             <Home 
-              onLaunchApp={handleLaunchApp} 
+              onLaunchApp={setCurrentView} 
               onExport={handleExportData}
               onImport={handleImportData}
               isDarkMode={isDarkMode}
@@ -203,27 +176,26 @@ const App: React.FC = () => {
         )}
 
         {currentView === 'tasks' && (
-          // Fix: Using as any to bypass TypeScript error on initial/animate props on motion.div
           <motion.div 
             key="tasks"
-            {...({ initial: { opacity: 0 }, animate: { opacity: 1 } } as any)}
+            initial={{ x: '100%' }}
+            animate={{ x: 0 }}
+            exit={{ x: '100%' }}
+            transition={{ type: 'spring', damping: 25, stiffness: 200 }}
             className="w-full h-full flex flex-col md:flex-row"
           >
-            {(!isMobile || !showMobileDetail) && (
-              <TaskList 
+            <TaskList 
+              tasks={tasks} 
+              setTasks={handleTaskReorder} 
+              selectedTaskId={selectedTaskId}
+              onSelectTask={(task) => setSelectedTaskId(task.id)}
+              onAddNewTask={() => { setEditingTask(null); setIsNewTaskModalOpen(true); }}
+              onGoHome={() => setCurrentView('home')}
+            />
+            <div className="flex flex-col flex-1 min-w-0">
+              <ProjectProgress 
                 tasks={tasks} 
-                setTasks={handleTaskReorder} 
-                selectedTaskId={selectedTaskId}
-                onSelectTask={(task) => {
-                  setSelectedTaskId(task.id);
-                  if (isMobile) setShowMobileDetail(true);
-                }}
-                onAddNewTask={() => { setEditingTask(null); setIsNewTaskModalOpen(true); }}
-                onGoHome={() => setCurrentView('home')}
               />
-            )}
-            <div className={`flex flex-col flex-1 min-w-0 ${isMobile && !showMobileDetail ? 'hidden' : 'flex'}`}>
-              <ProjectProgress tasks={tasks} />
               <div className="flex-1 relative overflow-hidden">
                   <TaskDetail 
                     task={selectedTask} 
@@ -233,7 +205,6 @@ const App: React.FC = () => {
                     onPriorityChange={handlePriorityChange}
                     onDeleteTask={handleDeleteTask}
                     onEditTask={(t) => { setEditingTask(t); setIsNewTaskModalOpen(true); }}
-                    onBack={isMobile ? () => setShowMobileDetail(false) : undefined}
                   />
               </div>
             </div>
@@ -247,10 +218,11 @@ const App: React.FC = () => {
         )}
 
         {currentView === 'notes' && (
-          // Fix: Using as any to bypass TypeScript error on initial/animate props on motion.div
           <motion.div 
             key="notes"
-            {...({ initial: { opacity: 0 }, animate: { opacity: 1 } } as any)}
+            initial={{ scale: 0.8, opacity: 0 }}
+            animate={{ scale: 1, opacity: 1 }}
+            exit={{ scale: 0.8, opacity: 0 }}
             className="w-full h-full"
           >
             <NotesApp 
@@ -259,37 +231,28 @@ const App: React.FC = () => {
               onSaveNotes={setNotes} 
               onGoHome={() => setCurrentView('home')}
               onNavigateToTask={handleNavigateToTask}
-              isMobile={isMobile}
             />
           </motion.div>
         )}
 
         {currentView === 'links' && (
-          // Fix: Using as any to bypass TypeScript error on initial/animate props on motion.div
           <motion.div 
             key="links"
-            {...({ initial: { opacity: 0 }, animate: { opacity: 1 } } as any)}
+            initial={{ y: '100%', opacity: 0 }}
+            animate={{ y: 0, opacity: 1 }}
+            exit={{ y: '100%', opacity: 0 }}
             className="w-full h-full"
           >
             <LinksApp 
               links={links}
               onSaveLinks={setLinks}
               onGoHome={() => setCurrentView('home')}
-              isMobile={isMobile}
             />
           </motion.div>
         )}
       </AnimatePresence>
-      <MobileNav />
     </div>
   );
 };
-
-const NavButton: React.FC<{ active: boolean; onClick: () => void; icon: any; label: string }> = ({ active, onClick, icon: Icon, label }) => (
-  <button onClick={onClick} className={`flex flex-col items-center gap-1 transition-colors ${active ? 'text-indigo-600 dark:text-indigo-400' : 'text-slate-400 dark:text-slate-600'}`}>
-    <Icon size={20} />
-    <span className="text-[9px] font-bold uppercase tracking-wider">{label}</span>
-  </button>
-);
 
 export default App;
