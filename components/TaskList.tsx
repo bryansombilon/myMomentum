@@ -1,6 +1,6 @@
 
 import React, { useState, useMemo } from 'react';
-import { Reorder, useDragControls, motion } from 'framer-motion';
+import { Reorder, useDragControls, motion, AnimatePresence } from 'framer-motion';
 import { Task, ProjectType } from '../types';
 import { PROJECT_CONFIG, STATUS_CONFIG } from '../constants';
 import { Calendar, GripVertical, Plus, Search, Home, Filter, Clock, Flag, Briefcase, Activity } from 'lucide-react';
@@ -31,9 +31,6 @@ const TaskItem: React.FC<TaskItemProps> = React.memo(({
   const statusStyle = STATUS_CONFIG[task.status] || STATUS_CONFIG['todo'];
   const isUrgent = task.priority === 'urgent';
   
-  // Extract ID from full ClickUp link
-  const clickupId = task.clickupLink ? task.clickupLink.replace(/.*\/t\//, '') : '';
-
   const Content = (
     <>
       <div className={`w-[3.5px] ${statusStyle.color} shrink-0`} />
@@ -51,7 +48,10 @@ const TaskItem: React.FC<TaskItemProps> = React.memo(({
             )}
           </div>
           {isDragEnabled && (
-            <div onPointerDown={(e) => controls.start(e)} className="text-slate-400 dark:text-slate-600 cursor-grab active:cursor-grabbing p-0.5 touch-none">
+            <div 
+              onPointerDown={(e) => controls.start(e)} 
+              className="text-slate-400 dark:text-slate-600 cursor-grab active:cursor-grabbing p-1 touch-none hover:bg-slate-100 dark:hover:bg-slate-800 rounded-md transition-colors"
+            >
               <GripVertical size={14} />
             </div>
           )}
@@ -68,17 +68,8 @@ const TaskItem: React.FC<TaskItemProps> = React.memo(({
               {new Intl.DateTimeFormat('en-US', { month: 'short', day: 'numeric' }).format(new Date(task.deadline))}
             </span>
           </div>
-          <div className="flex items-center gap-1.5">
-            {clickupId && (
-              <div className="flex items-center px-1.5 py-0.5 rounded bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700">
-                <span className="text-[9px] font-mono text-slate-500 dark:text-slate-400 font-bold tracking-tighter">
-                  #{clickupId}
-                </span>
-              </div>
-            )}
-            <div className={`text-[9px] px-2 py-0.5 rounded font-bold uppercase tracking-tighter ${statusStyle.color} ${statusStyle.text}`}>
-              {statusStyle.label}
-            </div>
+          <div className={`text-[9px] px-2 py-0.5 rounded font-bold uppercase tracking-tighter ${statusStyle.color} ${statusStyle.text}`}>
+            {statusStyle.label}
           </div>
         </div>
       </div>
@@ -92,12 +83,52 @@ const TaskItem: React.FC<TaskItemProps> = React.memo(({
       : 'bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-800 hover:border-slate-300 dark:hover:border-slate-700 shadow-sm'}
   `;
 
-  return isDragEnabled ? (
-    <Reorder.Item value={task} id={task.id} dragListener={false} dragControls={controls} className={containerClasses} onClick={() => onSelect(task)}>
+  // Use a consistent spring for all layout animations
+  const springConfig = { 
+    type: "spring", 
+    stiffness: 400, 
+    damping: 40, 
+    mass: 0.8 
+  };
+
+  if (isDragEnabled) {
+    return (
+      <Reorder.Item 
+        value={task} 
+        id={task.id} 
+        dragListener={false} 
+        dragControls={controls} 
+        className={containerClasses} 
+        onClick={() => onSelect(task)}
+        layout
+        initial={{ opacity: 0, x: -10 }}
+        animate={{ opacity: 1, x: 0 }}
+        exit={{ opacity: 0, scale: 0.95 }}
+        whileDrag={{ 
+          boxShadow: "0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04)",
+          zIndex: 50,
+          scale: 1.02,
+          backgroundColor: isSelected ? "var(--tw-bg-opacity)" : "rgba(255, 255, 255, 1)"
+        }}
+        transition={springConfig}
+      >
+        {Content}
+      </Reorder.Item>
+    );
+  }
+
+  return (
+    <motion.div 
+      layout
+      className={containerClasses} 
+      onClick={() => onSelect(task)}
+      initial={{ opacity: 0, scale: 0.98 }}
+      animate={{ opacity: 1, scale: 1 }}
+      exit={{ opacity: 0, scale: 0.95 }}
+      transition={springConfig}
+    >
       {Content}
-    </Reorder.Item>
-  ) : (
-    <motion.div className={containerClasses} onClick={() => onSelect(task)}>{Content}</motion.div>
+    </motion.div>
   );
 });
 
@@ -112,7 +143,6 @@ export const TaskList: React.FC<TaskListProps> = ({ tasks, setTasks, selectedTas
   const filteredTasks = useMemo(() => {
     return tasks.filter(task => {
       const q = searchQuery.toLowerCase();
-      // Search by title, clickup link, or raw ID part of the link
       const matchSearch = !searchQuery || 
         task.title.toLowerCase().includes(q) || 
         (task.clickupLink && task.clickupLink.toLowerCase().includes(q));
@@ -181,19 +211,17 @@ export const TaskList: React.FC<TaskListProps> = ({ tasks, setTasks, selectedTas
             type="text" 
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            placeholder="Search tasks or ClickUp ID..."
+            placeholder="Search tasks..."
             className="w-full bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-md pl-9 pr-3 py-2 text-[13px] font-semibold focus:border-indigo-500 dark:focus:border-indigo-400 outline-none text-slate-700 dark:text-slate-200 placeholder:text-slate-400 dark:placeholder:text-slate-600"
           />
         </div>
 
-        {/* Advanced Filters Panel */}
         {showFilters && (
           <motion.div 
             initial={{ height: 0, opacity: 0 }}
             animate={{ height: 'auto', opacity: 1 }}
             className="space-y-3 pt-2 border-t border-slate-100 dark:border-slate-800 overflow-hidden"
           >
-            {/* Status Filter */}
             <div className="flex flex-col gap-1.5">
                 <label className="text-[9px] font-bold uppercase tracking-widest text-slate-500 dark:text-slate-400 flex items-center gap-1.5">
                     <Activity size={10} /> Status
@@ -263,18 +291,39 @@ export const TaskList: React.FC<TaskListProps> = ({ tasks, setTasks, selectedTas
         )}
       </div>
 
-      <div className="flex-1 overflow-y-auto px-4 pb-4 space-y-1">
+      <div className="flex-1 overflow-y-auto px-4 pb-4 space-y-1 relative scrollbar-hide">
         {!isFiltered ? (
-          <Reorder.Group axis="y" values={tasks} onReorder={setTasks} className="space-y-1">
-            {filteredTasks.map((task) => (
-              <TaskItem key={task.id} task={task} isSelected={selectedTaskId === task.id} onSelect={onSelectTask} isDragEnabled={true} />
-            ))}
+          <Reorder.Group 
+            axis="y" 
+            values={tasks} 
+            onReorder={setTasks} 
+            className="space-y-1"
+          >
+            <AnimatePresence mode="popLayout">
+              {filteredTasks.map((task) => (
+                <TaskItem 
+                  key={task.id} 
+                  task={task} 
+                  isSelected={selectedTaskId === task.id} 
+                  onSelect={onSelectTask} 
+                  isDragEnabled={true} 
+                />
+              ))}
+            </AnimatePresence>
           </Reorder.Group>
         ) : (
           <div className="space-y-1">
-            {filteredTasks.map((task) => (
-              <TaskItem key={task.id} task={task} isSelected={selectedTaskId === task.id} onSelect={onSelectTask} isDragEnabled={false} />
-            ))}
+            <AnimatePresence mode="popLayout">
+              {filteredTasks.map((task) => (
+                <TaskItem 
+                  key={task.id} 
+                  task={task} 
+                  isSelected={selectedTaskId === task.id} 
+                  onSelect={onSelectTask} 
+                  isDragEnabled={false} 
+                />
+              ))}
+            </AnimatePresence>
             {filteredTasks.length === 0 && (
                 <div className="flex flex-col items-center justify-center py-12 text-slate-400 dark:text-slate-600 text-center">
                     <Search size={24} className="mb-2 opacity-20 mx-auto" />

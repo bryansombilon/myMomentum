@@ -1,4 +1,5 @@
-import React, { useState, useEffect } from 'react';
+
+import React, { useState, useEffect, useRef } from 'react';
 import { AnimatePresence, motion } from 'framer-motion';
 import { TaskList } from './components/TaskList';
 import { TaskDetail } from './components/TaskDetail';
@@ -78,17 +79,16 @@ const App: React.FC = () => {
     localStorage.setItem(THEME_KEY, isDarkMode ? 'dark' : 'light');
   }, [isDarkMode]);
 
+  // Debounced storage effect for performance
+  const debounceTimerRef = useRef<number | null>(null);
   useEffect(() => {
-    localStorage.setItem(STORAGE_KEY_TASKS, JSON.stringify(tasks));
-  }, [tasks]);
-
-  useEffect(() => {
-    localStorage.setItem(STORAGE_KEY_NOTES, JSON.stringify(notes));
-  }, [notes]);
-
-  useEffect(() => {
-    localStorage.setItem(STORAGE_KEY_LINKS, JSON.stringify(links));
-  }, [links]);
+    if (debounceTimerRef.current) window.clearTimeout(debounceTimerRef.current);
+    debounceTimerRef.current = window.setTimeout(() => {
+      localStorage.setItem(STORAGE_KEY_TASKS, JSON.stringify(tasks));
+      localStorage.setItem(STORAGE_KEY_NOTES, JSON.stringify(notes));
+      localStorage.setItem(STORAGE_KEY_LINKS, JSON.stringify(links));
+    }, 1000);
+  }, [tasks, notes, links]);
 
   // Handlers for Task App
   const handleTaskReorder = (newOrder: Task[]) => setTasks(newOrder);
