@@ -8,12 +8,14 @@ import { ProjectProgress } from './components/ProjectProgress';
 import { Home } from './components/Home';
 import { NotesApp } from './components/NotesApp';
 import { LinksApp } from './components/LinksApp';
-import { INITIAL_TASKS, INITIAL_NOTES, INITIAL_LINKS } from './constants';
-import { Task, Message, Priority, AppView, Note, LinkEntry } from './types';
+import { LeavesApp } from './components/LeavesApp';
+import { INITIAL_TASKS, INITIAL_NOTES, INITIAL_LINKS, INITIAL_LEAVES } from './constants';
+import { Task, Message, Priority, AppView, Note, LinkEntry, LeaveEntry } from './types';
 
 const STORAGE_KEY_TASKS = 'taskflow_tasks_v1';
 const STORAGE_KEY_NOTES = 'taskflow_notes_v1';
 const STORAGE_KEY_LINKS = 'taskflow_links_v1';
+const STORAGE_KEY_LEAVES = 'taskflow_leaves_v1';
 const THEME_KEY = 'taskflow_theme';
 
 const App: React.FC = () => {
@@ -62,6 +64,20 @@ const App: React.FC = () => {
     return INITIAL_LINKS;
   });
 
+  // Leaves State
+  const [leaves, setLeaves] = useState<LeaveEntry[]>(() => {
+    try {
+      const saved = localStorage.getItem(STORAGE_KEY_LEAVES);
+      if (saved) {
+        return JSON.parse(saved).map((l: any) => ({
+          ...l,
+          date: new Date(l.date)
+        }));
+      }
+    } catch (e) {}
+    return INITIAL_LEAVES;
+  });
+
   const [selectedTaskId, setSelectedTaskId] = useState<string | null>(null);
   const [isNewTaskModalOpen, setIsNewTaskModalOpen] = useState(false);
   const [editingTask, setEditingTask] = useState<Task | null>(null);
@@ -87,8 +103,9 @@ const App: React.FC = () => {
       localStorage.setItem(STORAGE_KEY_TASKS, JSON.stringify(tasks));
       localStorage.setItem(STORAGE_KEY_NOTES, JSON.stringify(notes));
       localStorage.setItem(STORAGE_KEY_LINKS, JSON.stringify(links));
+      localStorage.setItem(STORAGE_KEY_LEAVES, JSON.stringify(leaves));
     }, 1000);
-  }, [tasks, notes, links]);
+  }, [tasks, notes, links, leaves]);
 
   // Handlers for Task App
   const handleTaskReorder = (newOrder: Task[]) => setTasks(newOrder);
@@ -124,7 +141,7 @@ const App: React.FC = () => {
   };
 
   const handleExportData = () => {
-    const data = { tasks, notes, links };
+    const data = { tasks, notes, links, leaves };
     const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
     const url = URL.createObjectURL(blob);
     const link = document.createElement('a');
@@ -141,6 +158,7 @@ const App: React.FC = () => {
         if (data.tasks) setTasks(data.tasks.map((t: any) => ({ ...t, deadline: new Date(t.deadline), updates: t.updates.map((m: any) => ({ ...m, timestamp: new Date(m.timestamp) })) })));
         if (data.notes) setNotes(data.notes.map((n: any) => ({ ...n, lastModified: new Date(n.lastModified) })));
         if (data.links) setLinks(data.links.map((l: any) => ({ ...l, dateAdded: new Date(l.dateAdded) })));
+        if (data.leaves) setLeaves(data.leaves.map((l: any) => ({ ...l, date: new Date(l.date) })));
         alert("Backup restored!");
       } catch (err) { alert("Invalid backup file."); }
     };
@@ -246,6 +264,22 @@ const App: React.FC = () => {
             <LinksApp 
               links={links}
               onSaveLinks={setLinks}
+              onGoHome={() => setCurrentView('home')}
+            />
+          </motion.div>
+        )}
+
+        {currentView === 'leaves' && (
+          <motion.div 
+            key="leaves"
+            initial={{ opacity: 0, filter: 'blur(10px)' }}
+            animate={{ opacity: 1, filter: 'blur(0px)' }}
+            exit={{ opacity: 0, filter: 'blur(10px)' }}
+            className="w-full h-full"
+          >
+            <LeavesApp 
+              leaves={leaves}
+              onSaveLeaves={setLeaves}
               onGoHome={() => setCurrentView('home')}
             />
           </motion.div>

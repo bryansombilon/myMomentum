@@ -36,8 +36,7 @@ export interface Task {
   priority: Priority;
 }
 
-// New Types for multi-app system
-export type AppView = 'home' | 'tasks' | 'notes' | 'links';
+export type AppView = 'home' | 'tasks' | 'notes' | 'links' | 'leaves';
 
 export interface Note {
   id: string;
@@ -54,4 +53,18 @@ export interface LinkEntry {
   url: string;
   category: 'Awards' | 'Makers & Movers' | 'Alcott Global' | 'Source to Sold' | 'Supplify' | 'Executive Search' | 'Podcast' | 'Tools';
   dateAdded: Date;
+}
+
+// Leave Tracking Types
+export type LeaveType = 'Vacation' | 'Sick';
+export type LeaveDuration = 'Full' | 'Half';
+export type HalfDayPeriod = 'AM' | 'PM';
+
+export interface LeaveEntry {
+  id: string;
+  type: LeaveType;
+  duration: LeaveDuration;
+  halfDayPeriod?: HalfDayPeriod; // Only used if duration is 'Half'
+  date: Date;
+  reason: string;
 }
