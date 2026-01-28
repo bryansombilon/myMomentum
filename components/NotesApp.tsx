@@ -1,3 +1,4 @@
+
 import React, { useState, useMemo, useRef, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Note, Task, ProjectType } from '../types';
@@ -5,7 +6,7 @@ import {
   Plus, Trash2, Home, Search as SearchIcon, 
   FileText, Bold, Italic, Underline, Palette, CheckSquare, Tag as TagIcon, X as XIcon,
   Strikethrough, List, IndentIncrease, IndentDecrease, ChevronDown, Briefcase,
-  Pin, PinOff, Link as LinkIcon, Filter, Sparkles, Check
+  Pin, PinOff, Link as LinkIcon, Filter, Sparkles, Check, ListOrdered
 } from 'lucide-react';
 
 interface NotesAppProps {
@@ -114,7 +115,6 @@ export const NotesApp: React.FC<NotesAppProps> = ({ notes, tasks, onSaveNotes, o
     const range = document.createRange();
     range.setStart(el, 0);
     range.collapse(true);
-    // Fix: Explicitly type nodeStack as Node[] to avoid "ChildNode not assignable to HTMLElement" error
     const nodeStack: Node[] = [el];
     let node: Node | undefined;
     let foundStart = false;
@@ -153,7 +153,6 @@ export const NotesApp: React.FC<NotesAppProps> = ({ notes, tasks, onSaveNotes, o
     });
     
     if (newContent !== content) {
-      // Automatic detection should preserve the cursor
       if (isAutomatic) {
         const savedPos = saveCaretPosition(editorRef.current);
         editorRef.current.innerHTML = newContent;
@@ -170,17 +169,14 @@ export const NotesApp: React.FC<NotesAppProps> = ({ notes, tasks, onSaveNotes, o
       const newContent = editorRef.current.innerHTML;
       setPendingContent(newContent);
       
-      // Clear existing timeouts
       if (saveTimeoutRef.current) window.clearTimeout(saveTimeoutRef.current);
       if (autoLinkTimeoutRef.current) window.clearTimeout(autoLinkTimeoutRef.current);
 
-      // Save content after 2s of inactivity
       saveTimeoutRef.current = window.setTimeout(() => {
         handleUpdateNote(activeNote.id, { content: newContent });
         setPendingContent(null);
       }, 2000);
 
-      // Auto-detect links after 1s of inactivity
       autoLinkTimeoutRef.current = window.setTimeout(() => {
         handleDetectLinks(true);
       }, 1000);
@@ -252,7 +248,6 @@ export const NotesApp: React.FC<NotesAppProps> = ({ notes, tasks, onSaveNotes, o
         e.preventDefault();
         const textContent = (checklistItem as HTMLElement).innerText.trim();
 
-        // If checklist item is essentially empty, convert to regular line
         if (textContent === '' || textContent === '\u00A0') {
           const newLine = document.createElement('div');
           newLine.innerHTML = '<br>';
@@ -264,7 +259,6 @@ export const NotesApp: React.FC<NotesAppProps> = ({ notes, tasks, onSaveNotes, o
           selection.removeAllRanges();
           selection.addRange(newRange);
         } else {
-          // Create new checklist item
           const newItem = document.createElement('div');
           newItem.className = 'checklist-item';
           newItem.style.cssText = 'display: flex; align-items: center; gap: 8px; margin-bottom: 4px;';
@@ -433,6 +427,7 @@ export const NotesApp: React.FC<NotesAppProps> = ({ notes, tasks, onSaveNotes, o
                 <div className="w-px h-6 bg-slate-200 dark:bg-slate-800 mx-1.5" />
                 
                 <ToolbarButton icon={List} onClick={() => execCommand('insertUnorderedList')} title="Bullet List" />
+                <ToolbarButton icon={ListOrdered} onClick={() => execCommand('insertOrderedList')} title="Numbered List" />
                 <ToolbarButton icon={CheckSquare} onClick={() => execCommand('insertHTML', '<div class="checklist-item" style="display: flex; align-items: center; gap: 8px; margin-bottom: 4px;"><input type="checkbox" style="width: 14px; height: 14px; cursor: pointer;"><span>&nbsp;</span></div>')} title="Checklist" />
                 <ToolbarButton icon={LinkIcon} onClick={() => execCommand('createLink')} title="Insert Manual Link" />
                 <button 
@@ -567,7 +562,7 @@ export const NotesApp: React.FC<NotesAppProps> = ({ notes, tasks, onSaveNotes, o
                 onInput={handleContentChange}
                 onKeyDown={handleKeyDown}
                 onBlur={flushSave}
-                className="w-full h-auto min-h-[60vh] bg-transparent border-none outline-none text-lg leading-relaxed prose dark:prose-invert max-w-none pb-40 text-slate-800 dark:text-slate-100"
+                className="note-editor w-full h-auto min-h-[60vh] bg-transparent border-none outline-none text-lg leading-relaxed max-w-none pb-40 text-slate-800 dark:text-slate-100"
                 style={{ outline: 'none' }}
               />
             </div>
