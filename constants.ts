@@ -1,5 +1,5 @@
 
-import { ProjectType, Task, Project, Priority, Note, LinkEntry, LeaveEntry } from './types';
+import { ProjectType, Task, Project, Priority, Note, LinkEntry, LeaveEntry, EventActivity } from './types';
 
 export const PROJECT_CONFIG: Record<ProjectType, Project> = {
   [ProjectType.GALA]: { name: ProjectType.GALA, color: '#EAB308' }, 
@@ -84,3 +84,13 @@ export const LEAVE_LIMITS = {
 };
 
 export const INITIAL_LEAVES: LeaveEntry[] = [];
+
+export const INITIAL_EVENT_ACTIVITIES: EventActivity[] = [
+  {
+    id: 'e-1',
+    title: 'Venue Inspection',
+    details: 'Final walkthrough of the convention hall and stage setup.',
+    date: new Date(),
+    status: 'planned'
+  }
+];

@@ -1,7 +1,7 @@
 
 import React, { useState, useEffect, useRef } from 'react';
 import { motion } from 'framer-motion';
-import { CheckSquare, StickyNote, LayoutGrid, Calendar, Download, Upload, ShieldCheck, Globe, Sun, Moon, CalendarDays } from 'lucide-react';
+import { CheckSquare, StickyNote, LayoutGrid, Calendar, Download, Upload, ShieldCheck, Globe, Sun, Moon, CalendarDays, Rocket } from 'lucide-react';
 import { AppView } from '../types';
 
 interface HomeProps {
@@ -36,12 +36,13 @@ export const Home: React.FC<HomeProps> = ({ onLaunchApp, onExport, onImport, isD
     { id: 'notes' as AppView, name: 'Notes', icon: StickyNote, color: 'bg-amber-500', shadow: 'shadow-amber-500/40', desc: 'NoteFlow' },
     { id: 'links' as AppView, name: 'Hub', icon: Globe, color: 'bg-emerald-500', shadow: 'shadow-emerald-500/40', desc: 'LinkFlow' },
     { id: 'leaves' as AppView, name: 'Leaves', icon: CalendarDays, color: 'bg-sky-500', shadow: 'shadow-sky-500/40', desc: 'LeaveFlow' },
+    { id: 'event-timeline' as AppView, name: 'Makers', icon: Rocket, color: 'bg-purple-600', shadow: 'shadow-purple-500/40', desc: 'EventFlow' },
   ];
 
   return (
     <div className="relative w-full h-full flex flex-col items-center justify-center p-8 overflow-hidden bg-slate-100 dark:bg-slate-950 transition-colors duration-500">
       <div className="absolute top-[-10%] left-[-10%] w-[50%] h-[50%] bg-indigo-500/10 blur-[120px] rounded-full" />
-      <div className="absolute bottom-[-10%] right-[-10%] w-[50%] h-[50%] bg-sky-500/10 blur-[120px] rounded-full" />
+      <div className="absolute bottom-[-10%] right-[-10%] w-[50%] h-[50%] bg-purple-500/10 blur-[120px] rounded-full" />
 
       {/* Top Right Actions */}
       <div className="absolute top-8 right-8 z-20">
@@ -79,7 +80,7 @@ export const Home: React.FC<HomeProps> = ({ onLaunchApp, onExport, onImport, isD
         initial={{ opacity: 0, scale: 0.95 }} 
         animate={{ opacity: 1, scale: 1 }} 
         transition={{ delay: 0.1, duration: 0.5 }} 
-        className="grid grid-cols-2 md:grid-cols-4 gap-8 md:gap-16 z-10"
+        className="grid grid-cols-2 md:grid-cols-5 gap-6 md:gap-10 z-10"
       >
         {apps.map((app, index) => (
           <motion.button

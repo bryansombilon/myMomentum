@@ -9,13 +9,15 @@ import { Home } from './components/Home';
 import { NotesApp } from './components/NotesApp';
 import { LinksApp } from './components/LinksApp';
 import { LeavesApp } from './components/LeavesApp';
-import { INITIAL_TASKS, INITIAL_NOTES, INITIAL_LINKS, INITIAL_LEAVES } from './constants';
-import { Task, Message, Priority, AppView, Note, LinkEntry, LeaveEntry } from './types';
+import { MakersAndMoversApp } from './components/MakersAndMoversApp';
+import { INITIAL_TASKS, INITIAL_NOTES, INITIAL_LINKS, INITIAL_LEAVES, INITIAL_EVENT_ACTIVITIES } from './constants';
+import { Task, Message, Priority, AppView, Note, LinkEntry, LeaveEntry, EventActivity } from './types';
 
 const STORAGE_KEY_TASKS = 'taskflow_tasks_v1';
 const STORAGE_KEY_NOTES = 'taskflow_notes_v1';
 const STORAGE_KEY_LINKS = 'taskflow_links_v1';
 const STORAGE_KEY_LEAVES = 'taskflow_leaves_v1';
+const STORAGE_KEY_EVENTS = 'taskflow_events_v1';
 const THEME_KEY = 'taskflow_theme';
 
 const App: React.FC = () => {
@@ -78,6 +80,20 @@ const App: React.FC = () => {
     return INITIAL_LEAVES;
   });
 
+  // Event Activities State
+  const [eventActivities, setEventActivities] = useState<EventActivity[]>(() => {
+    try {
+      const saved = localStorage.getItem(STORAGE_KEY_EVENTS);
+      if (saved) {
+        return JSON.parse(saved).map((e: any) => ({
+          ...e,
+          date: new Date(e.date)
+        }));
+      }
+    } catch (e) {}
+    return INITIAL_EVENT_ACTIVITIES;
+  });
+
   const [selectedTaskId, setSelectedTaskId] = useState<string | null>(null);
   const [isNewTaskModalOpen, setIsNewTaskModalOpen] = useState(false);
   const [editingTask, setEditingTask] = useState<Task | null>(null);
@@ -104,8 +120,9 @@ const App: React.FC = () => {
       localStorage.setItem(STORAGE_KEY_NOTES, JSON.stringify(notes));
       localStorage.setItem(STORAGE_KEY_LINKS, JSON.stringify(links));
       localStorage.setItem(STORAGE_KEY_LEAVES, JSON.stringify(leaves));
+      localStorage.setItem(STORAGE_KEY_EVENTS, JSON.stringify(eventActivities));
     }, 1000);
-  }, [tasks, notes, links, leaves]);
+  }, [tasks, notes, links, leaves, eventActivities]);
 
   // Handlers for Task App
   const handleTaskReorder = (newOrder: Task[]) => setTasks(newOrder);
@@ -141,7 +158,7 @@ const App: React.FC = () => {
   };
 
   const handleExportData = () => {
-    const data = { tasks, notes, links, leaves };
+    const data = { tasks, notes, links, leaves, eventActivities };
     const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
     const url = URL.createObjectURL(blob);
     const link = document.createElement('a');
@@ -159,6 +176,7 @@ const App: React.FC = () => {
         if (data.notes) setNotes(data.notes.map((n: any) => ({ ...n, lastModified: new Date(n.lastModified) })));
         if (data.links) setLinks(data.links.map((l: any) => ({ ...l, dateAdded: new Date(l.dateAdded) })));
         if (data.leaves) setLeaves(data.leaves.map((l: any) => ({ ...l, date: new Date(l.date) })));
+        if (data.eventActivities) setEventActivities(data.eventActivities.map((e: any) => ({ ...e, date: new Date(e.date) })));
         alert("Backup restored!");
       } catch (err) { alert("Invalid backup file."); }
     };
@@ -280,6 +298,22 @@ const App: React.FC = () => {
             <LeavesApp 
               leaves={leaves}
               onSaveLeaves={setLeaves}
+              onGoHome={() => setCurrentView('home')}
+            />
+          </motion.div>
+        )}
+
+        {currentView === 'event-timeline' && (
+          <motion.div 
+            key="event-timeline"
+            initial={{ opacity: 0, x: -20 }}
+            animate={{ opacity: 1, x: 0 }}
+            exit={{ opacity: 0, scale: 0.9 }}
+            className="w-full h-full"
+          >
+            <MakersAndMoversApp 
+              activities={eventActivities}
+              onSaveActivities={setEventActivities}
               onGoHome={() => setCurrentView('home')}
             />
           </motion.div>

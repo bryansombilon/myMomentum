@@ -36,7 +36,7 @@ export interface Task {
   priority: Priority;
 }
 
-export type AppView = 'home' | 'tasks' | 'notes' | 'links' | 'leaves';
+export type AppView = 'home' | 'tasks' | 'notes' | 'links' | 'leaves' | 'event-timeline';
 
 export interface Note {
   id: string;
@@ -64,7 +64,16 @@ export interface LeaveEntry {
   id: string;
   type: LeaveType;
   duration: LeaveDuration;
-  halfDayPeriod?: HalfDayPeriod; // Only used if duration is 'Half'
+  halfDayPeriod?: HalfDayPeriod; 
   date: Date;
   reason: string;
+}
+
+// Event Activities (Makers and Movers)
+export interface EventActivity {
+  id: string;
+  title: string;
+  details: string;
+  date: Date;
+  status: 'planned' | 'in-progress' | 'completed';
 }
