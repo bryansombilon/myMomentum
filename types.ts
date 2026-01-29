@@ -36,7 +36,7 @@ export interface Task {
   priority: Priority;
 }
 
-export type AppView = 'home' | 'tasks' | 'notes' | 'links' | 'leaves' | 'event-timeline';
+export type AppView = 'home' | 'tasks' | 'notes' | 'links' | 'leaves' | 'event-timeline' | 'engagement';
 
 export interface Note {
   id: string;
@@ -55,7 +55,6 @@ export interface LinkEntry {
   dateAdded: Date;
 }
 
-// Leave Tracking Types
 export type LeaveType = 'Vacation' | 'Sick';
 export type LeaveDuration = 'Full' | 'Half';
 export type HalfDayPeriod = 'AM' | 'PM';
@@ -69,7 +68,6 @@ export interface LeaveEntry {
   reason: string;
 }
 
-// Event Activities (Makers and Movers) - Revamped for Calendar of Activities
 export interface EventActivity {
   id: string;
   title: string;
@@ -78,4 +76,15 @@ export interface EventActivity {
   endDate: Date;
   project: ProjectType;
   status: 'planned' | 'in-progress' | 'completed';
+}
+
+export interface Reminder {
+  id: string;
+  time: string; // "HH:mm"
+  label: string;
+  description: string;
+  actionType: 'link' | 'dismiss';
+  actionUrl?: string;
+  enabled: boolean;
+  frequency: 'daily' | 'weekdays' | 'weekends';
 }

@@ -1,5 +1,5 @@
 
-import { ProjectType, Task, Project, Priority, Note, LinkEntry, LeaveEntry, EventActivity } from './types';
+import { ProjectType, Task, Project, Priority, Note, LinkEntry, LeaveEntry, EventActivity, Reminder } from './types';
 
 export const PROJECT_CONFIG: Record<ProjectType, Project> = {
   [ProjectType.GALA]: { name: ProjectType.GALA, color: '#EAB308' }, 
@@ -46,15 +46,7 @@ export const INITIAL_TASKS: Task[] = [
     project: ProjectType.GALA,
     status: 'in-progress',
     priority: 'urgent',
-    updates: [
-      {
-        id: 'm-1',
-        sender: 'user',
-        text: 'Initial deployment successful on staging.',
-        timestamp: new Date(new Date().setDate(new Date().getDate() - 1)),
-        isUpdate: true
-      }
-    ]
+    updates: []
   }
 ];
 
@@ -62,7 +54,7 @@ export const INITIAL_NOTES: Note[] = [
   {
     id: 'n-1',
     title: 'Project Brainstorming',
-    content: '# Idea for Q4\n- Launch AI features\n- Improve mobile layout\n- User feedback session',
+    content: '<div>Start writing...</div>',
     lastModified: new Date(),
     tags: ['work', 'ideas']
   }
@@ -78,21 +70,39 @@ export const INITIAL_LINKS: LinkEntry[] = [
   }
 ];
 
-export const LEAVE_LIMITS = {
-  Vacation: 14,
-  Sick: 5
-};
-
-export const INITIAL_LEAVES: LeaveEntry[] = [];
-
-export const INITIAL_EVENT_ACTIVITIES: EventActivity[] = [
+export const INITIAL_REMINDERS: Reminder[] = [
   {
-    id: 'e-1',
-    title: 'Q3 Planning Workshop',
-    details: 'Strategic planning session for the next quarter.',
-    startDate: new Date(),
-    endDate: new Date(new Date().setDate(new Date().getDate() + 1)),
-    project: ProjectType.MAKERS_MOVERS,
-    status: 'planned'
+    id: 'r-1',
+    time: '09:30',
+    label: 'Morning Engagement',
+    description: 'Support the Alcott Global team on LinkedIn.',
+    actionType: 'link',
+    actionUrl: 'https://www.linkedin.com/company/alcottglobal/posts/?feedView=all&viewAsMember=true',
+    enabled: true,
+    frequency: 'daily'
+  },
+  {
+    id: 'r-2',
+    time: '14:00',
+    label: 'Mid-Day Check-in',
+    description: 'React to the latest industry updates.',
+    actionType: 'link',
+    actionUrl: 'https://www.linkedin.com/company/alcottglobal/posts/?feedView=all&viewAsMember=true',
+    enabled: true,
+    frequency: 'daily'
+  },
+  {
+    id: 'r-3',
+    time: '16:00',
+    label: 'Evening Wrap-up',
+    description: 'Final round of social engagement.',
+    actionType: 'link',
+    actionUrl: 'https://www.linkedin.com/company/alcottglobal/posts/?feedView=all&viewAsMember=true',
+    enabled: true,
+    frequency: 'daily'
   }
 ];
+
+export const LEAVE_LIMITS = { Vacation: 14, Sick: 5 };
+export const INITIAL_LEAVES: LeaveEntry[] = [];
+export const INITIAL_EVENT_ACTIVITIES: EventActivity[] = [];

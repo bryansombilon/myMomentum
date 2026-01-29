@@ -20,6 +20,13 @@ interface TaskItemProps {
   isDragEnabled: boolean;
 }
 
+const SPRING_TRANSITION = { 
+  type: "spring" as const, 
+  stiffness: 450, 
+  damping: 38, 
+  mass: 0.8 
+};
+
 const TaskItem: React.FC<TaskItemProps> = React.memo(({ 
   task, 
   isSelected, 
@@ -37,11 +44,11 @@ const TaskItem: React.FC<TaskItemProps> = React.memo(({
         <div className="flex items-center justify-between gap-2">
           <div className="flex items-center gap-1.5 overflow-hidden">
             <div className="w-2 h-2 rounded-full" style={{ backgroundColor: PROJECT_CONFIG[task.project].color }} />
-            <span className="text-[10px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 truncate">
+            <span className="text-[10px] font-bold uppercase text-slate-500 dark:text-slate-400 truncate">
               {PROJECT_CONFIG[task.project].name}
             </span>
             {isUrgent && (
-              <span className="text-[9px] font-extrabold uppercase tracking-widest text-red-600 dark:text-red-400 bg-red-50 dark:bg-red-500/10 px-1.5 py-0.5 rounded border border-red-100 dark:border-red-500/20">
+              <span className="text-[9px] font-bold uppercase text-red-600 dark:text-red-400 bg-red-50 dark:bg-red-500/10 px-1.5 py-0.5 rounded border border-red-100 dark:border-red-500/20">
                 Urgent
               </span>
             )}
@@ -61,27 +68,19 @@ const TaskItem: React.FC<TaskItemProps> = React.memo(({
         </h3>
 
         <div className="flex items-center justify-between mt-1">
-          <div className="flex items-center gap-1 text-[11px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-tight">
+          <div className="flex items-center gap-1 text-[11px] font-bold text-slate-400 dark:text-slate-500 uppercase">
             <Calendar size={12} />
-            <span className={new Date(task.deadline) < new Date() && task.status !== 'done' ? 'text-red-500 font-black' : ''}>
+            <span className={new Date(task.deadline) < new Date() && task.status !== 'done' ? 'text-red-500' : ''}>
               {new Intl.DateTimeFormat('en-US', { month: 'short', day: 'numeric' }).format(new Date(task.deadline))}
             </span>
           </div>
-          <div className={`text-[9px] px-2 py-0.5 rounded font-black uppercase tracking-tighter ${statusStyle.color} ${statusStyle.text}`}>
+          <div className={`text-[9px] px-2 py-0.5 rounded font-bold uppercase ${statusStyle.color} ${statusStyle.text}`}>
             {statusStyle.label}
           </div>
         </div>
       </div>
     </>
   );
-
-  // Added 'as const' to fix Transition type errors where 'type' was inferred as a generic string.
-  const springConfig = { 
-    type: "spring" as const, 
-    stiffness: 450, 
-    damping: 38, 
-    mass: 0.8 
-  };
 
   const containerClasses = `
     relative group border cursor-pointer select-none overflow-hidden touch-none rounded-xl flex mb-2
@@ -91,9 +90,9 @@ const TaskItem: React.FC<TaskItemProps> = React.memo(({
   `;
 
   const itemVariants = {
-    initial: { opacity: 0, y: 20, scale: 0.95 },
-    animate: { opacity: 1, y: 0, scale: 1 },
-    exit: { opacity: 0, scale: 0.9, transition: { duration: 0.2 } }
+    initial: { opacity: 0, scale: 0.95 },
+    animate: { opacity: 1, scale: 1 },
+    exit: { opacity: 0, scale: 0.95, transition: { duration: 0.2 } }
   };
 
   if (isDragEnabled) {
@@ -105,23 +104,21 @@ const TaskItem: React.FC<TaskItemProps> = React.memo(({
         dragControls={controls} 
         className={containerClasses} 
         onClick={() => onSelect(task)}
-        layout="position"
+        layout
         variants={itemVariants}
         initial="initial"
         animate="animate"
         exit="exit"
         whileHover={{ 
           scale: isSelected ? 1 : 1.015,
-          borderColor: isSelected ? undefined : "#cbd5e1" 
         }}
         whileTap={{ scale: 0.98 }}
         whileDrag={{ 
           scale: 1.04,
           boxShadow: "0 25px 50px -12px rgba(0, 0, 0, 0.25)",
-          zIndex: 50,
-          backgroundColor: isSelected ? undefined : "rgba(255, 255, 255, 1)"
+          zIndex: 50
         }}
-        transition={springConfig}
+        transition={SPRING_TRANSITION}
       >
         {Content}
       </Reorder.Item>
@@ -130,19 +127,16 @@ const TaskItem: React.FC<TaskItemProps> = React.memo(({
 
   return (
     <motion.div 
-      layout="position"
+      layout
       className={containerClasses} 
       onClick={() => onSelect(task)}
       variants={itemVariants}
       initial="initial"
       animate="animate"
       exit="exit"
-      whileHover={{ 
-        scale: 1.01,
-        borderColor: isSelected ? undefined : "#cbd5e1"
-      }}
+      whileHover={{ scale: 1.01 }}
       whileTap={{ scale: 0.98 }}
-      transition={springConfig}
+      transition={SPRING_TRANSITION}
     >
       {Content}
     </motion.div>
@@ -153,7 +147,6 @@ export const TaskList: React.FC<TaskListProps> = ({ tasks, setTasks, selectedTas
   const [searchQuery, setSearchQuery] = useState('');
   const [filterStatus, setFilterStatus] = useState('all');
   const [filterProject, setFilterProject] = useState('all');
-  const [filterPriority, setFilterProjectPriority] = useState('all');
   const [filterPriorityValue, setFilterPriority] = useState('all');
   const [filterTime, setFilterTime] = useState('all');
   const [showFilters, setShowFilters] = useState(false);
@@ -196,7 +189,7 @@ export const TaskList: React.FC<TaskListProps> = ({ tasks, setTasks, selectedTas
   return (
     <div className="h-full flex flex-col bg-slate-50 dark:bg-slate-900 border-r border-slate-200 dark:border-slate-800 w-64 md:w-80 flex-shrink-0">
       <div className="p-4 border-b border-slate-200 dark:border-slate-800 flex items-center justify-between bg-white dark:bg-slate-900">
-        <h2 className="text-2xl font-bold tracking-tighter uppercase bg-clip-text text-transparent bg-gradient-to-br from-indigo-500 to-blue-600">TaskFlow</h2>
+        <h2 className="text-2xl font-bold uppercase bg-clip-text text-transparent bg-gradient-to-br from-indigo-500 to-blue-600">TaskFlow</h2>
         <div className="flex gap-2">
             <button 
                 onClick={() => setShowFilters(!showFilters)}
@@ -223,79 +216,82 @@ export const TaskList: React.FC<TaskListProps> = ({ tasks, setTasks, selectedTas
           />
         </div>
 
-        {showFilters && (
-          <motion.div 
-            initial={{ height: 0, opacity: 0 }}
-            animate={{ height: 'auto', opacity: 1 }}
-            className="space-y-3 pt-2 border-t border-slate-100 dark:border-slate-800 overflow-hidden"
-          >
-            <div className="flex flex-col gap-1.5">
-                <label className="text-[9px] font-bold uppercase tracking-widest text-slate-400 dark:text-slate-500 flex items-center gap-1.5">
-                    <Activity size={10} /> Status
-                </label>
-                <select 
-                    value={filterStatus} 
-                    onChange={(e) => setFilterStatus(e.target.value)}
-                    className="w-full bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-md px-2 py-1.5 text-[11px] font-bold outline-none cursor-pointer focus:border-indigo-500 dark:text-slate-200"
-                >
-                    <option value="all">All Statuses</option>
-                    <option value="todo">To Do</option>
-                    <option value="in-progress">In Progress</option>
-                    <option value="on-hold">On Hold</option>
-                    <option value="under-review">Under Review</option>
-                    <option value="follow-up">Follow Up</option>
-                    <option value="watcher">Watcher</option>
-                    <option value="done">Done</option>
-                </select>
-            </div>
+        <AnimatePresence>
+          {showFilters && (
+            <motion.div 
+              initial={{ height: 0, opacity: 0 }}
+              animate={{ height: 'auto', opacity: 1 }}
+              exit={{ height: 0, opacity: 0 }}
+              className="space-y-3 pt-2 border-t border-slate-100 dark:border-slate-800 overflow-hidden"
+            >
+              <div className="flex flex-col gap-1.5">
+                  <label className="text-[9px] font-bold uppercase text-slate-400 dark:text-slate-500 flex items-center gap-1.5">
+                      <Activity size={10} /> Status
+                  </label>
+                  <select 
+                      value={filterStatus} 
+                      onChange={(e) => setFilterStatus(e.target.value)}
+                      className="w-full bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-md px-2 py-1.5 text-[11px] font-bold outline-none cursor-pointer focus:border-indigo-500 dark:text-slate-200"
+                  >
+                      <option value="all">All Statuses</option>
+                      <option value="todo">To Do</option>
+                      <option value="in-progress">In Progress</option>
+                      <option value="on-hold">On Hold</option>
+                      <option value="under-review">Under Review</option>
+                      <option value="follow-up">Follow Up</option>
+                      <option value="watcher">Watcher</option>
+                      <option value="done">Done</option>
+                  </select>
+              </div>
 
-            <div className="flex flex-col gap-1.5">
-                <label className="text-[9px] font-bold uppercase tracking-widest text-slate-400 dark:text-slate-500 flex items-center gap-1.5">
-                    <Briefcase size={10} /> Project
-                </label>
-                <select 
-                    value={filterProject} 
-                    onChange={(e) => setFilterProject(e.target.value)}
-                    className="w-full bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-md px-2 py-1.5 text-[11px] font-bold outline-none cursor-pointer focus:border-indigo-500 dark:text-slate-200"
-                >
-                    <option value="all">All Projects</option>
-                    {Object.values(ProjectType).map(p => <option key={p} value={p}>{p}</option>)}
-                </select>
-            </div>
+              <div className="flex flex-col gap-1.5">
+                  <label className="text-[9px] font-bold uppercase text-slate-400 dark:text-slate-500 flex items-center gap-1.5">
+                      <Briefcase size={10} /> Project
+                  </label>
+                  <select 
+                      value={filterProject} 
+                      onChange={(e) => setFilterProject(e.target.value)}
+                      className="w-full bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-md px-2 py-1.5 text-[11px] font-bold outline-none cursor-pointer focus:border-indigo-500 dark:text-slate-200"
+                  >
+                      <option value="all">All Projects</option>
+                      {Object.values(ProjectType).map(p => <option key={p} value={p}>{p}</option>)}
+                  </select>
+              </div>
 
-            <div className="grid grid-cols-2 gap-2">
-                <div className="flex flex-col gap-1.5">
-                    <label className="text-[9px] font-bold uppercase tracking-widest text-slate-400 dark:text-slate-500 flex items-center gap-1.5">
-                        <Flag size={10} /> Priority
-                    </label>
-                    <select 
-                        value={filterPriorityValue} 
-                        onChange={(e) => setFilterPriority(e.target.value)}
-                        className="w-full bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-md px-2 py-1.5 text-[11px] font-bold outline-none cursor-pointer focus:border-indigo-500 dark:text-slate-200"
-                    >
-                        <option value="all">Any</option>
-                        <option value="urgent">Urgent</option>
-                        <option value="not-urgent">Normal</option>
-                    </select>
-                </div>
-                <div className="flex flex-col gap-1.5">
-                    <label className="text-[9px] font-bold uppercase tracking-widest text-slate-400 dark:text-slate-500 flex items-center gap-1.5">
-                        <Clock size={10} /> Schedule
-                    </label>
-                    <select 
-                        value={filterTime} 
-                        onChange={(e) => setFilterTime(e.target.value)}
-                        className="w-full bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-md px-2 py-1.5 text-[11px] font-bold outline-none cursor-pointer focus:border-indigo-500 dark:text-slate-200"
-                    >
-                        <option value="all">Anytime</option>
-                        <option value="overdue">Overdue</option>
-                        <option value="today">Today</option>
-                        <option value="week">This Week</option>
-                    </select>
-                </div>
-            </div>
-          </motion.div>
-        )}
+              <div className="grid grid-cols-2 gap-2">
+                  <div className="flex flex-col gap-1.5">
+                      <label className="text-[9px] font-bold uppercase text-slate-400 dark:text-slate-500 flex items-center gap-1.5">
+                          <Flag size={10} /> Priority
+                      </label>
+                      <select 
+                          value={filterPriorityValue} 
+                          onChange={(e) => setFilterPriority(e.target.value)}
+                          className="w-full bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-md px-2 py-1.5 text-[11px] font-bold outline-none cursor-pointer focus:border-indigo-500 dark:text-slate-200"
+                      >
+                          <option value="all">Any</option>
+                          <option value="urgent">Urgent</option>
+                          <option value="not-urgent">Normal</option>
+                      </select>
+                  </div>
+                  <div className="flex flex-col gap-1.5">
+                      <label className="text-[9px] font-bold uppercase text-slate-400 dark:text-slate-500 flex items-center gap-1.5">
+                          <Clock size={10} /> Schedule
+                      </label>
+                      <select 
+                          value={filterTime} 
+                          onChange={(e) => setFilterTime(e.target.value)}
+                          className="w-full bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-md px-2 py-1.5 text-[11px] font-bold outline-none cursor-pointer focus:border-indigo-500 dark:text-slate-200"
+                      >
+                          <option value="all">Anytime</option>
+                          <option value="overdue">Overdue</option>
+                          <option value="today">Today</option>
+                          <option value="week">This Week</option>
+                      </select>
+                  </div>
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
       </div>
 
       <div className="flex-1 overflow-y-auto px-4 pb-32 space-y-1 relative no-scrollbar">
@@ -338,7 +334,7 @@ export const TaskList: React.FC<TaskListProps> = ({ tasks, setTasks, selectedTas
                   className="flex flex-col items-center justify-center py-20 text-slate-400 dark:text-slate-600 text-center"
                 >
                     <Search size={32} className="mb-4 opacity-10" />
-                    <p className="text-[10px] font-black uppercase tracking-[0.2em]">No Matches Found</p>
+                    <p className="text-[10px] font-bold uppercase">No Matches Found</p>
                 </motion.div>
             )}
           </div>

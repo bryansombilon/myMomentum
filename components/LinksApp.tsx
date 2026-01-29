@@ -88,7 +88,7 @@ export const LinksApp: React.FC<LinksAppProps> = ({ links, onSaveLinks }) => {
     <div className="flex h-screen w-full bg-slate-50 dark:bg-slate-950 overflow-hidden transition-colors">
       <div className="w-80 border-r border-slate-200 dark:border-slate-800 flex flex-col bg-white dark:bg-slate-900 transition-colors">
         <div className="p-4 border-b border-slate-200 dark:border-slate-800 flex items-center justify-between bg-slate-50/50 dark:bg-slate-900/50">
-          <h1 className="text-2xl font-bold tracking-tighter uppercase bg-clip-text text-transparent bg-gradient-to-br from-emerald-500 to-teal-600">LinkFlow</h1>
+          <h1 className="text-2xl font-bold uppercase bg-clip-text text-transparent bg-gradient-to-br from-emerald-500 to-teal-600">LinkFlow</h1>
           <button onClick={() => handleOpenModal()} className="p-1.5 bg-indigo-600 hover:bg-indigo-500 text-white rounded-md shadow-sm transition-all active:scale-95">
             <Plus size={18} />
           </button>
@@ -102,18 +102,18 @@ export const LinksApp: React.FC<LinksAppProps> = ({ links, onSaveLinks }) => {
               placeholder="Filter hub..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full bg-slate-100 dark:bg-slate-800 border-none rounded-md pl-9 pr-4 py-2 text-xs font-semibold focus:ring-2 focus:ring-indigo-500/20 dark:focus:ring-indigo-400/40 outline-none transition-all text-slate-700 dark:text-slate-200 placeholder:text-slate-400 dark:placeholder:text-slate-600"
+              className="w-full bg-slate-100 dark:bg-slate-800 border-none rounded-md pl-9 pr-4 py-2 text-xs font-bold focus:ring-2 focus:ring-indigo-500/20 dark:focus:ring-indigo-400/40 outline-none transition-all text-slate-700 dark:text-slate-200 placeholder:text-slate-400 dark:placeholder:text-slate-600"
             />
           </div>
         </div>
 
         <div className="flex-1 overflow-y-auto p-3 pb-32 space-y-1.5 scrollbar-hide">
-          <button onClick={() => setActiveCategory('All')} className={`w-full flex items-center gap-4 px-4 py-3 rounded-lg text-[10px] font-semibold uppercase tracking-wider transition-all ${activeCategory === 'All' ? 'bg-indigo-600 text-white shadow-md' : 'text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800'}`}>
+          <button onClick={() => setActiveCategory('All')} className={`w-full flex items-center gap-4 px-4 py-3 rounded-lg text-[10px] font-bold uppercase transition-all ${activeCategory === 'All' ? 'bg-indigo-600 text-white shadow-md' : 'text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800'}`}>
             <Globe size={14} /> All Resources
           </button>
           <div className="my-3 h-px bg-slate-100 dark:bg-slate-800 mx-2" />
           {CATEGORIES.map(cat => (
-            <button key={cat} onClick={() => setActiveCategory(cat)} className={`w-full flex items-center gap-4 px-4 py-3 rounded-lg text-[10px] font-semibold uppercase tracking-wider transition-all ${activeCategory === cat ? 'bg-indigo-600 text-white shadow-md' : 'text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800'}`}>
+            <button key={cat} onClick={() => setActiveCategory(cat)} className={`w-full flex items-center gap-4 px-4 py-3 rounded-lg text-[10px] font-bold uppercase transition-all ${activeCategory === cat ? 'bg-indigo-600 text-white shadow-md' : 'text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800'}`}>
               {getCategoryIcon(cat)} {cat}
             </button>
           ))}
@@ -122,7 +122,7 @@ export const LinksApp: React.FC<LinksAppProps> = ({ links, onSaveLinks }) => {
 
       <div className="flex-1 flex flex-col overflow-hidden relative">
         <header className="p-8 border-b border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 transition-colors">
-          <h2 className="text-2xl font-bold uppercase tracking-tight text-slate-900 dark:text-white">
+          <h2 className="text-2xl font-bold uppercase text-slate-900 dark:text-white">
             {activeCategory === 'All' ? 'Global Dashboard' : activeCategory}
           </h2>
         </header>
@@ -147,10 +147,10 @@ export const LinksApp: React.FC<LinksAppProps> = ({ links, onSaveLinks }) => {
                     <div>
                       <div className="flex items-center gap-2 mb-2">
                         <div className={`w-1.5 h-1.5 rounded-full ${CATEGORY_COLORS[link.category] || 'bg-slate-400'}`} />
-                        <span className="text-[9px] font-semibold uppercase tracking-widest text-slate-500 dark:text-slate-400">{link.category}</span>
+                        <span className="text-[9px] font-bold uppercase text-slate-500 dark:text-slate-400">{link.category}</span>
                       </div>
                       
-                      <h3 className="font-bold text-[18px] text-slate-900 dark:text-white leading-tight tracking-tight mb-4">
+                      <h3 className="font-bold text-[18px] text-slate-900 dark:text-white leading-tight mb-4">
                         {link.title}
                       </h3>
                     </div>
@@ -158,7 +158,7 @@ export const LinksApp: React.FC<LinksAppProps> = ({ links, onSaveLinks }) => {
                     <div className="flex items-center justify-between gap-4 mt-auto">
                       <button 
                         onClick={() => window.open(link.url, '_blank')}
-                        className="flex items-center gap-2 px-5 py-2.5 bg-indigo-600 hover:bg-indigo-500 text-white rounded-xl text-[10px] font-bold uppercase tracking-[0.1em] shadow-lg shadow-indigo-500/20 active:scale-95 transition-all"
+                        className="flex items-center gap-2 px-5 py-2.5 bg-indigo-600 hover:bg-indigo-500 text-white rounded-xl text-[10px] font-bold uppercase shadow-lg shadow-indigo-500/20 active:scale-95 transition-all"
                       >
                         Open <ExternalLink size={12} />
                       </button>
@@ -200,27 +200,27 @@ export const LinksApp: React.FC<LinksAppProps> = ({ links, onSaveLinks }) => {
           <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/90 backdrop-blur-sm">
             <motion.div initial={{ opacity: 0, scale: 0.98 }} animate={{ opacity: 1, scale: 1 }} className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl shadow-2xl w-full max-md overflow-hidden">
               <div className="p-6 border-b border-slate-200 dark:border-slate-800 flex items-center justify-between bg-slate-50 dark:bg-slate-800/50">
-                <h2 className="text-[12px] font-bold uppercase tracking-widest text-slate-800 dark:text-white">{editingLink ? 'Refine' : 'New'} Hub Resource</h2>
+                <h2 className="text-[12px] font-bold uppercase text-slate-800 dark:text-white">{editingLink ? 'Refine' : 'New'} Hub Resource</h2>
                 <button onClick={() => setShowModal(false)}><X size={20} className="text-slate-400 hover:text-slate-600 transition-colors" /></button>
               </div>
               <form onSubmit={handleSave} className="p-8 space-y-6">
                 <div className="space-y-1.5">
-                  <label className="text-[10px] font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">Title</label>
-                  <input required value={title} onChange={(e) => setTitle(e.target.value)} placeholder="Documentation..." className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg px-4 py-3 text-sm font-semibold outline-none text-slate-800 dark:text-white focus:border-indigo-500 transition-colors placeholder:text-slate-300 dark:placeholder:text-slate-600" />
+                  <label className="text-[10px] font-bold uppercase text-slate-500 dark:text-slate-400">Title</label>
+                  <input required value={title} onChange={(e) => setTitle(e.target.value)} placeholder="Documentation..." className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg px-4 py-3 text-sm font-bold outline-none text-slate-800 dark:text-white focus:border-indigo-500 transition-colors placeholder:text-slate-300 dark:placeholder:text-slate-600" />
                 </div>
                 <div className="space-y-1.5">
-                  <label className="text-[10px] font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">URL</label>
-                  <input required value={url} onChange={(e) => setUrl(e.target.value)} placeholder="alcott.com/hub" className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg px-4 py-3 text-sm font-semibold outline-none text-slate-800 dark:text-white focus:border-indigo-500 transition-colors placeholder:text-slate-300 dark:placeholder:text-slate-600" />
+                  <label className="text-[10px] font-bold uppercase text-slate-500 dark:text-slate-400">URL</label>
+                  <input required value={url} onChange={(e) => setUrl(e.target.value)} placeholder="alcott.com/hub" className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg px-4 py-3 text-sm font-bold outline-none text-slate-800 dark:text-white focus:border-indigo-500 transition-colors placeholder:text-slate-300 dark:placeholder:text-slate-600" />
                 </div>
                 <div className="space-y-1.5">
-                  <label className="text-[10px] font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">Collection</label>
-                  <select value={category} onChange={(e) => setCategory(e.target.value as any)} className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg px-4 py-3 text-sm outline-none text-slate-800 dark:text-white font-bold uppercase tracking-wider appearance-none cursor-pointer">
+                  <label className="text-[10px] font-bold uppercase text-slate-500 dark:text-slate-400">Collection</label>
+                  <select value={category} onChange={(e) => setCategory(e.target.value as any)} className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg px-4 py-3 text-sm outline-none text-slate-800 dark:text-white font-bold uppercase appearance-none cursor-pointer">
                     {CATEGORIES.map(cat => <option key={cat} value={cat}>{cat}</option>)}
                   </select>
                 </div>
                 <div className="pt-6 flex gap-4">
-                  <button type="button" onClick={() => setShowModal(false)} className="flex-1 py-3 text-[11px] font-semibold uppercase tracking-widest text-slate-500 hover:text-slate-800 dark:hover:text-slate-200 transition-colors">Cancel</button>
-                  <button type="submit" className="flex-1 py-3 bg-indigo-600 text-white rounded-xl text-[11px] font-bold uppercase tracking-widest active:scale-95 transition-all shadow-xl shadow-indigo-500/25">Confirm</button>
+                  <button type="button" onClick={() => setShowModal(false)} className="flex-1 py-3 text-[11px] font-bold uppercase text-slate-500 hover:text-slate-800 dark:hover:text-slate-200 transition-colors">Cancel</button>
+                  <button type="submit" className="flex-1 py-3 bg-indigo-600 text-white rounded-xl text-[11px] font-bold uppercase active:scale-95 transition-all shadow-xl shadow-indigo-500/25">Confirm</button>
                 </div>
               </form>
             </motion.div>

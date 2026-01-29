@@ -11,87 +11,74 @@ import { LinksApp } from './components/LinksApp';
 import { LeavesApp } from './components/LeavesApp';
 import { MakersAndMoversApp } from './components/MakersAndMoversApp';
 import { GlobalNav } from './components/GlobalNav';
-import { INITIAL_TASKS, INITIAL_NOTES, INITIAL_LINKS, INITIAL_LEAVES, INITIAL_EVENT_ACTIVITIES } from './constants';
-import { Task, Message, Priority, AppView, Note, LinkEntry, LeaveEntry, EventActivity } from './types';
+import { ReminderPopup } from './components/ReminderPopup';
+import { EngagementApp } from './components/EngagementApp';
+import { INITIAL_TASKS, INITIAL_NOTES, INITIAL_LINKS, INITIAL_LEAVES, INITIAL_EVENT_ACTIVITIES, INITIAL_REMINDERS } from './constants';
+import { Task, Message, Priority, AppView, Note, LinkEntry, LeaveEntry, EventActivity, Reminder } from './types';
 
 const STORAGE_KEY_TASKS = 'taskflow_tasks_v1';
 const STORAGE_KEY_NOTES = 'taskflow_notes_v1';
 const STORAGE_KEY_LINKS = 'taskflow_links_v1';
 const STORAGE_KEY_LEAVES = 'taskflow_leaves_v1';
 const STORAGE_KEY_EVENTS = 'taskflow_events_v2'; 
+const STORAGE_KEY_REMINDERS = 'taskflow_reminders_v1';
 const THEME_KEY = 'taskflow_theme';
+
+const SPRING_TRANSITION = { type: "spring", stiffness: 260, damping: 26, mass: 1 };
+const VIEW_VARIANTS = {
+  initial: { opacity: 0, scale: 0.98, filter: 'blur(10px)' },
+  animate: { opacity: 1, scale: 1, filter: 'blur(0px)' },
+  exit: { opacity: 0, scale: 1.02, filter: 'blur(10px)' }
+};
 
 const App: React.FC = () => {
   const [currentView, setCurrentView] = useState<AppView>('home');
 
-  // Tasks State
+  // Load state from local storage
   const [tasks, setTasks] = useState<Task[]>(() => {
     try {
       const saved = localStorage.getItem(STORAGE_KEY_TASKS);
-      if (saved) {
-        return JSON.parse(saved).map((t: any) => ({
-          ...t,
-          deadline: new Date(t.deadline),
-          updates: t.updates.map((m: any) => ({ ...m, timestamp: new Date(m.timestamp) }))
-        }));
-      }
+      if (saved) return JSON.parse(saved).map((t: any) => ({ ...t, deadline: new Date(t.deadline), updates: t.updates.map((m: any) => ({ ...m, timestamp: new Date(m.timestamp) })) }));
     } catch (e) {}
     return INITIAL_TASKS;
   });
 
-  // Notes State
   const [notes, setNotes] = useState<Note[]>(() => {
     try {
       const saved = localStorage.getItem(STORAGE_KEY_NOTES);
-      if (saved) {
-        return JSON.parse(saved).map((n: any) => ({
-          ...n,
-          lastModified: new Date(n.lastModified)
-        }));
-      }
+      if (saved) return JSON.parse(saved).map((n: any) => ({ ...n, lastModified: new Date(n.lastModified) }));
     } catch (e) {}
     return INITIAL_NOTES;
   });
 
-  // Links State
   const [links, setLinks] = useState<LinkEntry[]>(() => {
     try {
       const saved = localStorage.getItem(STORAGE_KEY_LINKS);
-      if (saved) {
-        return JSON.parse(saved).map((l: any) => ({
-          ...l,
-          dateAdded: new Date(l.dateAdded)
-        }));
-      }
+      if (saved) return JSON.parse(saved).map((l: any) => ({ ...l, dateAdded: new Date(l.dateAdded) }));
     } catch (e) {}
     return INITIAL_LINKS;
   });
 
-  // Leaves State
+  const [reminders, setReminders] = useState<Reminder[]>(() => {
+    try {
+      const saved = localStorage.getItem(STORAGE_KEY_REMINDERS);
+      if (saved) return JSON.parse(saved);
+    } catch (e) {}
+    return INITIAL_REMINDERS;
+  });
+
   const [leaves, setLeaves] = useState<LeaveEntry[]>(() => {
     try {
       const saved = localStorage.getItem(STORAGE_KEY_LEAVES);
-      if (saved) {
-        return JSON.parse(saved).map((l: any) => ({
-          ...l,
-          date: new Date(l.date)
-        }));
-      }
+      if (saved) return JSON.parse(saved).map((l: any) => ({ ...l, date: new Date(l.date) }));
     } catch (e) {}
     return INITIAL_LEAVES;
   });
 
-  // Event Activities State
   const [eventActivities, setEventActivities] = useState<EventActivity[]>(() => {
     try {
       const saved = localStorage.getItem(STORAGE_KEY_EVENTS);
-      if (saved) {
-        return JSON.parse(saved).map((e: any) => ({
-          ...e,
-          startDate: new Date(e.startDate),
-          endDate: new Date(e.endDate)
-        }));
-      }
+      if (saved) return JSON.parse(saved).map((e: any) => ({ ...e, startDate: new Date(e.startDate), endDate: new Date(e.endDate) }));
     } catch (e) {}
     return INITIAL_EVENT_ACTIVITIES;
   });
@@ -99,59 +86,34 @@ const App: React.FC = () => {
   const [selectedTaskId, setSelectedTaskId] = useState<string | null>(null);
   const [isNewTaskModalOpen, setIsNewTaskModalOpen] = useState(false);
   const [editingTask, setEditingTask] = useState<Task | null>(null);
-
-  // Theme State
-  const [isDarkMode, setIsDarkMode] = useState<boolean>(() => {
-    const savedTheme = localStorage.getItem(THEME_KEY);
-    return savedTheme ? savedTheme === 'dark' : true;
-  });
+  const [isDarkMode, setIsDarkMode] = useState<boolean>(() => localStorage.getItem(THEME_KEY) === 'dark');
 
   useEffect(() => {
     const root = window.document.documentElement;
-    if (isDarkMode) root.classList.add('dark');
-    else root.classList.remove('dark');
+    if (isDarkMode) root.classList.add('dark'); else root.classList.remove('dark');
     localStorage.setItem(THEME_KEY, isDarkMode ? 'dark' : 'light');
   }, [isDarkMode]);
 
-  // Debounced storage effect for performance
-  const debounceTimerRef = useRef<number | null>(null);
   useEffect(() => {
-    if (debounceTimerRef.current) window.clearTimeout(debounceTimerRef.current);
-    debounceTimerRef.current = window.setTimeout(() => {
-      localStorage.setItem(STORAGE_KEY_TASKS, JSON.stringify(tasks));
-      localStorage.setItem(STORAGE_KEY_NOTES, JSON.stringify(notes));
-      localStorage.setItem(STORAGE_KEY_LINKS, JSON.stringify(links));
-      localStorage.setItem(STORAGE_KEY_LEAVES, JSON.stringify(leaves));
-      localStorage.setItem(STORAGE_KEY_EVENTS, JSON.stringify(eventActivities));
-    }, 1000);
-  }, [tasks, notes, links, leaves, eventActivities]);
+    localStorage.setItem(STORAGE_KEY_TASKS, JSON.stringify(tasks));
+    localStorage.setItem(STORAGE_KEY_NOTES, JSON.stringify(notes));
+    localStorage.setItem(STORAGE_KEY_LINKS, JSON.stringify(links));
+    localStorage.setItem(STORAGE_KEY_LEAVES, JSON.stringify(leaves));
+    localStorage.setItem(STORAGE_KEY_EVENTS, JSON.stringify(eventActivities));
+    localStorage.setItem(STORAGE_KEY_REMINDERS, JSON.stringify(reminders));
+  }, [tasks, notes, links, leaves, eventActivities, reminders]);
 
-  // Handlers
   const handleTaskReorder = (newOrder: Task[]) => setTasks(newOrder);
-  const handleUpdateTask = (taskId: string, updates: Message[]) => {
-    setTasks(prev => prev.map(t => t.id === taskId ? { ...t, updates } : t));
-  };
-  const handleStatusChange = (taskId: string, status: Task['status']) => {
-    setTasks(prev => {
-      const taskIndex = prev.findIndex(t => t.id === taskId);
-      if (taskIndex === -1) return prev;
-      const updatedTask = { ...prev[taskIndex], status };
-      const others = prev.filter(t => t.id !== taskId);
-      return status === 'done' ? [...others, updatedTask] : prev.map(t => t.id === taskId ? updatedTask : t);
-    });
-  };
-  const handlePriorityChange = (taskId: string, priority: Priority) => {
-    setTasks(prev => prev.map(t => t.id === taskId ? { ...t, priority } : t));
-  };
+  const handleUpdateTask = (taskId: string, updates: Message[]) => setTasks(prev => prev.map(t => t.id === taskId ? { ...t, updates } : t));
+  const handleStatusChange = (taskId: string, status: Task['status']) => setTasks(prev => prev.map(t => t.id === taskId ? { ...t, status } : t));
+  const handlePriorityChange = (taskId: string, priority: Priority) => setTasks(prev => prev.map(t => t.id === taskId ? { ...t, priority } : t));
   const handleDeleteTask = (taskId: string) => {
     setTasks(prev => prev.filter(t => t.id !== taskId));
     if (selectedTaskId === taskId) setSelectedTaskId(null);
   };
   const handleSaveTask = (taskData: any) => {
-    if (editingTask) {
-      setTasks(prev => prev.map(t => t.id === editingTask.id ? { ...t, ...taskData } : t));
-      setEditingTask(null);
-    } else {
+    if (editingTask) setTasks(prev => prev.map(t => t.id === editingTask.id ? { ...t, ...taskData } : t));
+    else {
       const newTask: Task = { id: Date.now().toString(), ...taskData, status: 'todo', updates: [] };
       setTasks(prev => [newTask, ...prev]);
       setSelectedTaskId(newTask.id);
@@ -159,177 +121,48 @@ const App: React.FC = () => {
     setIsNewTaskModalOpen(false);
   };
 
-  const handleExportData = () => {
-    const data = { tasks, notes, links, leaves, eventActivities };
-    const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
-    const url = URL.createObjectURL(blob);
-    const link = document.createElement('a');
-    link.href = url;
-    link.download = `taskflow-full-backup.json`;
-    link.click();
-  };
-
-  const handleImportData = (file: File) => {
-    const reader = new FileReader();
-    reader.onload = (e) => {
-      try {
-        const data = JSON.parse(e.target?.result as string);
-        if (data.tasks) setTasks(data.tasks.map((t: any) => ({ ...t, deadline: new Date(t.deadline), updates: t.updates.map((m: any) => ({ ...m, timestamp: new Date(m.timestamp) })) })));
-        if (data.notes) setNotes(data.notes.map((n: any) => ({ ...n, lastModified: new Date(n.lastModified) })));
-        if (data.links) setLinks(data.links.map((l: any) => ({ ...l, dateAdded: new Date(l.dateAdded) })));
-        if (data.leaves) setLeaves(data.leaves.map((l: any) => ({ ...l, date: new Date(l.date) })));
-        if (data.eventActivities) setEventActivities(data.eventActivities.map((e: any) => ({ ...e, startDate: new Date(e.startDate), endDate: new Date(e.endDate) })));
-        alert("Backup restored!");
-      } catch (err) { alert("Invalid backup file."); }
-    };
-    reader.readAsText(file);
-  };
-
-  const handleNavigateToTask = (taskId: string) => {
-    setSelectedTaskId(taskId);
-    setCurrentView('tasks');
-  };
-
+  const handleNavigateToTask = (taskId: string) => { setSelectedTaskId(taskId); setCurrentView('tasks'); };
   const selectedTask = tasks.find(t => t.id === selectedTaskId) || null;
+
+  const renderView = () => {
+    switch(currentView) {
+      case 'home': return <Home onLaunchApp={setCurrentView} onExport={() => {}} onImport={() => {}} isDarkMode={isDarkMode} toggleTheme={() => setIsDarkMode(!isDarkMode)} />;
+      case 'tasks': return (
+        <div className="w-full h-full flex flex-col md:flex-row overflow-hidden">
+          <TaskList tasks={tasks} setTasks={handleTaskReorder} selectedTaskId={selectedTaskId} onSelectTask={(task) => setSelectedTaskId(task.id)} onAddNewTask={() => { setEditingTask(null); setIsNewTaskModalOpen(true); }} />
+          <div className="flex flex-col flex-1 min-w-0">
+            <ProjectProgress tasks={tasks} />
+            <TaskDetail task={selectedTask} onUpdateTask={handleUpdateTask} onStatusChange={handleStatusChange} onPriorityChange={handlePriorityChange} onDeleteTask={handleDeleteTask} onEditTask={(t) => { setEditingTask(t); setIsNewTaskModalOpen(true); }} />
+          </div>
+        </div>
+      );
+      case 'notes': return <NotesApp notes={notes} tasks={tasks} onSaveNotes={setNotes} onNavigateToTask={handleNavigateToTask} />;
+      case 'links': return <LinksApp links={links} onSaveLinks={setLinks} />;
+      case 'leaves': return <LeavesApp leaves={leaves} onSaveLeaves={setLeaves} />;
+      case 'event-timeline': return <MakersAndMoversApp activities={eventActivities} tasks={tasks} onSaveActivities={setEventActivities} onNavigateToTask={handleNavigateToTask} />;
+      case 'engagement': return <EngagementApp reminders={reminders} onSaveReminders={setReminders} />;
+      default: return null;
+    }
+  };
 
   return (
     <div className="relative flex h-screen w-full bg-slate-50 dark:bg-slate-950 overflow-hidden font-sans transition-colors duration-300">
-      <AnimatePresence mode="wait">
-        {currentView === 'home' ? (
-          <motion.div 
-            key="home"
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0, scale: 1.1 }}
-            className="w-full h-full"
-          >
-            <Home 
-              onLaunchApp={setCurrentView} 
-              onExport={handleExportData}
-              onImport={handleImportData}
-              isDarkMode={isDarkMode}
-              toggleTheme={() => setIsDarkMode(!isDarkMode)}
-            />
+      <div className="flex-1 relative h-full w-full">
+        <AnimatePresence mode="wait">
+          <motion.div key={currentView} variants={VIEW_VARIANTS} initial="initial" animate="animate" exit="exit" transition={SPRING_TRANSITION} className="w-full h-full">
+            {renderView()}
           </motion.div>
-        ) : (
-          <motion.div 
-            key="app-shell"
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            className="w-full h-full relative flex"
-          >
-            <main className="flex-1 relative overflow-hidden">
-              <AnimatePresence mode="wait">
-                {currentView === 'tasks' && (
-                  <motion.div 
-                    key="tasks"
-                    initial={{ y: 20, opacity: 0 }}
-                    animate={{ y: 0, opacity: 1 }}
-                    exit={{ y: -20, opacity: 0 }}
-                    className="w-full h-full flex flex-col md:flex-row"
-                  >
-                    <TaskList 
-                      tasks={tasks} 
-                      setTasks={handleTaskReorder} 
-                      selectedTaskId={selectedTaskId}
-                      onSelectTask={(task) => setSelectedTaskId(task.id)}
-                      onAddNewTask={() => { setEditingTask(null); setIsNewTaskModalOpen(true); }}
-                    />
-                    <div className="flex flex-col flex-1 min-w-0">
-                      <ProjectProgress tasks={tasks} />
-                      <div className="flex-1 relative overflow-hidden">
-                          <TaskDetail 
-                            task={selectedTask} 
-                            onUpdateTask={handleUpdateTask}
-                            onStatusChange={handleStatusChange}
-                            onNavigateToTask={handleNavigateToTask}
-                            onPriorityChange={handlePriorityChange}
-                            onDeleteTask={handleDeleteTask}
-                            onEditTask={(t) => { setEditingTask(t); setIsNewTaskModalOpen(true); }}
-                          />
-                      </div>
-                    </div>
-                  </motion.div>
-                )}
-
-                {currentView === 'notes' && (
-                  <motion.div 
-                    key="notes"
-                    initial={{ y: 20, opacity: 0 }}
-                    animate={{ y: 0, opacity: 1 }}
-                    exit={{ y: -20, opacity: 0 }}
-                    className="w-full h-full"
-                  >
-                    <NotesApp 
-                      notes={notes} 
-                      tasks={tasks}
-                      onSaveNotes={setNotes} 
-                      onNavigateToTask={handleNavigateToTask}
-                    />
-                  </motion.div>
-                )}
-
-                {currentView === 'links' && (
-                  <motion.div 
-                    key="links"
-                    initial={{ y: 20, opacity: 0 }}
-                    animate={{ y: 0, opacity: 1 }}
-                    exit={{ y: -20, opacity: 0 }}
-                    className="w-full h-full"
-                  >
-                    <LinksApp 
-                      links={links}
-                      onSaveLinks={setLinks}
-                    />
-                  </motion.div>
-                )}
-
-                {currentView === 'leaves' && (
-                  <motion.div 
-                    key="leaves"
-                    initial={{ y: 20, opacity: 0 }}
-                    animate={{ y: 0, opacity: 1 }}
-                    exit={{ y: -20, opacity: 0 }}
-                    className="w-full h-full"
-                  >
-                    <LeavesApp 
-                      leaves={leaves}
-                      onSaveLeaves={setLeaves}
-                    />
-                  </motion.div>
-                )}
-
-                {currentView === 'event-timeline' && (
-                  <motion.div 
-                    key="event-timeline"
-                    initial={{ y: 20, opacity: 0 }}
-                    animate={{ y: 0, opacity: 1 }}
-                    exit={{ y: -20, opacity: 0 }}
-                    className="w-full h-full"
-                  >
-                    <MakersAndMoversApp 
-                      activities={eventActivities}
-                      tasks={tasks}
-                      onSaveActivities={setEventActivities}
-                      onNavigateToTask={handleNavigateToTask}
-                    />
-                  </motion.div>
-                )}
-              </AnimatePresence>
-            </main>
-
+        </AnimatePresence>
+      </div>
+      <AnimatePresence>
+        {currentView !== 'home' && (
+          <motion.div initial={{ y: 100, opacity: 0 }} animate={{ y: 0, opacity: 1 }} exit={{ y: 100, opacity: 0 }} transition={SPRING_TRANSITION} className="z-[100]">
             <GlobalNav currentView={currentView} onNavigate={setCurrentView} />
-
-            <NewTaskModal 
-              isOpen={isNewTaskModalOpen}
-              onClose={() => setIsNewTaskModalOpen(false)}
-              onSave={handleSaveTask}
-              taskToEdit={editingTask}
-            />
           </motion.div>
         )}
       </AnimatePresence>
+      <ReminderPopup reminders={reminders} />
+      <NewTaskModal isOpen={isNewTaskModalOpen} onClose={() => setIsNewTaskModalOpen(false)} onSave={handleSaveTask} taskToEdit={editingTask} />
     </div>
   );
 };
