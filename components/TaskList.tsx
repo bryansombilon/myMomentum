@@ -3,7 +3,7 @@ import React, { useState, useMemo } from 'react';
 import { Reorder, useDragControls, motion, AnimatePresence } from 'framer-motion';
 import { Task, ProjectType } from '../types';
 import { PROJECT_CONFIG, STATUS_CONFIG } from '../constants';
-import { Calendar, GripVertical, Plus, Search, Home, Filter, Clock, Flag, Briefcase, Activity } from 'lucide-react';
+import { Calendar, GripVertical, Plus, Search, Filter, Clock, Flag, Briefcase, Activity } from 'lucide-react';
 
 interface TaskListProps {
   tasks: Task[];
@@ -11,7 +11,6 @@ interface TaskListProps {
   selectedTaskId: string | null;
   onSelectTask: (task: Task) => void;
   onAddNewTask: () => void;
-  onGoHome?: () => void;
 }
 
 interface TaskItemProps {
@@ -149,7 +148,7 @@ const TaskItem: React.FC<TaskItemProps> = React.memo(({
   );
 });
 
-export const TaskList: React.FC<TaskListProps> = ({ tasks, setTasks, selectedTaskId, onSelectTask, onAddNewTask, onGoHome }) => {
+export const TaskList: React.FC<TaskListProps> = ({ tasks, setTasks, selectedTaskId, onSelectTask, onAddNewTask }) => {
   const [searchQuery, setSearchQuery] = useState('');
   const [filterStatus, setFilterStatus] = useState('all');
   const [filterProject, setFilterProject] = useState('all');
@@ -195,18 +194,7 @@ export const TaskList: React.FC<TaskListProps> = ({ tasks, setTasks, selectedTas
   return (
     <div className="h-full flex flex-col bg-slate-50 dark:bg-slate-900 border-r border-slate-200 dark:border-slate-800 w-64 md:w-80 flex-shrink-0">
       <div className="p-4 border-b border-slate-200 dark:border-slate-800 flex items-center justify-between bg-white dark:bg-slate-900">
-        <div className="flex items-center gap-3">
-          {onGoHome && (
-            <button 
-              onClick={onGoHome} 
-              className="p-2 rounded-lg bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:text-indigo-600 dark:hover:text-indigo-400 hover:bg-white dark:hover:bg-slate-700 transition-all border border-slate-200 dark:border-slate-700 shadow-sm"
-              title="Return Home"
-            >
-              <Home size={18} />
-            </button>
-          )}
-          <h2 className="text-2xl font-bold tracking-tighter uppercase bg-clip-text text-transparent bg-gradient-to-br from-indigo-500 to-blue-600">TaskFlow</h2>
-        </div>
+        <h2 className="text-2xl font-bold tracking-tighter uppercase bg-clip-text text-transparent bg-gradient-to-br from-indigo-500 to-blue-600">TaskFlow</h2>
         <div className="flex gap-2">
             <button 
                 onClick={() => setShowFilters(!showFilters)}
@@ -308,7 +296,7 @@ export const TaskList: React.FC<TaskListProps> = ({ tasks, setTasks, selectedTas
         )}
       </div>
 
-      <div className="flex-1 overflow-y-auto px-4 pb-12 space-y-1 relative no-scrollbar">
+      <div className="flex-1 overflow-y-auto px-4 pb-32 space-y-1 relative no-scrollbar">
         {!isFiltered ? (
           <Reorder.Group 
             axis="y" 

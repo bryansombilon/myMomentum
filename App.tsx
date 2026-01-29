@@ -10,6 +10,7 @@ import { NotesApp } from './components/NotesApp';
 import { LinksApp } from './components/LinksApp';
 import { LeavesApp } from './components/LeavesApp';
 import { MakersAndMoversApp } from './components/MakersAndMoversApp';
+import { GlobalNav } from './components/GlobalNav';
 import { INITIAL_TASKS, INITIAL_NOTES, INITIAL_LINKS, INITIAL_LEAVES, INITIAL_EVENT_ACTIVITIES } from './constants';
 import { Task, Message, Priority, AppView, Note, LinkEntry, LeaveEntry, EventActivity } from './types';
 
@@ -17,7 +18,7 @@ const STORAGE_KEY_TASKS = 'taskflow_tasks_v1';
 const STORAGE_KEY_NOTES = 'taskflow_notes_v1';
 const STORAGE_KEY_LINKS = 'taskflow_links_v1';
 const STORAGE_KEY_LEAVES = 'taskflow_leaves_v1';
-const STORAGE_KEY_EVENTS = 'taskflow_events_v2'; // Bumped version for new schema
+const STORAGE_KEY_EVENTS = 'taskflow_events_v2'; 
 const THEME_KEY = 'taskflow_theme';
 
 const App: React.FC = () => {
@@ -80,7 +81,7 @@ const App: React.FC = () => {
     return INITIAL_LEAVES;
   });
 
-  // Event Activities State - Updated for new schema
+  // Event Activities State
   const [eventActivities, setEventActivities] = useState<EventActivity[]>(() => {
     try {
       const saved = localStorage.getItem(STORAGE_KEY_EVENTS);
@@ -125,7 +126,7 @@ const App: React.FC = () => {
     }, 1000);
   }, [tasks, notes, links, leaves, eventActivities]);
 
-  // Handlers for Task App
+  // Handlers
   const handleTaskReorder = (newOrder: Task[]) => setTasks(newOrder);
   const handleUpdateTask = (taskId: string, updates: Message[]) => {
     setTasks(prev => prev.map(t => t.id === taskId ? { ...t, updates } : t));
@@ -192,9 +193,9 @@ const App: React.FC = () => {
   const selectedTask = tasks.find(t => t.id === selectedTaskId) || null;
 
   return (
-    <div className="flex h-screen w-full bg-slate-50 dark:bg-slate-950 overflow-hidden font-sans transition-colors duration-300">
+    <div className="relative flex h-screen w-full bg-slate-50 dark:bg-slate-950 overflow-hidden font-sans transition-colors duration-300">
       <AnimatePresence mode="wait">
-        {currentView === 'home' && (
+        {currentView === 'home' ? (
           <motion.div 
             key="home"
             initial={{ opacity: 0 }}
@@ -210,114 +211,115 @@ const App: React.FC = () => {
               toggleTheme={() => setIsDarkMode(!isDarkMode)}
             />
           </motion.div>
-        )}
+        ) : (
+          <>
+            <main className="flex-1 relative overflow-hidden">
+              <AnimatePresence mode="wait">
+                {currentView === 'tasks' && (
+                  <motion.div 
+                    key="tasks"
+                    initial={{ y: 20, opacity: 0 }}
+                    animate={{ y: 0, opacity: 1 }}
+                    exit={{ y: -20, opacity: 0 }}
+                    className="w-full h-full flex flex-col md:flex-row"
+                  >
+                    <TaskList 
+                      tasks={tasks} 
+                      setTasks={handleTaskReorder} 
+                      selectedTaskId={selectedTaskId}
+                      onSelectTask={(task) => setSelectedTaskId(task.id)}
+                      onAddNewTask={() => { setEditingTask(null); setIsNewTaskModalOpen(true); }}
+                    />
+                    <div className="flex flex-col flex-1 min-w-0">
+                      <ProjectProgress tasks={tasks} />
+                      <div className="flex-1 relative overflow-hidden">
+                          <TaskDetail 
+                            task={selectedTask} 
+                            onUpdateTask={handleUpdateTask}
+                            onStatusChange={handleStatusChange}
+                            onNavigateToTask={handleNavigateToTask}
+                            onPriorityChange={handlePriorityChange}
+                            onDeleteTask={handleDeleteTask}
+                            onEditTask={(t) => { setEditingTask(t); setIsNewTaskModalOpen(true); }}
+                          />
+                      </div>
+                    </div>
+                  </motion.div>
+                )}
 
-        {currentView === 'tasks' && (
-          <motion.div 
-            key="tasks"
-            initial={{ x: '100%' }}
-            animate={{ x: 0 }}
-            exit={{ x: '100%' }}
-            transition={{ type: 'spring', damping: 25, stiffness: 200 }}
-            className="w-full h-full flex flex-col md:flex-row"
-          >
-            <TaskList 
-              tasks={tasks} 
-              setTasks={handleTaskReorder} 
-              selectedTaskId={selectedTaskId}
-              onSelectTask={(task) => setSelectedTaskId(task.id)}
-              onAddNewTask={() => { setEditingTask(null); setIsNewTaskModalOpen(true); }}
-              onGoHome={() => setCurrentView('home')}
-            />
-            <div className="flex flex-col flex-1 min-w-0">
-              <ProjectProgress 
-                tasks={tasks} 
-              />
-              <div className="flex-1 relative overflow-hidden">
-                  <TaskDetail 
-                    task={selectedTask} 
-                    onUpdateTask={handleUpdateTask}
-                    onStatusChange={handleStatusChange}
-                    onNavigateToTask={handleNavigateToTask}
-                    onPriorityChange={handlePriorityChange}
-                    onDeleteTask={handleDeleteTask}
-                    onEditTask={(t) => { setEditingTask(t); setIsNewTaskModalOpen(true); }}
-                  />
-              </div>
-            </div>
+                {currentView === 'notes' && (
+                  <motion.div 
+                    key="notes"
+                    initial={{ y: 20, opacity: 0 }}
+                    animate={{ y: 0, opacity: 1 }}
+                    exit={{ y: -20, opacity: 0 }}
+                    className="w-full h-full"
+                  >
+                    <NotesApp 
+                      notes={notes} 
+                      tasks={tasks}
+                      onSaveNotes={setNotes} 
+                      onNavigateToTask={handleNavigateToTask}
+                    />
+                  </motion.div>
+                )}
+
+                {currentView === 'links' && (
+                  <motion.div 
+                    key="links"
+                    initial={{ y: 20, opacity: 0 }}
+                    animate={{ y: 0, opacity: 1 }}
+                    exit={{ y: -20, opacity: 0 }}
+                    className="w-full h-full"
+                  >
+                    <LinksApp 
+                      links={links}
+                      onSaveLinks={setLinks}
+                    />
+                  </motion.div>
+                )}
+
+                {currentView === 'leaves' && (
+                  <motion.div 
+                    key="leaves"
+                    initial={{ y: 20, opacity: 0 }}
+                    animate={{ y: 0, opacity: 1 }}
+                    exit={{ y: -20, opacity: 0 }}
+                    className="w-full h-full"
+                  >
+                    <LeavesApp 
+                      leaves={leaves}
+                      onSaveLeaves={setLeaves}
+                    />
+                  </motion.div>
+                )}
+
+                {currentView === 'event-timeline' && (
+                  <motion.div 
+                    key="event-timeline"
+                    initial={{ y: 20, opacity: 0 }}
+                    animate={{ y: 0, opacity: 1 }}
+                    exit={{ y: -20, opacity: 0 }}
+                    className="w-full h-full"
+                  >
+                    <MakersAndMoversApp 
+                      activities={eventActivities}
+                      onSaveActivities={setEventActivities}
+                    />
+                  </motion.div>
+                )}
+              </AnimatePresence>
+            </main>
+
+            <GlobalNav currentView={currentView} onNavigate={setCurrentView} />
+
             <NewTaskModal 
               isOpen={isNewTaskModalOpen}
               onClose={() => setIsNewTaskModalOpen(false)}
               onSave={handleSaveTask}
               taskToEdit={editingTask}
             />
-          </motion.div>
-        )}
-
-        {currentView === 'notes' && (
-          <motion.div 
-            key="notes"
-            initial={{ scale: 0.8, opacity: 0 }}
-            animate={{ scale: 1, opacity: 1 }}
-            exit={{ scale: 0.8, opacity: 0 }}
-            className="w-full h-full"
-          >
-            <NotesApp 
-              notes={notes} 
-              tasks={tasks}
-              onSaveNotes={setNotes} 
-              onGoHome={() => setCurrentView('home')}
-              onNavigateToTask={handleNavigateToTask}
-            />
-          </motion.div>
-        )}
-
-        {currentView === 'links' && (
-          <motion.div 
-            key="links"
-            initial={{ y: '100%', opacity: 0 }}
-            animate={{ y: 0, opacity: 1 }}
-            exit={{ y: '100%', opacity: 0 }}
-            className="w-full h-full"
-          >
-            <LinksApp 
-              links={links}
-              onSaveLinks={setLinks}
-              onGoHome={() => setCurrentView('home')}
-            />
-          </motion.div>
-        )}
-
-        {currentView === 'leaves' && (
-          <motion.div 
-            key="leaves"
-            initial={{ opacity: 0, filter: 'blur(10px)' }}
-            animate={{ opacity: 1, filter: 'blur(0px)' }}
-            exit={{ opacity: 0, filter: 'blur(10px)' }}
-            className="w-full h-full"
-          >
-            <LeavesApp 
-              leaves={leaves}
-              onSaveLeaves={setLeaves}
-              onGoHome={() => setCurrentView('home')}
-            />
-          </motion.div>
-        )}
-
-        {currentView === 'event-timeline' && (
-          <motion.div 
-            key="event-timeline"
-            initial={{ opacity: 0, x: -20 }}
-            animate={{ opacity: 1, x: 0 }}
-            exit={{ opacity: 0, scale: 0.9 }}
-            className="w-full h-full"
-          >
-            <MakersAndMoversApp 
-              activities={eventActivities}
-              onSaveActivities={setEventActivities}
-              onGoHome={() => setCurrentView('home')}
-            />
-          </motion.div>
+          </>
         )}
       </AnimatePresence>
     </div>

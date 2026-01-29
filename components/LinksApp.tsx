@@ -3,7 +3,7 @@ import React, { useState, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { LinkEntry } from '../types';
 import { 
-  Plus, Search, ExternalLink, Copy, Trash2, Home, 
+  Plus, Search, ExternalLink, Copy, Trash2, 
   Globe, Wrench, Trophy, Rocket, Building2, Package, Layers, Users,
   Check, X, Pencil, Mic
 } from 'lucide-react';
@@ -11,7 +11,6 @@ import {
 interface LinksAppProps {
   links: LinkEntry[];
   onSaveLinks: (links: LinkEntry[]) => void;
-  onGoHome: () => void;
 }
 
 const CATEGORIES = ['Awards', 'Makers & Movers', 'Alcott Global', 'Source to Sold', 'Supplify', 'Executive Search', 'Podcast', 'Tools'] as const;
@@ -20,7 +19,7 @@ const CATEGORY_COLORS: Record<string, string> = {
   'Source to Sold': 'bg-orange-500', 'Supplify': 'bg-blue-500', 'Executive Search': 'bg-emerald-600', 'Podcast': 'bg-rose-500', 'Tools': 'bg-slate-500',
 };
 
-export const LinksApp: React.FC<LinksAppProps> = ({ links, onSaveLinks, onGoHome }) => {
+export const LinksApp: React.FC<LinksAppProps> = ({ links, onSaveLinks }) => {
   const [searchQuery, setSearchQuery] = useState('');
   const [activeCategory, setActiveCategory] = useState<string>('All');
   const [showModal, setShowModal] = useState(false);
@@ -87,18 +86,9 @@ export const LinksApp: React.FC<LinksAppProps> = ({ links, onSaveLinks, onGoHome
 
   return (
     <div className="flex h-screen w-full bg-slate-50 dark:bg-slate-950 overflow-hidden transition-colors">
-      <div className="w-80 border-r border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 flex flex-col transition-colors">
+      <div className="w-80 border-r border-slate-200 dark:border-slate-800 flex flex-col bg-white dark:bg-slate-900 transition-colors">
         <div className="p-4 border-b border-slate-200 dark:border-slate-800 flex items-center justify-between bg-slate-50/50 dark:bg-slate-900/50">
-          <div className="flex items-center gap-3">
-            <button 
-              onClick={onGoHome} 
-              className="p-2 rounded-lg bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:text-emerald-600 dark:hover:text-emerald-400 hover:bg-white dark:hover:bg-slate-700 transition-all border border-slate-200 dark:border-slate-700 shadow-sm"
-              title="Return Home"
-            >
-              <Home size={18} />
-            </button>
-            <h1 className="text-2xl font-bold tracking-tighter uppercase bg-clip-text text-transparent bg-gradient-to-br from-emerald-500 to-teal-600">LinkFlow</h1>
-          </div>
+          <h1 className="text-2xl font-bold tracking-tighter uppercase bg-clip-text text-transparent bg-gradient-to-br from-emerald-500 to-teal-600">LinkFlow</h1>
           <button onClick={() => handleOpenModal()} className="p-1.5 bg-indigo-600 hover:bg-indigo-500 text-white rounded-md shadow-sm transition-all active:scale-95">
             <Plus size={18} />
           </button>
@@ -117,7 +107,7 @@ export const LinksApp: React.FC<LinksAppProps> = ({ links, onSaveLinks, onGoHome
           </div>
         </div>
 
-        <div className="flex-1 overflow-y-auto p-3 space-y-1.5 scrollbar-hide">
+        <div className="flex-1 overflow-y-auto p-3 pb-32 space-y-1.5 scrollbar-hide">
           <button onClick={() => setActiveCategory('All')} className={`w-full flex items-center gap-4 px-4 py-3 rounded-lg text-[10px] font-semibold uppercase tracking-wider transition-all ${activeCategory === 'All' ? 'bg-indigo-600 text-white shadow-md' : 'text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800'}`}>
             <Globe size={14} /> All Resources
           </button>
@@ -137,7 +127,7 @@ export const LinksApp: React.FC<LinksAppProps> = ({ links, onSaveLinks, onGoHome
           </h2>
         </header>
 
-        <div className="flex-1 overflow-y-auto p-8 scrollbar-hide">
+        <div className="flex-1 overflow-y-auto p-8 pb-32 scrollbar-hide">
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-2 xl:grid-cols-3 gap-8">
             <AnimatePresence mode="popLayout">
               {filteredLinks.map(link => (
@@ -155,19 +145,16 @@ export const LinksApp: React.FC<LinksAppProps> = ({ links, onSaveLinks, onGoHome
                   
                   <div className="flex-1 flex flex-col p-6 min-w-0 justify-between">
                     <div>
-                      {/* Category moved to top */}
                       <div className="flex items-center gap-2 mb-2">
                         <div className={`w-1.5 h-1.5 rounded-full ${CATEGORY_COLORS[link.category] || 'bg-slate-400'}`} />
                         <span className="text-[9px] font-semibold uppercase tracking-widest text-slate-500 dark:text-slate-400">{link.category}</span>
                       </div>
                       
-                      {/* Title */}
                       <h3 className="font-bold text-[18px] text-slate-900 dark:text-white leading-tight tracking-tight mb-4">
                         {link.title}
                       </h3>
                     </div>
 
-                    {/* Bottom Row: OPEN button and Action group */}
                     <div className="flex items-center justify-between gap-4 mt-auto">
                       <button 
                         onClick={() => window.open(link.url, '_blank')}
@@ -205,7 +192,6 @@ export const LinksApp: React.FC<LinksAppProps> = ({ links, onSaveLinks, onGoHome
               ))}
             </AnimatePresence>
           </div>
-          {filteredLinks.length === 0 && <div className="text-center py-40 text-slate-400 dark:text-slate-600 text-[12px] font-semibold uppercase tracking-[0.4em] opacity-10">No entries found</div>}
         </div>
       </div>
 

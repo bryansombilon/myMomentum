@@ -53,7 +53,7 @@ export const TaskDetail: React.FC<TaskDetailProps> = ({ task, onUpdateTask, onSt
 
   return (
     <div className="flex-1 h-full overflow-y-auto bg-slate-50 dark:bg-slate-950 transition-colors">
-      <div className="w-full px-4 md:px-5 lg:px-6 py-6 space-y-5">
+      <div className="w-full px-4 md:px-5 lg:px-6 py-6 pb-32 space-y-5">
         
         {/* Header */}
         <div className="flex flex-col md:flex-row items-start justify-between gap-4">

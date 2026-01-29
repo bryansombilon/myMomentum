@@ -3,7 +3,7 @@ import React, { useState, useMemo, useRef, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Note, Task, ProjectType } from '../types';
 import { 
-  Plus, Trash2, Home, Search as SearchIcon, 
+  Plus, Trash2, Search as SearchIcon, 
   FileText, Bold, Italic, Underline, Palette, CheckSquare, Tag as TagIcon, X as XIcon,
   Strikethrough, List, IndentIncrease, IndentDecrease, ChevronDown, Briefcase,
   Pin, PinOff, Link as LinkIcon, Filter, Sparkles, Check, ListOrdered
@@ -13,7 +13,6 @@ interface NotesAppProps {
   notes: Note[];
   tasks: Task[];
   onSaveNotes: (notes: Note[]) => void;
-  onGoHome: () => void;
   onNavigateToTask: (taskId: string) => void;
 }
 
@@ -37,7 +36,7 @@ const renderPreviewWithLinks = (text: string) => {
   });
 };
 
-export const NotesApp: React.FC<NotesAppProps> = ({ notes, tasks, onSaveNotes, onGoHome, onNavigateToTask }) => {
+export const NotesApp: React.FC<NotesAppProps> = ({ notes, tasks, onSaveNotes, onNavigateToTask }) => {
   const [selectedNoteId, setSelectedNoteId] = useState<string | null>(notes[0]?.id || null);
   const [searchQuery, setSearchQuery] = useState('');
   const [activeTagFilter, setActiveTagFilter] = useState<string | null>(null);
@@ -91,7 +90,27 @@ export const NotesApp: React.FC<NotesAppProps> = ({ notes, tasks, onSaveNotes, o
     onSaveNotes(notes.map(n => n.id === id ? { ...n, ...updates, lastModified: new Date() } : n));
   };
 
-  // Helper to save and restore cursor position when modifying content
+  const handleDetectLinks = (isAutomatic = false) => {
+    if (!editorRef.current || !activeNote) return;
+    const content = editorRef.current.innerHTML;
+    const urlRegex = /(?<!href="|">|src=")(https?:\/\/[^\s<]+|www\.[^\s<]+)/gi;
+    const newContent = content.replace(urlRegex, (match) => {
+      const href = match.toLowerCase().startsWith('http') ? match : `https://${match}`;
+      return `<a href="${href}" target="_blank" rel="noopener noreferrer" style="color: #4f46e5; text-decoration: underline;">${match}</a>`;
+    });
+    
+    if (newContent !== content) {
+      if (isAutomatic) {
+        const savedPos = saveCaretPosition(editorRef.current);
+        editorRef.current.innerHTML = newContent;
+        restoreCaretPosition(editorRef.current, savedPos);
+      } else {
+        editorRef.current.innerHTML = newContent;
+      }
+      handleContentChange();
+    }
+  };
+
   const saveCaretPosition = (el: HTMLElement) => {
     const selection = window.getSelection();
     if (!selection || selection.rangeCount === 0) return null;
@@ -141,27 +160,6 @@ export const NotesApp: React.FC<NotesAppProps> = ({ notes, tasks, onSaveNotes, o
     }
     selection.removeAllRanges();
     selection.addRange(range);
-  };
-
-  const handleDetectLinks = (isAutomatic = false) => {
-    if (!editorRef.current || !activeNote) return;
-    const content = editorRef.current.innerHTML;
-    const urlRegex = /(?<!href="|">|src=")(https?:\/\/[^\s<]+|www\.[^\s<]+)/gi;
-    const newContent = content.replace(urlRegex, (match) => {
-      const href = match.toLowerCase().startsWith('http') ? match : `https://${match}`;
-      return `<a href="${href}" target="_blank" rel="noopener noreferrer" style="color: #4f46e5; text-decoration: underline;">${match}</a>`;
-    });
-    
-    if (newContent !== content) {
-      if (isAutomatic) {
-        const savedPos = saveCaretPosition(editorRef.current);
-        editorRef.current.innerHTML = newContent;
-        restoreCaretPosition(editorRef.current, savedPos);
-      } else {
-        editorRef.current.innerHTML = newContent;
-      }
-      handleContentChange();
-    }
   };
 
   const handleContentChange = () => {
@@ -294,16 +292,7 @@ export const NotesApp: React.FC<NotesAppProps> = ({ notes, tasks, onSaveNotes, o
     <div className="flex h-screen w-full bg-slate-50 dark:bg-slate-950 overflow-hidden transition-colors">
       <div className="w-80 border-r border-slate-200 dark:border-slate-800 flex flex-col bg-white dark:bg-slate-900 transition-colors">
         <div className="p-4 border-b border-slate-200 dark:border-slate-800 flex items-center justify-between bg-slate-50/50 dark:bg-slate-900/50">
-          <div className="flex items-center gap-3">
-            <button 
-              onClick={() => { flushSave(); onGoHome(); }} 
-              className="p-2 rounded-lg bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:text-amber-600 dark:hover:text-amber-400 hover:bg-white dark:hover:bg-slate-700 transition-all border border-slate-200 dark:border-slate-700 shadow-sm"
-              title="Return Home"
-            >
-              <Home size={18} />
-            </button>
-            <h2 className="text-2xl font-bold tracking-tighter uppercase bg-clip-text text-transparent bg-gradient-to-br from-amber-500 to-orange-600">NoteFlow</h2>
-          </div>
+          <h2 className="text-2xl font-bold tracking-tighter uppercase bg-clip-text text-transparent bg-gradient-to-br from-amber-500 to-orange-600">NoteFlow</h2>
           <button onClick={handleCreateNote} className="p-1.5 bg-amber-500 hover:bg-amber-400 text-white rounded-md shadow-sm transition-all active:scale-95">
             <Plus size={18} />
           </button>
@@ -367,7 +356,7 @@ export const NotesApp: React.FC<NotesAppProps> = ({ notes, tasks, onSaveNotes, o
           </div>
         </div>
 
-        <div className="flex-1 overflow-y-auto space-y-1 p-3 scrollbar-hide">
+        <div className="flex-1 overflow-y-auto space-y-1 p-3 pb-32 scrollbar-hide">
           {filteredNotes.map(note => (
             <button
               key={note.id}
@@ -511,7 +500,7 @@ export const NotesApp: React.FC<NotesAppProps> = ({ notes, tasks, onSaveNotes, o
               </div>
             </div>
 
-            <div className="flex-1 overflow-y-auto px-12 md:px-24 lg:px-32 py-8 w-full">
+            <div className="flex-1 overflow-y-auto px-12 md:px-24 lg:px-32 py-8 pb-32 w-full">
               <input 
                 type="text"
                 value={activeNote.title}
