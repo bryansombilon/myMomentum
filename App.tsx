@@ -304,7 +304,9 @@ const App: React.FC = () => {
                   >
                     <MakersAndMoversApp 
                       activities={eventActivities}
+                      tasks={tasks}
                       onSaveActivities={setEventActivities}
+                      onNavigateToTask={handleNavigateToTask}
                     />
                   </motion.div>
                 )}

@@ -1,21 +1,35 @@
 
 import React, { useState, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { EventActivity, ProjectType } from '../types';
+import { EventActivity, ProjectType, Task } from '../types';
 import { PROJECT_CONFIG } from '../constants';
 import { 
   Plus, Calendar as CalendarIcon, List as ListIcon, Trash2, 
   ChevronLeft, ChevronRight, Rocket,
   Pencil, X, CalendarDays as CalendarDaysIcon, Briefcase, ChevronDown,
-  ArrowRight, AlignLeft
+  ArrowRight, AlignLeft, CheckSquare, ExternalLink
 } from 'lucide-react';
 
 interface MakersAndMoversAppProps {
   activities: EventActivity[];
+  tasks: Task[];
   onSaveActivities: (activities: EventActivity[]) => void;
+  onNavigateToTask?: (taskId: string) => void;
 }
 
-export const MakersAndMoversApp: React.FC<MakersAndMoversAppProps> = ({ activities, onSaveActivities }) => {
+// Unified interface for calendar display
+interface CalendarDisplayItem {
+  id: string;
+  title: string;
+  details: string;
+  dateStr: string; // The specific day it appears on
+  project: ProjectType;
+  type: 'activity' | 'task';
+  status: string;
+  originalItem: EventActivity | Task;
+}
+
+export const MakersAndMoversApp: React.FC<MakersAndMoversAppProps> = ({ activities, tasks, onSaveActivities, onNavigateToTask }) => {
   const [view, setView] = useState<'calendar' | 'list'>('calendar');
   const [currentMonth, setCurrentMonth] = useState(new Date());
   const [showModal, setShowModal] = useState(false);
@@ -24,7 +38,7 @@ export const MakersAndMoversApp: React.FC<MakersAndMoversAppProps> = ({ activiti
   const [focusedDate, setFocusedDate] = useState<string | null>(null);
   const [activeProjectFilter, setActiveProjectFilter] = useState<ProjectType | 'All'>('All');
 
-  // Form State
+  // Form State for Activities
   const [title, setTitle] = useState('');
   const [details, setDetails] = useState('');
   const [startDate, setStartDate] = useState(new Date().toISOString().split('T')[0]);
@@ -56,13 +70,40 @@ export const MakersAndMoversApp: React.FC<MakersAndMoversAppProps> = ({ activiti
     setShowModal(true);
   };
 
-  const filteredActivities = useMemo(() => {
-    return activities.filter(a => activeProjectFilter === 'All' || a.project === activeProjectFilter);
-  }, [activities, activeProjectFilter]);
+  // Convert tasks and activities into a flat list for calendar logic
+  const allItems = useMemo(() => {
+    const activityItems: CalendarDisplayItem[] = activities.map(a => {
+      return {
+        id: a.id,
+        title: a.title,
+        details: a.details,
+        dateStr: new Date(a.startDate).toISOString().split('T')[0],
+        project: a.project,
+        type: 'activity',
+        status: a.status,
+        originalItem: a
+      };
+    });
 
-  const sortedActivities = useMemo(() => {
-    return [...filteredActivities].sort((a, b) => new Date(a.startDate).getTime() - new Date(b.startDate).getTime());
-  }, [filteredActivities]);
+    const taskItems: CalendarDisplayItem[] = tasks.map(t => ({
+      id: t.id,
+      title: t.title,
+      details: t.description,
+      dateStr: new Date(t.deadline).toISOString().split('T')[0],
+      project: t.project,
+      type: 'task',
+      status: t.status,
+      originalItem: t
+    }));
+
+    return [...activityItems, ...taskItems].filter(item => 
+      activeProjectFilter === 'All' || item.project === activeProjectFilter
+    );
+  }, [activities, tasks, activeProjectFilter]);
+
+  const sortedListItems = useMemo(() => {
+    return [...allItems].sort((a, b) => a.dateStr.localeCompare(b.dateStr));
+  }, [allItems]);
 
   const handleSaveActivity = (e: React.FormEvent) => {
     e.preventDefault();
@@ -111,18 +152,24 @@ export const MakersAndMoversApp: React.FC<MakersAndMoversAppProps> = ({ activiti
     setCurrentMonth(new Date(currentMonth.getFullYear(), currentMonth.getMonth() + offset, 1));
   };
 
-  const getActivitiesForDate = (dateStr: string) => {
-    return filteredActivities.filter(a => {
-      const start = new Date(a.startDate).toISOString().split('T')[0];
-      const end = new Date(a.endDate).toISOString().split('T')[0];
-      return dateStr >= start && dateStr <= end;
+  const getItemsForDate = (dateStr: string) => {
+    return allItems.filter(item => {
+      if (item.type === 'task') {
+        return item.dateStr === dateStr;
+      } else {
+        // For activities, check range
+        const act = item.originalItem as EventActivity;
+        const start = new Date(act.startDate).toISOString().split('T')[0];
+        const end = new Date(act.endDate).toISOString().split('T')[0];
+        return dateStr >= start && dateStr <= end;
+      }
     });
   };
 
-  const focusedDateActivities = useMemo(() => {
+  const focusedDateItems = useMemo(() => {
     if (!focusedDate) return [];
-    return getActivitiesForDate(focusedDate);
-  }, [filteredActivities, focusedDate]);
+    return getItemsForDate(focusedDate);
+  }, [allItems, focusedDate]);
 
   return (
     <div className="flex h-screen w-full bg-slate-50 dark:bg-slate-950 transition-colors">
@@ -134,7 +181,7 @@ export const MakersAndMoversApp: React.FC<MakersAndMoversAppProps> = ({ activiti
             </div>
             <div>
               <h1 className="text-xl font-bold text-slate-900 dark:text-white uppercase tracking-tight">Calendar of Activities</h1>
-              <p className="text-[10px] font-semibold uppercase tracking-widest text-slate-400">Integrated EventFlow</p>
+              <p className="text-[10px] font-semibold uppercase tracking-widest text-slate-400">Integrated EventFlow & TaskFlow</p>
             </div>
           </div>
           
@@ -169,6 +216,7 @@ export const MakersAndMoversApp: React.FC<MakersAndMoversAppProps> = ({ activiti
             <button 
               onClick={() => openModal()}
               className="p-2.5 bg-purple-600 hover:bg-purple-500 text-white rounded-xl shadow-lg shadow-purple-500/20 transition-all active:scale-95"
+              title="Add Activity"
             >
               <Plus size={20} strokeWidth={2.5} />
             </button>
@@ -199,8 +247,8 @@ export const MakersAndMoversApp: React.FC<MakersAndMoversAppProps> = ({ activiti
                   {calendarDays.map((day, i) => {
                     const dateObj = day ? new Date(currentMonth.getFullYear(), currentMonth.getMonth(), day) : null;
                     const dateStr = dateObj ? dateObj.toISOString().split('T')[0] : '';
-                    const dayActivities = day ? getActivitiesForDate(dateStr) : [];
-                    const activityCount = dayActivities.length;
+                    const dayItems = day ? getItemsForDate(dateStr) : [];
+                    const activityCount = dayItems.length;
                     const isToday = dateStr === todayStr;
                     
                     return (
@@ -217,9 +265,10 @@ export const MakersAndMoversApp: React.FC<MakersAndMoversAppProps> = ({ activiti
                               </span>
                             </div>
                             <div className="space-y-1.5 pointer-events-none pb-4">
-                              {dayActivities.slice(0, 5).map(a => (
-                                <div key={a.id} style={{ borderLeft: `3px solid ${PROJECT_CONFIG[a.project].color}` }} className="text-[10px] p-1.5 rounded bg-slate-50 dark:bg-slate-800/60 font-semibold truncate text-slate-700 dark:text-slate-200 shadow-sm border border-slate-100 dark:border-slate-700">
-                                  {a.title}
+                              {dayItems.slice(0, 5).map(item => (
+                                <div key={item.id} style={{ borderLeft: `3px solid ${PROJECT_CONFIG[item.project].color}` }} className="text-[10px] p-1.5 rounded bg-slate-50 dark:bg-slate-800/60 font-semibold truncate text-slate-700 dark:text-slate-200 shadow-sm border border-slate-100 dark:border-slate-700 flex items-center gap-1.5">
+                                  {item.type === 'task' && <CheckSquare size={10} className="text-indigo-500 shrink-0" />}
+                                  <span className="truncate">{item.title}</span>
                                 </div>
                               ))}
                               {activityCount > 5 && <div className="text-[9px] font-medium text-slate-400 pl-1 uppercase tracking-widest">+ {activityCount - 5} more</div>}
@@ -233,8 +282,14 @@ export const MakersAndMoversApp: React.FC<MakersAndMoversAppProps> = ({ activiti
               </motion.div>
             ) : (
               <motion.div key="list-v" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -10 }} className="max-w-5xl mx-auto space-y-6 pb-32">
-                {sortedActivities.map((activity) => (
-                  <ActivityListItem key={activity.id} activity={activity} onDelete={() => handleDelete(activity.id)} onEdit={() => openModal(activity)} />
+                {sortedListItems.map((item) => (
+                  <CalendarListItem 
+                    key={item.id} 
+                    item={item} 
+                    onDelete={item.type === 'activity' ? () => handleDelete(item.id) : undefined} 
+                    onEdit={item.type === 'activity' ? () => openModal(item.originalItem as EventActivity) : undefined} 
+                    onNavigateToTask={onNavigateToTask}
+                  />
                 ))}
               </motion.div>
             )}
@@ -255,13 +310,27 @@ export const MakersAndMoversApp: React.FC<MakersAndMoversAppProps> = ({ activiti
                 <button onClick={() => setShowDayModal(false)} className="p-3 hover:bg-slate-200 dark:hover:bg-slate-700 rounded-2xl transition-colors"><X size={24} /></button>
               </div>
               <div className="flex-1 overflow-y-auto p-8 space-y-4 no-scrollbar">
-                {focusedDateActivities.map(activity => (
-                  <div key={activity.id} className="group bg-slate-50 dark:bg-slate-800/40 border border-slate-200 dark:border-slate-700 rounded-2xl p-5 flex items-center gap-4">
-                    <div className="w-1.5 self-stretch rounded-full shrink-0" style={{ backgroundColor: PROJECT_CONFIG[activity.project].color }} />
+                {focusedDateItems.map(item => (
+                  <div key={item.id} className="group bg-slate-50 dark:bg-slate-800/40 border border-slate-200 dark:border-slate-700 rounded-2xl p-5 flex items-center gap-4 relative">
+                    <div className="w-1.5 self-stretch rounded-full shrink-0" style={{ backgroundColor: PROJECT_CONFIG[item.project].color }} />
                     <div className="flex-1 min-w-0">
-                      <h4 className="text-base font-bold text-slate-900 dark:text-white truncate">{activity.title}</h4>
-                      <p className="text-[12px] text-slate-500 dark:text-slate-400 italic mt-1 whitespace-pre-wrap">{activity.details || 'No details.'}</p>
+                      <div className="flex items-center gap-2 mb-1">
+                        {item.type === 'task' && (
+                          <span className="px-2 py-0.5 rounded bg-indigo-100 dark:bg-indigo-900/40 text-indigo-600 dark:text-indigo-400 text-[9px] font-black uppercase tracking-widest">TaskFlow Item</span>
+                        )}
+                        <span className="text-[9px] font-bold text-slate-400 uppercase tracking-[0.2em]">{item.project}</span>
+                      </div>
+                      <h4 className="text-base font-bold text-slate-900 dark:text-white truncate">{item.title}</h4>
+                      <p className="text-[12px] text-slate-500 dark:text-slate-400 italic mt-1 whitespace-pre-wrap">{item.details || 'No details.'}</p>
                     </div>
+                    {item.type === 'task' && onNavigateToTask && (
+                      <button 
+                        onClick={() => { setShowDayModal(false); onNavigateToTask(item.id); }}
+                        className="p-3 bg-white dark:bg-slate-900 text-indigo-600 dark:text-indigo-400 rounded-xl border border-indigo-100 dark:border-indigo-900/40 hover:bg-indigo-50 dark:hover:bg-indigo-900/20 transition-all shadow-sm flex items-center gap-2 text-[10px] font-bold uppercase tracking-widest"
+                      >
+                        Go to Tasks <ExternalLink size={14} />
+                      </button>
+                    )}
                   </div>
                 ))}
               </div>
@@ -337,31 +406,45 @@ export const MakersAndMoversApp: React.FC<MakersAndMoversAppProps> = ({ activiti
   );
 };
 
-const ActivityListItem: React.FC<{ activity: EventActivity; onDelete: () => void; onEdit: () => void }> = ({ activity, onDelete, onEdit }) => {
-  const projectConfig = PROJECT_CONFIG[activity.project];
+const CalendarListItem: React.FC<{ item: CalendarDisplayItem; onDelete?: () => void; onEdit?: () => void; onNavigateToTask?: (id: string) => void }> = ({ item, onDelete, onEdit, onNavigateToTask }) => {
+  const projectConfig = PROJECT_CONFIG[item.project];
+  const dateObj = new Date(item.dateStr);
 
   return (
     <motion.div layout className="group bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 p-6 rounded-3xl flex items-start gap-6 shadow-sm hover:shadow-lg transition-all">
       <div style={{ backgroundColor: `${projectConfig.color}15`, borderColor: `${projectConfig.color}40`, color: projectConfig.color }} className="w-16 h-16 rounded-2xl flex flex-col items-center justify-center shrink-0 border">
-        <span className="text-[10px] font-bold uppercase tracking-widest leading-none mb-1">{new Intl.DateTimeFormat('en-US', { month: 'short' }).format(new Date(activity.startDate))}</span>
-        <span className="text-xl font-bold leading-none">{new Date(activity.startDate).getDate()}</span>
+        <span className="text-[10px] font-bold uppercase tracking-widest leading-none mb-1">{new Intl.DateTimeFormat('en-US', { month: 'short' }).format(dateObj)}</span>
+        <span className="text-xl font-bold leading-none">{dateObj.getDate()}</span>
       </div>
       <div className="flex-1 min-w-0">
         <div className="flex items-center gap-2 mb-2">
-           <span className="text-[10px] font-bold uppercase tracking-widest text-slate-500">{activity.project}</span>
+           {item.type === 'task' && (
+             <span className="px-2 py-0.5 rounded-full bg-indigo-100 dark:bg-indigo-900/40 text-indigo-600 dark:text-indigo-400 text-[9px] font-black uppercase tracking-tighter">TASK</span>
+           )}
+           <span className="text-[10px] font-bold uppercase tracking-widest text-slate-500">{item.project}</span>
            <span className="w-1.5 h-1.5 rounded-full" style={{ backgroundColor: projectConfig.color }} />
            <div className="flex items-center gap-1.5 text-[10px] font-bold text-slate-400 uppercase tracking-widest ml-auto">
-             {new Intl.DateTimeFormat('en-US', { month: 'short', day: 'numeric' }).format(new Date(activity.startDate))}
-             <ArrowRight size={10} className="text-slate-300" />
-             {new Intl.DateTimeFormat('en-US', { month: 'short', day: 'numeric' }).format(new Date(activity.endDate))}
+             {item.type === 'task' ? 'Deadline' : 'Activity Date'}
            </div>
         </div>
-        <h3 className="text-xl font-bold text-slate-900 dark:text-white tracking-tight mb-2 group-hover:text-purple-600 transition-colors">{activity.title}</h3>
-        <p className="text-[13px] text-slate-500 dark:text-slate-400 italic line-clamp-2">{activity.details || 'No briefing available.'}</p>
+        <h3 className="text-xl font-bold text-slate-900 dark:text-white tracking-tight mb-2 group-hover:text-purple-600 transition-colors flex items-center gap-2">
+          {item.type === 'task' && <CheckSquare size={18} className="text-indigo-500" />}
+          {item.title}
+        </h3>
+        <p className="text-[13px] text-slate-500 dark:text-slate-400 italic line-clamp-2">{item.details || 'No briefing available.'}</p>
       </div>
       <div className="flex flex-col gap-2">
-         <button onClick={onEdit} className="p-2 text-slate-300 hover:text-indigo-600 transition-all opacity-0 group-hover:opacity-100"><Pencil size={18} /></button>
-         <button onClick={onDelete} className="p-2 text-slate-300 hover:text-rose-500 transition-all opacity-0 group-hover:opacity-100"><Trash2 size={18} /></button>
+         {onEdit && <button onClick={onEdit} className="p-2 text-slate-300 hover:text-indigo-600 transition-all opacity-0 group-hover:opacity-100"><Pencil size={18} /></button>}
+         {item.type === 'task' && onNavigateToTask && (
+           <button 
+             onClick={() => onNavigateToTask(item.id)} 
+             className="p-2 text-slate-300 hover:text-indigo-600 transition-all opacity-0 group-hover:opacity-100"
+             title="View in TaskFlow"
+           >
+             <ExternalLink size={18} />
+           </button>
+         )}
+         {onDelete && <button onClick={onDelete} className="p-2 text-slate-300 hover:text-rose-500 transition-all opacity-0 group-hover:opacity-100"><Trash2 size={18} /></button>}
       </div>
     </motion.div>
   );
