@@ -124,9 +124,49 @@ const App: React.FC = () => {
   const handleNavigateToTask = (taskId: string) => { setSelectedTaskId(taskId); setCurrentView('tasks'); };
   const selectedTask = tasks.find(t => t.id === selectedTaskId) || null;
 
+  const handleExport = () => {
+    const backupData = {
+      tasks,
+      notes,
+      links,
+      reminders,
+      leaves,
+      eventActivities,
+      exportedAt: new Date().toISOString()
+    };
+    const blob = new Blob([JSON.stringify(backupData, null, 2)], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = `taskflow_backup_${new Date().toISOString().split('T')[0]}.json`;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
+  };
+
+  const handleImport = (file: File) => {
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      try {
+        const data = JSON.parse(e.target?.result as string);
+        if (data.tasks) setTasks(data.tasks.map((t: any) => ({ ...t, deadline: new Date(t.deadline), updates: t.updates.map((m: any) => ({ ...m, timestamp: new Date(m.timestamp) })) })));
+        if (data.notes) setNotes(data.notes.map((n: any) => ({ ...n, lastModified: new Date(n.lastModified) })));
+        if (data.links) setLinks(data.links.map((l: any) => ({ ...l, dateAdded: new Date(l.dateAdded) })));
+        if (data.reminders) setReminders(data.reminders);
+        if (data.leaves) setLeaves(data.leaves.map((l: any) => ({ ...l, date: new Date(l.date) })));
+        if (data.eventActivities) setEventActivities(data.eventActivities.map((e: any) => ({ ...e, startDate: new Date(e.startDate), endDate: new Date(e.endDate) })));
+        alert('Restore successful! All data has been synchronized.');
+      } catch (err) {
+        alert('Failed to parse backup file. Please ensure it is a valid TaskFlow JSON export.');
+      }
+    };
+    reader.readAsText(file);
+  };
+
   const renderView = () => {
     switch(currentView) {
-      case 'home': return <Home onLaunchApp={setCurrentView} onExport={() => {}} onImport={() => {}} isDarkMode={isDarkMode} toggleTheme={() => setIsDarkMode(!isDarkMode)} />;
+      case 'home': return <Home onLaunchApp={setCurrentView} onExport={handleExport} onImport={handleImport} isDarkMode={isDarkMode} toggleTheme={() => setIsDarkMode(!isDarkMode)} />;
       case 'tasks': return (
         <div className="w-full h-full flex flex-col md:flex-row overflow-hidden">
           <TaskList tasks={tasks} setTasks={handleTaskReorder} selectedTaskId={selectedTaskId} onSelectTask={(task) => setSelectedTaskId(task.id)} onAddNewTask={() => { setEditingTask(null); setIsNewTaskModalOpen(true); }} />

@@ -59,8 +59,8 @@ export const Home: React.FC<HomeProps> = ({ onLaunchApp, onExport, onImport, isD
       </div>
 
       <motion.div initial={{ opacity: 0, y: -40 }} animate={{ opacity: 1, y: 0 }} className="mb-12 text-center z-10">
-        <div className="text-[100px] leading-none font-bold tracking-tightest text-slate-900 dark:text-white mb-6 select-none">{formatTime(time)}</div>
-        <div className="text-sm font-semibold uppercase tracking-[0.3em] text-slate-600 dark:text-slate-300 flex items-center justify-center gap-3 bg-white/40 dark:bg-slate-900/40 px-6 py-2 rounded-full backdrop-blur-sm border border-white/20 dark:border-slate-800/50">
+        <div className="text-[100px] leading-none font-bold text-slate-900 dark:text-white mb-6 select-none">{formatTime(time)}</div>
+        <div className="text-sm font-semibold uppercase text-slate-600 dark:text-slate-300 flex items-center justify-center gap-3 bg-white/40 dark:bg-slate-900/40 px-6 py-2 rounded-full backdrop-blur-sm border border-white/20 dark:border-slate-800/50">
           <Calendar size={16} className="text-indigo-600 dark:text-indigo-400" /> {formatDate(time)}
         </div>
       </motion.div>
@@ -72,8 +72,8 @@ export const Home: React.FC<HomeProps> = ({ onLaunchApp, onExport, onImport, isD
               <app.icon size={44} className="drop-shadow-lg" strokeWidth={1.5} />
             </div>
             <div className="text-center">
-              <div className="font-semibold text-slate-500 dark:text-slate-400 text-[10px] uppercase tracking-widest mb-1">{app.desc}</div>
-              <div className="font-bold text-slate-900 dark:text-slate-100 text-lg tracking-tight">{app.name}</div>
+              <div className="font-semibold text-slate-500 dark:text-slate-400 text-[10px] uppercase mb-1">{app.desc}</div>
+              <div className="font-bold text-slate-900 dark:text-slate-100 text-lg">{app.name}</div>
             </div>
           </motion.button>
         ))}
@@ -83,23 +83,23 @@ export const Home: React.FC<HomeProps> = ({ onLaunchApp, onExport, onImport, isD
         <div className="flex items-center gap-6 px-4">
           <div className="flex items-center gap-3">
             <ShieldCheck size={18} className="text-emerald-600 dark:text-emerald-400" />
-            <span className="text-[11px] font-black uppercase tracking-widest text-slate-700 dark:text-slate-300">Flow OS 2.0</span>
+            <span className="text-[11px] font-black uppercase text-slate-700 dark:text-slate-300">Flow OS 2.0</span>
           </div>
           <div className="h-8 w-px bg-slate-200 dark:bg-slate-800" />
           <button onClick={() => onLaunchApp('engagement')} className="flex items-center gap-3 group px-4 py-2 hover:bg-slate-100 dark:hover:bg-slate-800/50 rounded-2xl transition-all text-left">
              <Activity size={18} className="text-indigo-600 dark:text-indigo-400" />
              <div>
-               <div className="text-[9px] font-black uppercase tracking-widest text-slate-500">System Engagement</div>
+               <div className="text-[9px] font-black uppercase text-slate-500">System Engagement</div>
                <div className="text-[11px] font-bold text-slate-800 dark:text-white flex items-center gap-1">Protocol Standby <ChevronRight size={14} /></div>
              </div>
           </button>
         </div>
         <div className="flex items-center gap-4 p-1">
           <input type="file" ref={fileInputRef} onChange={(e) => e.target.files?.[0] && onImport(e.target.files[0])} accept=".json" className="hidden" />
-          <button onClick={() => fileInputRef.current?.click()} className="flex items-center gap-2 px-5 py-2.5 rounded-xl hover:bg-slate-200 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-200 text-[11px] font-semibold uppercase tracking-widest">
+          <button onClick={() => fileInputRef.current?.click()} className="flex items-center gap-2 px-5 py-2.5 rounded-xl hover:bg-slate-200 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-200 text-[11px] font-semibold uppercase">
             <Upload size={16} /> Restore
           </button>
-          <button onClick={onExport} className="flex items-center gap-2 px-6 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white shadow-xl shadow-indigo-500/30 text-[11px] font-semibold uppercase tracking-widest">
+          <button onClick={onExport} className="flex items-center gap-2 px-6 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white shadow-xl shadow-indigo-500/30 text-[11px] font-semibold uppercase">
             <Download size={16} /> Export
           </button>
         </div>
