@@ -5,7 +5,8 @@ import { Reminder } from '../types';
 import { 
   Plus, Trash2, Clock, Globe, 
   CheckCircle2, X, ExternalLink, Activity, 
-  Zap, ShieldCheck, ToggleLeft, ToggleRight
+  Zap, ShieldCheck, ToggleLeft, ToggleRight,
+  Calendar, GripVertical
 } from 'lucide-react';
 
 interface EngagementAppProps {
@@ -13,50 +14,66 @@ interface EngagementAppProps {
   onSaveReminders: (reminders: Reminder[]) => void;
 }
 
+const DAYS_OF_WEEK = [
+  { label: 'S', value: 0 },
+  { label: 'M', value: 1 },
+  { label: 'T', value: 2 },
+  { label: 'W', value: 3 },
+  { label: 'T', value: 4 },
+  { label: 'F', value: 5 },
+  { label: 'S', value: 6 },
+];
+
 export const EngagementApp: React.FC<EngagementAppProps> = ({ reminders, onSaveReminders }) => {
   const [showModal, setShowModal] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
   
   // Form State
-  const [time, setTime] = useState('09:00');
+  const [times, setTimes] = useState<string[]>(['09:00']);
   const [label, setLabel] = useState('');
   const [description, setDescription] = useState('');
   const [actionType, setActionType] = useState<'link' | 'dismiss'>('link');
   const [actionUrl, setActionUrl] = useState('');
-  const [frequency, setFrequency] = useState<'daily' | 'weekdays' | 'weekends'>('daily');
+  const [frequency, setFrequency] = useState<'daily' | 'weekdays' | 'weekends' | 'custom'>('daily');
+  const [customDays, setCustomDays] = useState<number[]>([]);
 
   const openModal = (reminder?: Reminder) => {
     if (reminder) {
       setEditingId(reminder.id);
-      setTime(reminder.time);
+      setTimes(reminder.times || []);
       setLabel(reminder.label);
       setDescription(reminder.description);
       setActionType(reminder.actionType);
       setActionUrl(reminder.actionUrl || '');
       setFrequency(reminder.frequency);
+      setCustomDays(reminder.customDays || []);
     } else {
       setEditingId(null);
-      setTime('09:00');
+      setTimes(['09:00']);
       setLabel('');
       setDescription('');
       setActionType('link');
       setActionUrl('');
       setFrequency('daily');
+      setCustomDays([]);
     }
     setShowModal(true);
   };
 
   const handleSave = (e: React.FormEvent) => {
     e.preventDefault();
+    if (times.length === 0) return;
+
     const newReminder: Reminder = {
       id: editingId || Date.now().toString(),
-      time,
+      times: times.filter(t => t), // Clean empty strings
       label,
       description,
       actionType,
       actionUrl: actionType === 'link' ? actionUrl : undefined,
       enabled: true,
-      frequency
+      frequency,
+      customDays: frequency === 'custom' ? customDays : undefined,
     };
 
     if (editingId) {
@@ -74,6 +91,26 @@ export const EngagementApp: React.FC<EngagementAppProps> = ({ reminders, onSaveR
   const deleteReminder = (id: string) => {
     if (confirm('Delete this engagement protocol?')) {
       onSaveReminders(reminders.filter(r => r.id !== id));
+    }
+  };
+
+  const handleAddTime = () => setTimes([...times, '12:00']);
+  const handleRemoveTime = (index: number) => {
+    if (times.length > 1) {
+      setTimes(times.filter((_, i) => i !== index));
+    }
+  };
+  const handleTimeChange = (index: number, val: string) => {
+    const newTimes = [...times];
+    newTimes[index] = val;
+    setTimes(newTimes);
+  };
+
+  const toggleDay = (dayValue: number) => {
+    if (customDays.includes(dayValue)) {
+      setCustomDays(customDays.filter(d => d !== dayValue));
+    } else {
+      setCustomDays([...customDays, dayValue]);
     }
   };
 
@@ -95,15 +132,18 @@ export const EngagementApp: React.FC<EngagementAppProps> = ({ reminders, onSaveR
           </div>
           <div className="px-2 space-y-3">
              <div className="text-[9px] font-bold uppercase text-slate-400">Scheduled Actions</div>
-             {reminders.sort((a,b) => a.time.localeCompare(b.time)).map(r => (
+             {reminders.map(r => (
                <button 
                  key={r.id} 
                  onClick={() => openModal(r)}
                  className={`w-full p-4 rounded-2xl border text-left transition-all flex items-center justify-between ${r.enabled ? 'bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700 shadow-sm' : 'bg-slate-50 dark:bg-slate-900 border-transparent opacity-50'}`}
                >
                  <div>
-                   <div className="text-sm font-bold text-slate-900 dark:text-white leading-tight">{r.time}</div>
-                   <div className="text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase mt-1">{r.label}</div>
+                   <div className="text-sm font-bold text-slate-900 dark:text-white leading-tight flex items-center gap-2">
+                     <Clock size={12} className="text-slate-400" />
+                     {r.times?.[0]}{r.times?.length > 1 ? ` +${r.times.length - 1}` : ''}
+                   </div>
+                   <div className="text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase mt-1 truncate max-w-[140px]">{r.label}</div>
                  </div>
                  <div className={`w-2 h-2 rounded-full ${r.enabled ? 'bg-indigo-500 shadow-[0_0_8px_rgba(99,102,241,0.6)]' : 'bg-slate-300'}`} />
                </button>
@@ -140,13 +180,19 @@ export const EngagementApp: React.FC<EngagementAppProps> = ({ reminders, onSaveR
                     </button>
                   </div>
                   
-                  <div className="flex items-center gap-4 mb-6">
-                    <div className="w-16 h-16 bg-slate-100 dark:bg-slate-800 rounded-2xl flex items-center justify-center text-slate-400">
+                  <div className="flex items-start gap-4 mb-6">
+                    <div className="w-16 h-16 bg-slate-100 dark:bg-slate-800 rounded-2xl flex items-center justify-center text-slate-400 shrink-0">
                       <Clock size={32} />
                     </div>
                     <div>
-                      <div className="text-4xl font-bold text-slate-900 dark:text-white tracking-tighter">{r.time}</div>
-                      <div className="text-[10px] font-bold uppercase text-indigo-600 dark:text-indigo-400">{r.frequency} Protocol</div>
+                      <div className="flex flex-wrap gap-2">
+                        {r.times?.map((t, idx) => (
+                          <span key={idx} className="text-2xl font-bold text-slate-900 dark:text-white tracking-tighter">{t}</span>
+                        ))}
+                      </div>
+                      <div className="text-[10px] font-bold uppercase text-indigo-600 dark:text-indigo-400 mt-1">
+                        {r.frequency === 'custom' ? `Custom (${r.customDays?.length} days)` : `${r.frequency} Protocol`}
+                      </div>
                     </div>
                   </div>
 
@@ -170,49 +216,102 @@ export const EngagementApp: React.FC<EngagementAppProps> = ({ reminders, onSaveR
       <AnimatePresence>
         {showModal && (
           <div className="fixed inset-0 z-[1000] flex items-center justify-center p-4 bg-slate-950/40 backdrop-blur-md">
-            <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} className="bg-white dark:bg-slate-900 rounded-[2.5rem] border border-slate-200 dark:border-slate-800 shadow-2xl w-full max-w-lg overflow-hidden">
-              <div className="p-8 border-b border-slate-100 dark:border-slate-800 bg-slate-50 dark:bg-slate-800/30 flex items-center justify-between">
+            <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} className="bg-white dark:bg-slate-900 rounded-[2.5rem] border border-slate-200 dark:border-slate-800 shadow-2xl w-full max-w-xl overflow-hidden flex flex-col max-h-[90vh]">
+              <div className="p-8 border-b border-slate-100 dark:border-slate-800 bg-slate-50 dark:bg-slate-800/30 flex items-center justify-between shrink-0">
                 <h2 className="text-xl font-bold text-slate-900 dark:text-white uppercase">{editingId ? 'Modify' : 'Initialize'} Protocol</h2>
                 <button onClick={() => setShowModal(false)}><X size={24} className="text-slate-400" /></button>
               </div>
-              <form onSubmit={handleSave} className="p-10 space-y-6">
-                <div className="grid grid-cols-2 gap-4">
-                  <div className="space-y-1.5">
-                    <label className="text-[10px] font-bold uppercase text-slate-500">Trigger Time</label>
-                    <input type="time" required value={time} onChange={(e) => setTime(e.target.value)} className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl px-4 py-3 text-sm font-bold dark:text-white" />
+              
+              <form onSubmit={handleSave} className="p-10 space-y-6 overflow-y-auto no-scrollbar">
+                
+                {/* Multi-Time Section */}
+                <div className="space-y-3">
+                  <div className="flex items-center justify-between">
+                    <label className="text-[10px] font-bold uppercase text-slate-500">Trigger Times</label>
+                    <button type="button" onClick={handleAddTime} className="text-[10px] font-bold uppercase text-indigo-600 flex items-center gap-1 hover:underline">
+                      <Plus size={12} /> Add Time
+                    </button>
                   </div>
-                  <div className="space-y-1.5">
-                    <label className="text-[10px] font-bold uppercase text-slate-500">Frequency</label>
-                    <select value={frequency} onChange={(e) => setFrequency(e.target.value as any)} className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl px-4 py-3 text-sm font-bold uppercase dark:text-white">
-                      <option value="daily">Everyday</option>
-                      <option value="weekdays">Weekdays (M-F)</option>
-                      <option value="weekends">Weekends (S-S)</option>
-                    </select>
+                  <div className="grid grid-cols-2 gap-3">
+                    {times.map((timeVal, idx) => (
+                      <div key={idx} className="flex items-center gap-2 group">
+                        <input 
+                          type="time" 
+                          required 
+                          value={timeVal} 
+                          onChange={(e) => handleTimeChange(idx, e.target.value)} 
+                          className="flex-1 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl px-4 py-3 text-sm font-bold dark:text-white" 
+                        />
+                        {times.length > 1 && (
+                          <button type="button" onClick={() => handleRemoveTime(idx)} className="p-2 text-slate-300 hover:text-red-500 transition-colors">
+                            <Trash2 size={16} />
+                          </button>
+                        )}
+                      </div>
+                    ))}
                   </div>
                 </div>
+
+                <div className="space-y-1.5">
+                  <label className="text-[10px] font-bold uppercase text-slate-500">Frequency</label>
+                  <select value={frequency} onChange={(e) => setFrequency(e.target.value as any)} className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl px-4 py-3 text-sm font-bold uppercase dark:text-white">
+                    <option value="daily">Everyday</option>
+                    <option value="weekdays">Weekdays (M-F)</option>
+                    <option value="weekends">Weekends (S-S)</option>
+                    <option value="custom">Custom Days</option>
+                  </select>
+                </div>
+
+                <AnimatePresence>
+                  {frequency === 'custom' && (
+                    <motion.div initial={{ height: 0, opacity: 0 }} animate={{ height: 'auto', opacity: 1 }} exit={{ height: 0, opacity: 0 }} className="overflow-hidden space-y-1.5">
+                      <label className="text-[10px] font-bold uppercase text-slate-500">Select Custom Days</label>
+                      <div className="flex justify-between items-center gap-2">
+                        {DAYS_OF_WEEK.map(day => {
+                          const isSelected = customDays.includes(day.value);
+                          return (
+                            <button
+                              key={day.value}
+                              type="button"
+                              onClick={() => toggleDay(day.value)}
+                              className={`w-10 h-10 rounded-full border transition-all text-[11px] font-bold ${isSelected ? 'bg-indigo-600 border-indigo-500 text-white shadow-lg' : 'bg-slate-50 dark:bg-slate-800 border-slate-200 dark:border-slate-700 text-slate-400 hover:border-slate-300'}`}
+                            >
+                              {day.label}
+                            </button>
+                          );
+                        })}
+                      </div>
+                    </motion.div>
+                  )}
+                </AnimatePresence>
+
                 <div className="space-y-1.5">
                   <label className="text-[10px] font-bold uppercase text-slate-500">Protocol Label</label>
                   <input required value={label} onChange={(e) => setLabel(e.target.value)} placeholder="e.g. LinkedIn Engagement" className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl px-4 py-3 text-sm font-medium dark:text-white" />
                 </div>
+                
                 <div className="space-y-1.5">
                   <label className="text-[10px] font-bold uppercase text-slate-500">Context Briefing</label>
                   <textarea value={description} onChange={(e) => setDescription(e.target.value)} placeholder="Why is this interrupt necessary?" className="w-full h-24 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl px-4 py-3 text-sm font-medium dark:text-white resize-none" />
                 </div>
+                
                 <div className="space-y-1.5">
                   <label className="text-[10px] font-bold uppercase text-slate-500">Action Type</label>
                   <div className="grid grid-cols-2 gap-4">
-                    <button type="button" onClick={() => setActionType('link')} className={`py-3 rounded-xl border text-[10px] font-bold uppercase transition-all ${actionType === 'link' ? 'bg-indigo-600 border-indigo-500 text-white' : 'bg-slate-50 dark:bg-slate-800 border-slate-200 dark:border-slate-700 text-slate-400'}`}>External Link</button>
-                    <button type="button" onClick={() => setActionType('dismiss')} className={`py-3 rounded-xl border text-[10px] font-bold uppercase transition-all ${actionType === 'dismiss' ? 'bg-indigo-600 border-indigo-500 text-white' : 'bg-slate-50 dark:bg-slate-800 border-slate-200 dark:border-slate-700 text-slate-400'}`}>System Exit</button>
+                    <button type="button" onClick={() => setActionType('link')} className={`py-3 rounded-xl border text-[10px] font-bold uppercase transition-all ${actionType === 'link' ? 'bg-indigo-600 border-indigo-500 text-white shadow-md' : 'bg-slate-50 dark:bg-slate-800 border-slate-200 dark:border-slate-700 text-slate-400'}`}>External Link</button>
+                    <button type="button" onClick={() => setActionType('dismiss')} className={`py-3 rounded-xl border text-[10px] font-bold uppercase transition-all ${actionType === 'dismiss' ? 'bg-indigo-600 border-indigo-500 text-white shadow-md' : 'bg-slate-50 dark:bg-slate-800 border-slate-200 dark:border-slate-700 text-slate-400'}`}>System Exit</button>
                   </div>
                 </div>
+                
                 {actionType === 'link' && (
                   <div className="space-y-1.5">
                     <label className="text-[10px] font-bold uppercase text-slate-500">Destination URL</label>
                     <input required value={actionUrl} onChange={(e) => setActionUrl(e.target.value)} placeholder="https://..." className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl px-4 py-3 text-sm font-medium dark:text-white" />
                   </div>
                 )}
-                <div className="pt-6 flex gap-4">
-                  <button type="button" onClick={() => setShowModal(false)} className="flex-1 py-4 text-[11px] font-bold uppercase text-slate-400">Abort</button>
+                
+                <div className="pt-6 flex gap-4 shrink-0">
+                  <button type="button" onClick={() => setShowModal(false)} className="flex-1 py-4 text-[11px] font-bold uppercase text-slate-400 hover:text-slate-600">Abort</button>
                   <button type="submit" className="flex-1 py-4 bg-indigo-600 text-white rounded-2xl text-[11px] font-bold uppercase shadow-xl shadow-indigo-500/30 active:scale-95 transition-all">Save Protocol</button>
                 </div>
               </form>

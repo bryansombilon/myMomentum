@@ -55,10 +55,19 @@ export const ReminderPopup: React.FC<ReminderPopupProps> = ({ reminders }) => {
       const day = now.getDay();
 
       const matched = reminders.find(r => {
-        if (!r.enabled || r.time !== currentTimeStr) return false;
-        if (r.frequency === 'weekdays' && (day === 0 || day === 6)) return false;
-        if (r.frequency === 'weekends' && (day > 0 && day < 6)) return false;
-        return true;
+        if (!r.enabled) return false;
+        
+        // Check frequency/days
+        const isCorrectDay = 
+          r.frequency === 'daily' ||
+          (r.frequency === 'weekdays' && (day > 0 && day < 6)) ||
+          (r.frequency === 'weekends' && (day === 0 || day === 6)) ||
+          (r.frequency === 'custom' && r.customDays?.includes(day));
+
+        if (!isCorrectDay) return false;
+
+        // Check times
+        return r.times.includes(currentTimeStr);
       });
 
       if (matched && lastTriggeredTime !== currentTimeStr) {
@@ -66,7 +75,7 @@ export const ReminderPopup: React.FC<ReminderPopupProps> = ({ reminders }) => {
         setLastTriggeredTime(currentTimeStr);
       }
 
-      if (!matched && lastTriggeredTime === currentTimeStr) {
+      if (matched === undefined && lastTriggeredTime === currentTimeStr) {
         // Just let it pass
       } else if (matched === undefined) {
         setLastTriggeredTime(null);

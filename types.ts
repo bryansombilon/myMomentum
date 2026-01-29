@@ -80,11 +80,12 @@ export interface EventActivity {
 
 export interface Reminder {
   id: string;
-  time: string; // "HH:mm"
+  times: string[]; // Supported multiple times
   label: string;
   description: string;
   actionType: 'link' | 'dismiss';
   actionUrl?: string;
   enabled: boolean;
-  frequency: 'daily' | 'weekdays' | 'weekends';
+  frequency: 'daily' | 'weekdays' | 'weekends' | 'custom';
+  customDays?: number[]; // 0 for Sunday, 1 for Monday, etc.
 }

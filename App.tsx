@@ -214,7 +214,17 @@ const App: React.FC = () => {
 
   const renderView = () => {
     switch(currentView) {
-      case 'home': return <Home onLaunchApp={setCurrentView} onExport={handleExport} onImport={handleImport} isDarkMode={isDarkMode} toggleTheme={() => setIsDarkMode(!isDarkMode)} />;
+      case 'home': return (
+        <Home 
+          onLaunchApp={setCurrentView} 
+          onExport={handleExport} 
+          onImport={handleImport} 
+          isDarkMode={isDarkMode} 
+          toggleTheme={() => setIsDarkMode(!isDarkMode)}
+          tasks={tasks}
+          activities={eventActivities}
+        />
+      );
       case 'tasks': return (
         <div className="w-full h-full flex flex-col md:flex-row overflow-hidden">
           <TaskList tasks={tasks} setTasks={handleTaskReorder} selectedTaskId={selectedTaskId} onSelectTask={(task) => setSelectedTaskId(task.id)} onAddNewTask={() => { setEditingTask(null); setIsNewTaskModalOpen(true); }} />

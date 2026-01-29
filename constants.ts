@@ -73,29 +73,9 @@ export const INITIAL_LINKS: LinkEntry[] = [
 export const INITIAL_REMINDERS: Reminder[] = [
   {
     id: 'r-1',
-    time: '09:30',
-    label: 'Morning Engagement',
-    description: 'Support the Alcott Global team on LinkedIn.',
-    actionType: 'link',
-    actionUrl: 'https://www.linkedin.com/company/alcottglobal/posts/?feedView=all&viewAsMember=true',
-    enabled: true,
-    frequency: 'daily'
-  },
-  {
-    id: 'r-2',
-    time: '14:00',
-    label: 'Mid-Day Check-in',
-    description: 'React to the latest industry updates.',
-    actionType: 'link',
-    actionUrl: 'https://www.linkedin.com/company/alcottglobal/posts/?feedView=all&viewAsMember=true',
-    enabled: true,
-    frequency: 'daily'
-  },
-  {
-    id: 'r-3',
-    time: '16:00',
-    label: 'Evening Wrap-up',
-    description: 'Final round of social engagement.',
+    times: ['09:30', '14:00', '16:00'],
+    label: 'LinkedIn Engagement',
+    description: 'Support the Alcott Global team on LinkedIn with likes and comments.',
     actionType: 'link',
     actionUrl: 'https://www.linkedin.com/company/alcottglobal/posts/?feedView=all&viewAsMember=true',
     enabled: true,
