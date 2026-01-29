@@ -5,7 +5,7 @@ import { EventActivity } from '../types';
 import { 
   Plus, Calendar as CalendarIcon, List as ListIcon, Home, Trash2, 
   ChevronLeft, ChevronRight, Clock, MapPin, CheckCircle2, AlertCircle, Rocket,
-  Pencil, X
+  Pencil, X, CalendarDays as CalendarDaysIcon, MoreHorizontal
 } from 'lucide-react';
 
 interface MakersAndMoversAppProps {
@@ -18,7 +18,9 @@ export const MakersAndMoversApp: React.FC<MakersAndMoversAppProps> = ({ activiti
   const [view, setView] = useState<'list' | 'calendar'>('list');
   const [currentMonth, setCurrentMonth] = useState(new Date());
   const [showModal, setShowModal] = useState(false);
+  const [showDayModal, setShowDayModal] = useState(false);
   const [editingActivity, setEditingActivity] = useState<EventActivity | null>(null);
+  const [focusedDate, setFocusedDate] = useState<string | null>(null);
   
   // Form State
   const [title, setTitle] = useState('');
@@ -26,8 +28,11 @@ export const MakersAndMoversApp: React.FC<MakersAndMoversAppProps> = ({ activiti
   const [date, setDate] = useState(new Date().toISOString().split('T')[0]);
   const [status, setStatus] = useState<EventActivity['status']>('planned');
 
+  // Today reference for highlighting
+  const todayStr = useMemo(() => new Date().toISOString().split('T')[0], []);
+
   // Handle opening modal for edit vs add
-  const openModal = (activity?: EventActivity) => {
+  const openModal = (activity?: EventActivity, defaultDate?: string) => {
     if (activity) {
       setEditingActivity(activity);
       setTitle(activity.title);
@@ -38,7 +43,7 @@ export const MakersAndMoversApp: React.FC<MakersAndMoversAppProps> = ({ activiti
       setEditingActivity(null);
       setTitle('');
       setDetails('');
-      setDate(new Date().toISOString().split('T')[0]);
+      setDate(defaultDate || new Date().toISOString().split('T')[0]);
       setStatus('planned');
     }
     setShowModal(true);
@@ -82,6 +87,11 @@ export const MakersAndMoversApp: React.FC<MakersAndMoversAppProps> = ({ activiti
     }
   };
 
+  const handleDayClick = (dateStr: string) => {
+    setFocusedDate(dateStr);
+    setShowDayModal(true);
+  };
+
   // Calendar Logic
   const daysInMonth = (date: Date) => new Date(date.getFullYear(), date.getMonth() + 1, 0).getDate();
   const firstDayOfMonth = (date: Date) => new Date(date.getFullYear(), date.getMonth(), 1).getDay();
@@ -108,14 +118,19 @@ export const MakersAndMoversApp: React.FC<MakersAndMoversAppProps> = ({ activiti
     setCurrentMonth(new Date(currentMonth.getFullYear(), currentMonth.getMonth() + offset, 1));
   };
 
+  const focusedDateActivities = useMemo(() => {
+    if (!focusedDate) return [];
+    return activities.filter(a => new Date(a.date).toISOString().split('T')[0] === focusedDate);
+  }, [activities, focusedDate]);
+
   return (
     <div className="flex h-screen w-full bg-slate-50 dark:bg-slate-950 transition-colors">
       
       {/* Sidebar Navigation */}
-      <div className="w-20 md:w-24 border-r border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 flex flex-col items-center py-8 gap-8 transition-colors">
+      <div className="w-20 md:w-24 border-r border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 flex flex-col items-center py-8 gap-8 transition-colors shrink-0">
         <button 
           onClick={onGoHome} 
-          className="p-3 rounded-2xl bg-slate-100 dark:bg-slate-800 text-slate-500 hover:text-purple-600 transition-all border border-slate-200 dark:border-slate-700 shadow-sm"
+          className="p-3 rounded-2xl bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:text-purple-600 transition-all border border-slate-200 dark:border-slate-700 shadow-sm"
         >
           <Home size={24} />
         </button>
@@ -151,15 +166,15 @@ export const MakersAndMoversApp: React.FC<MakersAndMoversAppProps> = ({ activiti
               <Rocket size={24} />
             </div>
             <div>
-              <h1 className="text-2xl font-black text-slate-900 dark:text-white uppercase tracking-tighter">Makers & Movers</h1>
-              <p className="text-[10px] font-bold uppercase tracking-widest text-slate-400">Event Project Management</p>
+              <h1 className="text-xl font-bold text-slate-900 dark:text-white uppercase tracking-tight">Makers & Movers</h1>
+              <p className="text-[10px] font-semibold uppercase tracking-widest text-slate-400">Event Management</p>
             </div>
           </div>
           
           <div className="flex items-center gap-6">
             <div className="text-right">
-               <div className="text-[14px] font-black text-slate-900 dark:text-white">{activities.length} Activities</div>
-               <div className="text-[9px] font-bold text-slate-400 uppercase tracking-widest">Total Milestones</div>
+               <div className="text-[14px] font-semibold text-slate-900 dark:text-white">{activities.length} Activities</div>
+               <div className="text-[9px] font-medium text-slate-400 uppercase tracking-widest">Total Milestones</div>
             </div>
           </div>
         </header>
@@ -185,7 +200,7 @@ export const MakersAndMoversApp: React.FC<MakersAndMoversAppProps> = ({ activiti
                 {activities.length === 0 && (
                    <div className="py-40 text-center opacity-20">
                       <Rocket size={80} className="mx-auto mb-6 text-slate-400" />
-                      <p className="text-[14px] font-black uppercase tracking-[0.4em]">No activities logged</p>
+                      <p className="text-[14px] font-medium uppercase tracking-[0.4em]">No activities logged</p>
                    </div>
                 )}
               </motion.div>
@@ -195,10 +210,10 @@ export const MakersAndMoversApp: React.FC<MakersAndMoversAppProps> = ({ activiti
                 initial={{ opacity: 0, scale: 0.98 }}
                 animate={{ opacity: 1, scale: 1 }}
                 exit={{ opacity: 0, scale: 0.98 }}
-                className="w-full h-full flex flex-col"
+                className="w-full flex flex-col"
               >
                 <div className="flex items-center justify-between mb-8 px-2">
-                  <h2 className="text-3xl font-black text-slate-900 dark:text-white">
+                  <h2 className="text-2xl font-bold text-slate-900 dark:text-white">
                     {new Intl.DateTimeFormat('en-US', { month: 'long', year: 'numeric' }).format(currentMonth)}
                   </h2>
                   <div className="flex gap-2">
@@ -207,33 +222,58 @@ export const MakersAndMoversApp: React.FC<MakersAndMoversAppProps> = ({ activiti
                   </div>
                 </div>
 
-                <div className="grid grid-cols-7 gap-px bg-slate-200 dark:bg-slate-800 rounded-[2.5rem] overflow-hidden border border-slate-200 dark:border-slate-800 shadow-2xl flex-1">
+                <div className="grid grid-cols-7 gap-px bg-slate-200 dark:bg-slate-800 rounded-[2rem] overflow-hidden border border-slate-200 dark:border-slate-800 shadow-xl mb-12">
                   {['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].map(day => (
-                    <div key={day} className="bg-slate-50 dark:bg-slate-900 p-4 text-center text-[11px] font-black uppercase tracking-widest text-slate-400">
+                    <div key={day} className="bg-slate-50 dark:bg-slate-900 p-4 text-center text-[10px] font-semibold uppercase tracking-widest text-slate-400">
                       {day}
                     </div>
                   ))}
                   {calendarDays.map((day, i) => {
-                    const dateStr = day ? new Date(currentMonth.getFullYear(), currentMonth.getMonth(), day).toISOString().split('T')[0] : '';
+                    const dateObj = day ? new Date(currentMonth.getFullYear(), currentMonth.getMonth(), day) : null;
+                    const dateStr = dateObj ? dateObj.toISOString().split('T')[0] : '';
                     const dayActivities = activities.filter(a => new Date(a.date).toISOString().split('T')[0] === dateStr);
+                    const activityCount = dayActivities.length;
+                    const isToday = dateStr === todayStr;
                     
                     return (
-                      <div key={i} className="bg-white dark:bg-slate-900 min-h-[160px] p-4 border-t border-slate-100 dark:border-slate-800 group relative transition-colors hover:bg-slate-50/50 dark:hover:bg-slate-800/30">
+                      <div 
+                        key={i} 
+                        onClick={() => dateStr && handleDayClick(dateStr)}
+                        className={`bg-white dark:bg-slate-900 min-h-[160px] p-4 border-t border-slate-100 dark:border-slate-800 group relative transition-colors ${dateStr ? 'hover:bg-slate-50/50 dark:hover:bg-slate-800/30 cursor-pointer' : ''} ${isToday ? 'bg-indigo-50/20 dark:bg-indigo-900/10' : ''}`}
+                      >
                         {day && (
                           <>
-                            <span className="text-sm font-black text-slate-300 dark:text-slate-700 group-hover:text-purple-600 transition-colors">{day}</span>
-                            <div className="mt-2 space-y-1.5">
-                              {dayActivities.map(a => (
-                                <button 
+                            <div className="flex items-center justify-between">
+                              <span className={`text-sm font-semibold transition-colors flex items-center justify-center ${isToday ? 'bg-indigo-600 text-white w-7 h-7 rounded-full -ml-1.5' : 'text-slate-300 dark:text-slate-700 group-hover:text-purple-600'}`}>
+                                {day}
+                              </span>
+                              {activityCount > 0 && (
+                                <span className={`text-[9px] font-bold px-1.5 py-0.5 rounded-full uppercase tracking-tighter ${isToday ? 'bg-white/80 dark:bg-indigo-800/80 text-indigo-700 dark:text-indigo-200' : 'bg-purple-100 dark:bg-purple-900/40 text-purple-600 dark:text-purple-400'}`}>
+                                  {activityCount} {activityCount === 1 ? 'Event' : 'Events'}
+                                </span>
+                              )}
+                            </div>
+                            <div className="mt-2 space-y-1.5 pointer-events-none">
+                              {dayActivities.slice(0, 3).map(a => (
+                                <div 
                                   key={a.id} 
-                                  onClick={() => openModal(a)}
-                                  className={`w-full text-left text-[11px] p-2.5 rounded-xl border font-bold truncate transition-all active:scale-[0.98] ${a.status === 'completed' ? 'bg-emerald-50 text-emerald-700 border-emerald-100 dark:bg-emerald-900/20 dark:border-emerald-800/50 hover:bg-emerald-100 dark:hover:bg-emerald-800/40' : 'bg-purple-50 text-purple-700 border-purple-100 dark:bg-purple-900/20 dark:border-purple-800/50 hover:bg-purple-100 dark:hover:bg-purple-800/40'}`}
-                                  title={a.title}
+                                  className={`text-[10px] p-1.5 rounded-lg border font-medium truncate ${a.status === 'completed' ? 'bg-emerald-50 text-emerald-700 border-emerald-100 dark:bg-emerald-900/20 dark:border-emerald-800/50' : 'bg-purple-50 text-purple-700 border-purple-100 dark:bg-purple-900/20 dark:border-purple-800/50'}`}
                                 >
                                   {a.title}
-                                </button>
+                                </div>
                               ))}
+                              {activityCount > 3 && (
+                                <div className="text-[9px] font-medium text-slate-400 pl-1 uppercase tracking-widest">
+                                  + {activityCount - 3} more
+                                </div>
+                              )}
                             </div>
+                            {isToday && (
+                              <div className="absolute bottom-2 right-4 flex items-center gap-1">
+                                <span className="w-1 h-1 rounded-full bg-indigo-500 animate-ping"></span>
+                                <span className="text-[8px] font-bold text-indigo-500 uppercase tracking-widest">Today</span>
+                              </div>
+                            )}
                           </>
                         )}
                       </div>
@@ -246,6 +286,77 @@ export const MakersAndMoversApp: React.FC<MakersAndMoversAppProps> = ({ activiti
         </div>
       </div>
 
+      {/* Day Detail Modal */}
+      <AnimatePresence>
+        {showDayModal && focusedDate && (
+          <div className="fixed inset-0 z-40 flex items-center justify-center p-4 bg-slate-950/40 backdrop-blur-sm">
+            <motion.div 
+              initial={{ opacity: 0, scale: 0.95 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 0.95 }}
+              className="bg-white dark:bg-slate-900 rounded-[2rem] border border-slate-200 dark:border-slate-800 shadow-3xl w-full max-w-2xl overflow-hidden flex flex-col max-h-[85vh]"
+            >
+              <div className="p-8 border-b border-slate-100 dark:border-slate-800 bg-slate-50 dark:bg-slate-800/30 flex items-center justify-between">
+                <div>
+                   <h2 className="text-2xl font-bold text-slate-900 dark:text-white uppercase tracking-tight">
+                     {new Intl.DateTimeFormat('en-US', { weekday: 'long', month: 'long', day: 'numeric' }).format(new Date(focusedDate))}
+                   </h2>
+                   <p className="text-[10px] font-semibold uppercase tracking-[0.2em] text-purple-600 mt-1">{focusedDate === todayStr ? 'Today\'s Focus' : 'Daily Milestones'}</p>
+                </div>
+                <button 
+                  onClick={() => setShowDayModal(false)} 
+                  className="p-3 hover:bg-slate-200 dark:hover:bg-slate-700 rounded-2xl transition-colors"
+                >
+                  <X size={24} />
+                </button>
+              </div>
+
+              <div className="flex-1 overflow-y-auto p-8 space-y-4 no-scrollbar">
+                {focusedDateActivities.length > 0 ? (
+                  focusedDateActivities.map(activity => (
+                    <div key={activity.id} className="group bg-slate-50 dark:bg-slate-800/40 border border-slate-200 dark:border-slate-700 rounded-2xl p-5 flex items-center gap-4 transition-all hover:border-purple-500/30">
+                      <div className={`w-2 h-2 rounded-full shrink-0 ${activity.status === 'completed' ? 'bg-emerald-500' : 'bg-purple-500'}`} />
+                      <div className="flex-1 min-w-0">
+                        <h4 className="text-base font-semibold text-slate-900 dark:text-white truncate">{activity.title}</h4>
+                        <p className="text-[12px] text-slate-500 dark:text-slate-400 italic line-clamp-1">{activity.details || 'No additional details.'}</p>
+                      </div>
+                      <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                         <button 
+                          onClick={() => openModal(activity)}
+                          className="p-2 hover:bg-purple-100 dark:hover:bg-purple-900/40 text-purple-600 rounded-lg transition-colors"
+                        >
+                           <Pencil size={18} />
+                         </button>
+                         <button 
+                          onClick={() => handleDelete(activity.id)}
+                          className="p-2 hover:bg-rose-100 dark:hover:bg-rose-900/40 text-rose-500 rounded-lg transition-colors"
+                        >
+                           <Trash2 size={18} />
+                         </button>
+                      </div>
+                    </div>
+                  ))
+                ) : (
+                  <div className="py-20 text-center opacity-20">
+                     <CalendarDaysIcon size={64} className="mx-auto mb-4 text-slate-400" />
+                     <p className="text-[12px] font-medium uppercase tracking-[0.4em]">No events scheduled</p>
+                  </div>
+                )}
+              </div>
+
+              <div className="p-8 border-t border-slate-100 dark:border-slate-800 bg-white dark:bg-slate-900">
+                <button 
+                  onClick={() => openModal(undefined, focusedDate)}
+                  className="w-full py-4 bg-purple-600 hover:bg-purple-500 text-white rounded-2xl text-[12px] font-semibold uppercase tracking-widest shadow-xl shadow-purple-500/20 active:scale-95 transition-all flex items-center justify-center gap-2"
+                >
+                  <Plus size={18} /> Add Activity
+                </button>
+              </div>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
+
       {/* Add / Edit Milestone Modal */}
       <AnimatePresence>
         {showModal && (
@@ -254,42 +365,42 @@ export const MakersAndMoversApp: React.FC<MakersAndMoversAppProps> = ({ activiti
               initial={{ opacity: 0, scale: 0.95, y: 20 }}
               animate={{ opacity: 1, scale: 1, y: 0 }}
               exit={{ opacity: 0, scale: 0.95, y: 20 }}
-              className="bg-white dark:bg-slate-900 rounded-3xl border border-slate-200 dark:border-slate-800 shadow-2xl w-full max-w-lg overflow-hidden"
+              className="bg-white dark:bg-slate-900 rounded-3xl border border-slate-200 dark:border-slate-700 shadow-2xl w-full max-w-lg overflow-hidden"
             >
               <div className="p-6 border-b border-slate-100 dark:border-slate-800 bg-slate-50 dark:bg-slate-800/30 flex items-center justify-between">
-                 <h2 className="text-xl font-black text-slate-900 dark:text-white uppercase tracking-tighter">{editingActivity ? 'Edit Activity' : 'Add Activity'}</h2>
+                 <h2 className="text-xl font-bold text-slate-900 dark:text-white uppercase tracking-tight">{editingActivity ? 'Edit Activity' : 'Add Activity'}</h2>
                  <button onClick={() => setShowModal(false)} className="p-1 hover:bg-slate-200 dark:hover:bg-slate-700 rounded-lg transition-colors"><X size={20} /></button>
               </div>
               
               <form onSubmit={handleSaveActivity} className="p-8 space-y-5">
                 <div>
-                  <label className="text-[10px] font-black uppercase tracking-widest text-slate-500 mb-2 block">Milestone Title</label>
+                  <label className="text-[10px] font-semibold uppercase tracking-widest text-slate-500 mb-2 block">Milestone Title</label>
                   <input 
                     required 
                     value={title} 
                     onChange={(e) => setTitle(e.target.value)}
-                    className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl px-4 py-3 text-sm font-semibold focus:border-purple-500 outline-none dark:text-white"
+                    className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl px-4 py-3 text-sm font-medium focus:border-purple-500 outline-none dark:text-white"
                     placeholder="e.g. Speakers Briefing"
                   />
                 </div>
 
                 <div className="grid grid-cols-2 gap-4">
                   <div>
-                    <label className="text-[10px] font-black uppercase tracking-widest text-slate-500 mb-2 block">Date</label>
+                    <label className="text-[10px] font-semibold uppercase tracking-widest text-slate-500 mb-2 block">Date</label>
                     <input 
                       type="date"
                       required 
                       value={date} 
                       onChange={(e) => setDate(e.target.value)}
-                      className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl px-4 py-3 text-sm font-semibold focus:border-purple-500 outline-none dark:text-white"
+                      className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl px-4 py-3 text-sm font-medium focus:border-purple-500 outline-none dark:text-white"
                     />
                   </div>
                   <div>
-                    <label className="text-[10px] font-black uppercase tracking-widest text-slate-500 mb-2 block">Status</label>
+                    <label className="text-[10px] font-semibold uppercase tracking-widest text-slate-500 mb-2 block">Status</label>
                     <select 
                       value={status} 
                       onChange={(e) => setStatus(e.target.value as any)}
-                      className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl px-4 py-3 text-sm font-bold uppercase tracking-wider focus:border-purple-500 outline-none dark:text-white"
+                      className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl px-4 py-3 text-sm font-semibold uppercase tracking-wider focus:border-purple-500 outline-none dark:text-white"
                     >
                       <option value="planned">Planned</option>
                       <option value="in-progress">In Progress</option>
@@ -299,19 +410,19 @@ export const MakersAndMoversApp: React.FC<MakersAndMoversAppProps> = ({ activiti
                 </div>
 
                 <div>
-                  <label className="text-[10px] font-black uppercase tracking-widest text-slate-500 mb-2 block">Details</label>
+                  <label className="text-[10px] font-semibold uppercase tracking-widest text-slate-500 mb-2 block">Details</label>
                   <textarea 
                     value={details} 
                     onChange={(e) => setDetails(e.target.value)}
                     rows={3}
-                    className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl px-4 py-3 text-sm font-semibold focus:border-purple-500 outline-none dark:text-white resize-none"
+                    className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl px-4 py-3 text-sm font-medium focus:border-purple-500 outline-none dark:text-white resize-none"
                     placeholder="Describe logistics, attendees, or requirements..."
                   />
                 </div>
 
                 <div className="flex gap-4 pt-4">
-                  <button type="button" onClick={() => setShowModal(false)} className="flex-1 py-4 text-[11px] font-black uppercase tracking-widest text-slate-400 hover:text-slate-600 transition-colors">Cancel</button>
-                  <button type="submit" className="flex-1 py-4 bg-purple-600 hover:bg-purple-500 text-white rounded-2xl text-[11px] font-black uppercase tracking-widest shadow-xl shadow-purple-500/20 active:scale-95 transition-all">
+                  <button type="button" onClick={() => setShowModal(false)} className="flex-1 py-4 text-[11px] font-semibold uppercase tracking-widest text-slate-400 hover:text-slate-600 transition-colors">Cancel</button>
+                  <button type="submit" className="flex-1 py-4 bg-purple-600 hover:bg-purple-500 text-white rounded-2xl text-[11px] font-semibold uppercase tracking-widest shadow-xl shadow-purple-500/20 active:scale-95 transition-all">
                     {editingActivity ? 'Save Changes' : 'Create Milestone'}
                   </button>
                 </div>
@@ -332,22 +443,22 @@ const ActivityCard: React.FC<{ activity: EventActivity; onDelete: () => void; on
   return (
     <motion.div 
       layout
-      className="group bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 p-6 rounded-3xl flex items-start gap-6 shadow-sm hover:shadow-xl hover:border-purple-500/30 transition-all"
+      className="group bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 p-6 rounded-3xl flex items-start gap-6 shadow-sm hover:shadow-lg hover:border-purple-500/30 transition-all"
     >
       <div className={`w-14 h-14 rounded-2xl flex flex-col items-center justify-center shrink-0 border ${isCompleted ? 'bg-emerald-50 border-emerald-100 text-emerald-600 dark:bg-emerald-900/20' : 'bg-purple-50 border-purple-100 text-purple-600 dark:bg-purple-900/20'}`}>
-        <span className="text-[10px] font-black uppercase tracking-tighter leading-none">{new Intl.DateTimeFormat('en-US', { month: 'short' }).format(new Date(activity.date))}</span>
-        <span className="text-[20px] font-black leading-none mt-1">{new Date(activity.date).getDate()}</span>
+        <span className="text-[10px] font-semibold uppercase tracking-tighter leading-none">{new Intl.DateTimeFormat('en-US', { month: 'short' }).format(new Date(activity.date))}</span>
+        <span className="text-lg font-bold leading-none mt-1">{new Date(activity.date).getDate()}</span>
       </div>
 
       <div className="flex-1 min-w-0">
         <div className="flex items-center gap-2 mb-2">
-           <span className={`px-2 py-0.5 rounded-full text-[9px] font-black uppercase tracking-widest border ${isCompleted ? 'bg-emerald-100 text-emerald-700 border-emerald-200' : isInProgress ? 'bg-amber-100 text-amber-700 border-amber-200' : 'bg-slate-100 text-slate-600 border-slate-200'}`}>
+           <span className={`px-2 py-0.5 rounded-full text-[9px] font-semibold uppercase tracking-widest border ${isCompleted ? 'bg-emerald-100 text-emerald-700 border-emerald-200' : isInProgress ? 'bg-amber-100 text-amber-700 border-amber-200' : 'bg-slate-100 text-slate-600 border-slate-200'}`}>
              {activity.status}
            </span>
-           <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest ml-auto">{new Date(activity.date).getFullYear()}</span>
+           <span className="text-[10px] font-medium text-slate-400 uppercase tracking-widest ml-auto">{new Date(activity.date).getFullYear()}</span>
         </div>
-        <h3 className="text-xl font-black text-slate-900 dark:text-white tracking-tight mb-2 group-hover:text-purple-600 transition-colors">{activity.title}</h3>
-        <p className="text-[13px] text-slate-500 dark:text-slate-400 leading-relaxed italic">{activity.details || 'No additional details provided for this milestone.'}</p>
+        <h3 className="text-lg font-bold text-slate-900 dark:text-white tracking-tight mb-2 group-hover:text-purple-600 transition-colors">{activity.title}</h3>
+        <p className="text-[13px] text-slate-500 dark:text-slate-400 leading-relaxed italic">{activity.details || 'No additional details provided.'}</p>
       </div>
 
       <div className="flex flex-col gap-2">
