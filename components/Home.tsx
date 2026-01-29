@@ -5,7 +5,7 @@ import {
   CheckSquare, StickyNote, Calendar, Download, 
   Upload, ShieldCheck, Globe, Sun, Moon, CalendarDays, 
   Rocket, ChevronRight, Activity, AlarmClock,
-  Clock, AlertCircle
+  Clock, AlertCircle, FileText
 } from 'lucide-react';
 import { AppView, Task, EventActivity } from '../types';
 import { PROJECT_CONFIG } from '../constants';
@@ -109,6 +109,7 @@ export const Home: React.FC<HomeProps> = ({
     { id: 'tasks' as AppView, name: 'Tasks', icon: CheckSquare, color: 'bg-indigo-600', shadow: 'shadow-indigo-500/40', desc: 'TaskFlow' },
     { id: 'notes' as AppView, name: 'Notes', icon: StickyNote, color: 'bg-amber-500', shadow: 'shadow-amber-500/40', desc: 'NoteFlow' },
     { id: 'links' as AppView, name: 'Hub', icon: Globe, color: 'bg-emerald-500', shadow: 'shadow-emerald-500/40', desc: 'LinkFlow' },
+    { id: 'sop' as AppView, name: 'SOP', icon: FileText, color: 'bg-rose-500', shadow: 'shadow-rose-500/40', desc: 'DocFlow' },
     { id: 'leaves' as AppView, name: 'Leaves', icon: CalendarDays, color: 'bg-sky-500', shadow: 'shadow-sky-500/40', desc: 'LeaveFlow' },
     { id: 'event-timeline' as AppView, name: 'Calendar', icon: Rocket, color: 'bg-purple-600', shadow: 'shadow-purple-500/40', desc: 'EventFlow' },
     { id: 'engagement' as AppView, name: 'Protocol', icon: AlarmClock, color: 'bg-slate-900 dark:bg-slate-100 text-white dark:text-slate-900', shadow: 'shadow-slate-500/40', desc: 'Engagement' },
@@ -212,15 +213,20 @@ export const Home: React.FC<HomeProps> = ({
         </div>
       </motion.div>
 
-      <motion.div variants={CONTAINER_VARIANTS} initial="hidden" animate="show" className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-6 md:gap-10 z-10">
+      <motion.div 
+        variants={CONTAINER_VARIANTS} 
+        initial="hidden" 
+        animate="show" 
+        className="grid grid-cols-2 md:grid-cols-4 gap-6 md:gap-x-12 md:gap-y-8 z-10 max-w-4xl"
+      >
         {apps.map((app) => (
-          <motion.button key={app.id} variants={ITEM_VARIANTS} whileHover={{ y: -12, scale: 1.05 }} whileTap={{ scale: 0.95 }} onClick={() => onLaunchApp(app.id)} className="group flex flex-col items-center gap-6 outline-none">
-            <div className={`w-24 h-24 sm:w-28 sm:h-28 rounded-[2.5rem] ${app.color} ${app.shadow} shadow-2xl flex items-center justify-center transition-all duration-300 group-hover:brightness-110 group-hover:rotate-2`}>
-              <app.icon size={44} className="drop-shadow-lg" strokeWidth={1.5} />
+          <motion.button key={app.id} variants={ITEM_VARIANTS} whileHover={{ y: -12, scale: 1.05 }} whileTap={{ scale: 0.95 }} onClick={() => onLaunchApp(app.id)} className="group flex flex-col items-center gap-4 outline-none">
+            <div className={`w-20 h-20 sm:w-24 sm:h-24 rounded-[2.2rem] ${app.color} ${app.shadow} shadow-2xl flex items-center justify-center transition-all duration-300 group-hover:brightness-110 group-hover:rotate-2`}>
+              <app.icon size={36} className="drop-shadow-lg" strokeWidth={1.5} />
             </div>
             <div className="text-center">
-              <div className="font-semibold text-slate-500 dark:text-slate-400 text-[10px] uppercase mb-1">{app.desc}</div>
-              <div className="font-bold text-slate-900 dark:text-slate-100 text-lg">{app.name}</div>
+              <div className="font-semibold text-slate-500 dark:text-slate-400 text-[9px] uppercase mb-0.5">{app.desc}</div>
+              <div className="font-bold text-slate-900 dark:text-slate-100 text-base">{app.name}</div>
             </div>
           </motion.button>
         ))}

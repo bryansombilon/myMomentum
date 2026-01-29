@@ -3,7 +3,7 @@ import React from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { 
   Home, CheckSquare, StickyNote, Globe, 
-  CalendarDays, Rocket, AlarmClock
+  CalendarDays, Rocket, AlarmClock, FileText
 } from 'lucide-react';
 import { AppView } from '../types';
 
@@ -20,6 +20,7 @@ export const GlobalNav: React.FC<GlobalNavProps> = ({ currentView, onNavigate })
     { id: 'tasks' as AppView, icon: CheckSquare, label: 'Tasks', color: 'bg-indigo-600' },
     { id: 'notes' as AppView, icon: StickyNote, label: 'Notes', color: 'bg-amber-500' },
     { id: 'links' as AppView, icon: Globe, label: 'Hub', color: 'bg-emerald-500' },
+    { id: 'sop' as AppView, icon: FileText, label: 'SOP', color: 'bg-rose-500' },
     { id: 'leaves' as AppView, icon: CalendarDays, label: 'Leaves', color: 'bg-sky-500' },
     { id: 'event-timeline' as AppView, icon: Rocket, label: 'Events', color: 'bg-purple-600' },
     { id: 'engagement' as AppView, icon: AlarmClock, label: 'Alarm', color: 'bg-slate-900' },

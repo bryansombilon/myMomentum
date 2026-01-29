@@ -36,7 +36,7 @@ export interface Task {
   priority: Priority;
 }
 
-export type AppView = 'home' | 'tasks' | 'notes' | 'links' | 'leaves' | 'event-timeline' | 'engagement';
+export type AppView = 'home' | 'tasks' | 'notes' | 'links' | 'leaves' | 'event-timeline' | 'engagement' | 'sop';
 
 export interface Note {
   id: string;
@@ -88,4 +88,17 @@ export interface Reminder {
   enabled: boolean;
   frequency: 'daily' | 'weekdays' | 'weekends' | 'custom';
   customDays?: number[]; // 0 for Sunday, 1 for Monday, etc.
+}
+
+export interface SOPStep {
+  id: string;
+  text: string;
+}
+
+export interface SOP {
+  id: string;
+  title: string;
+  toolsUsed: string[];
+  steps: SOPStep[];
+  lastModified: Date;
 }
