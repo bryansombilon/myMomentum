@@ -212,7 +212,13 @@ const App: React.FC = () => {
             />
           </motion.div>
         ) : (
-          <>
+          <motion.div 
+            key="app-shell"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="w-full h-full relative flex"
+          >
             <main className="flex-1 relative overflow-hidden">
               <AnimatePresence mode="wait">
                 {currentView === 'tasks' && (
@@ -321,7 +327,7 @@ const App: React.FC = () => {
               onSave={handleSaveTask}
               taskToEdit={editingTask}
             />
-          </>
+          </motion.div>
         )}
       </AnimatePresence>
     </div>
