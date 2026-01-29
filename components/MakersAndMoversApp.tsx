@@ -7,7 +7,7 @@ import {
   Plus, Calendar as CalendarIcon, List as ListIcon, Trash2, 
   ChevronLeft, ChevronRight, Rocket,
   Pencil, X, CalendarDays as CalendarDaysIcon, Briefcase, ChevronDown,
-  ArrowRight
+  ArrowRight, AlignLeft
 } from 'lucide-react';
 
 interface MakersAndMoversAppProps {
@@ -260,7 +260,7 @@ export const MakersAndMoversApp: React.FC<MakersAndMoversAppProps> = ({ activiti
                     <div className="w-1.5 self-stretch rounded-full shrink-0" style={{ backgroundColor: PROJECT_CONFIG[activity.project].color }} />
                     <div className="flex-1 min-w-0">
                       <h4 className="text-base font-bold text-slate-900 dark:text-white truncate">{activity.title}</h4>
-                      <p className="text-[12px] text-slate-500 dark:text-slate-400 italic mt-1">{activity.details || 'No details.'}</p>
+                      <p className="text-[12px] text-slate-500 dark:text-slate-400 italic mt-1 whitespace-pre-wrap">{activity.details || 'No details.'}</p>
                     </div>
                   </div>
                 ))}
@@ -281,25 +281,52 @@ export const MakersAndMoversApp: React.FC<MakersAndMoversAppProps> = ({ activiti
               <form onSubmit={handleSaveActivity} className="p-8 space-y-5">
                 <div>
                   <label className="text-[10px] font-bold uppercase tracking-widest text-slate-500 mb-2 block">Activity Title</label>
-                  <input required value={title} onChange={(e) => setTitle(e.target.value)} className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl px-4 py-3 text-sm font-medium focus:border-indigo-500 outline-none dark:text-white" />
+                  <input required value={title} onChange={(e) => setTitle(e.target.value)} className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl px-4 py-3 text-sm font-medium focus:border-indigo-500 outline-none dark:text-white transition-colors" />
                 </div>
+                
+                <div>
+                  <label className="text-[10px] font-bold uppercase tracking-widest text-slate-500 mb-2 block flex items-center gap-1.5">
+                    <AlignLeft size={12} /> Activity Description
+                  </label>
+                  <textarea 
+                    value={details} 
+                    onChange={(e) => setDetails(e.target.value)} 
+                    placeholder="Briefing, agenda or key notes..."
+                    className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl px-4 py-3 text-sm font-medium focus:border-indigo-500 outline-none dark:text-white h-24 resize-none transition-colors"
+                  />
+                </div>
+
                 <div className="grid grid-cols-2 gap-4">
-                  <input type="date" required value={startDate} onChange={(e) => setStartDate(e.target.value)} className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl px-4 py-3 text-sm dark:text-white" />
-                  <input type="date" required value={endDate} onChange={(e) => setEndDate(e.target.value)} className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl px-4 py-3 text-sm dark:text-white" />
+                  <div>
+                    <label className="text-[10px] font-bold uppercase tracking-widest text-slate-500 mb-2 block">Start Date</label>
+                    <input type="date" required value={startDate} onChange={(e) => setStartDate(e.target.value)} className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl px-4 py-3 text-sm dark:text-white transition-colors" />
+                  </div>
+                  <div>
+                    <label className="text-[10px] font-bold uppercase tracking-widest text-slate-500 mb-2 block">End Date</label>
+                    <input type="date" required value={endDate} onChange={(e) => setEndDate(e.target.value)} className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl px-4 py-3 text-sm dark:text-white transition-colors" />
+                  </div>
                 </div>
+
                 <div className="grid grid-cols-2 gap-4">
-                  <select value={project} onChange={(e) => setProject(e.target.value as ProjectType)} className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl px-4 py-3 text-sm font-bold uppercase tracking-widest dark:text-white">
-                    {Object.values(ProjectType).map(p => <option key={p} value={p}>{p}</option>)}
-                  </select>
-                  <select value={status} onChange={(e) => setStatus(e.target.value as any)} className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl px-4 py-3 text-sm font-bold uppercase tracking-widest dark:text-white">
-                    <option value="planned">Planned</option>
-                    <option value="in-progress">In Progress</option>
-                    <option value="completed">Completed</option>
-                  </select>
+                  <div>
+                    <label className="text-[10px] font-bold uppercase tracking-widest text-slate-500 mb-2 block">Project Portfolio</label>
+                    <select value={project} onChange={(e) => setProject(e.target.value as ProjectType)} className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl px-4 py-3 text-sm font-bold uppercase tracking-widest dark:text-white cursor-pointer transition-colors">
+                      {Object.values(ProjectType).map(p => <option key={p} value={p}>{p}</option>)}
+                    </select>
+                  </div>
+                  <div>
+                    <label className="text-[10px] font-bold uppercase tracking-widest text-slate-500 mb-2 block">Current Status</label>
+                    <select value={status} onChange={(e) => setStatus(e.target.value as any)} className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl px-4 py-3 text-sm font-bold uppercase tracking-widest dark:text-white cursor-pointer transition-colors">
+                      <option value="planned">Planned</option>
+                      <option value="in-progress">In Progress</option>
+                      <option value="completed">Completed</option>
+                    </select>
+                  </div>
                 </div>
+
                 <div className="flex gap-4 pt-4">
-                  <button type="button" onClick={() => setShowModal(false)} className="flex-1 py-4 text-[11px] font-semibold uppercase tracking-widest text-slate-400">Cancel</button>
-                  <button type="submit" className="flex-1 py-4 bg-indigo-600 hover:bg-indigo-500 text-white rounded-2xl text-[11px] font-bold uppercase tracking-widest shadow-xl shadow-indigo-500/20 transition-all">Save</button>
+                  <button type="button" onClick={() => setShowModal(false)} className="flex-1 py-4 text-[11px] font-semibold uppercase tracking-widest text-slate-400 hover:text-slate-600 transition-colors">Cancel</button>
+                  <button type="submit" className="flex-1 py-4 bg-indigo-600 hover:bg-indigo-500 text-white rounded-2xl text-[11px] font-bold uppercase tracking-widest shadow-xl shadow-indigo-500/20 transition-all active:scale-95">Save Activity</button>
                 </div>
               </form>
             </motion.div>
@@ -330,7 +357,7 @@ const ActivityListItem: React.FC<{ activity: EventActivity; onDelete: () => void
            </div>
         </div>
         <h3 className="text-xl font-bold text-slate-900 dark:text-white tracking-tight mb-2 group-hover:text-purple-600 transition-colors">{activity.title}</h3>
-        <p className="text-[13px] text-slate-500 dark:text-slate-400 italic">{activity.details || 'No briefing available.'}</p>
+        <p className="text-[13px] text-slate-500 dark:text-slate-400 italic line-clamp-2">{activity.details || 'No briefing available.'}</p>
       </div>
       <div className="flex flex-col gap-2">
          <button onClick={onEdit} className="p-2 text-slate-300 hover:text-indigo-600 transition-all opacity-0 group-hover:opacity-100"><Pencil size={18} /></button>
