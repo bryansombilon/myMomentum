@@ -69,11 +69,13 @@ export interface LeaveEntry {
   reason: string;
 }
 
-// Event Activities (Makers and Movers)
+// Event Activities (Makers and Movers) - Revamped for Calendar of Activities
 export interface EventActivity {
   id: string;
   title: string;
   details: string;
-  date: Date;
+  startDate: Date;
+  endDate: Date;
+  project: ProjectType;
   status: 'planned' | 'in-progress' | 'completed';
 }

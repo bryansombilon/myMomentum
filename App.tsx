@@ -17,7 +17,7 @@ const STORAGE_KEY_TASKS = 'taskflow_tasks_v1';
 const STORAGE_KEY_NOTES = 'taskflow_notes_v1';
 const STORAGE_KEY_LINKS = 'taskflow_links_v1';
 const STORAGE_KEY_LEAVES = 'taskflow_leaves_v1';
-const STORAGE_KEY_EVENTS = 'taskflow_events_v1';
+const STORAGE_KEY_EVENTS = 'taskflow_events_v2'; // Bumped version for new schema
 const THEME_KEY = 'taskflow_theme';
 
 const App: React.FC = () => {
@@ -80,14 +80,15 @@ const App: React.FC = () => {
     return INITIAL_LEAVES;
   });
 
-  // Event Activities State
+  // Event Activities State - Updated for new schema
   const [eventActivities, setEventActivities] = useState<EventActivity[]>(() => {
     try {
       const saved = localStorage.getItem(STORAGE_KEY_EVENTS);
       if (saved) {
         return JSON.parse(saved).map((e: any) => ({
           ...e,
-          date: new Date(e.date)
+          startDate: new Date(e.startDate),
+          endDate: new Date(e.endDate)
         }));
       }
     } catch (e) {}
@@ -176,7 +177,7 @@ const App: React.FC = () => {
         if (data.notes) setNotes(data.notes.map((n: any) => ({ ...n, lastModified: new Date(n.lastModified) })));
         if (data.links) setLinks(data.links.map((l: any) => ({ ...l, dateAdded: new Date(l.dateAdded) })));
         if (data.leaves) setLeaves(data.leaves.map((l: any) => ({ ...l, date: new Date(l.date) })));
-        if (data.eventActivities) setEventActivities(data.eventActivities.map((e: any) => ({ ...e, date: new Date(e.date) })));
+        if (data.eventActivities) setEventActivities(data.eventActivities.map((e: any) => ({ ...e, startDate: new Date(e.startDate), endDate: new Date(e.endDate) })));
         alert("Backup restored!");
       } catch (err) { alert("Invalid backup file."); }
     };

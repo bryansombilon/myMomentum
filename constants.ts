@@ -88,9 +88,11 @@ export const INITIAL_LEAVES: LeaveEntry[] = [];
 export const INITIAL_EVENT_ACTIVITIES: EventActivity[] = [
   {
     id: 'e-1',
-    title: 'Venue Inspection',
-    details: 'Final walkthrough of the convention hall and stage setup.',
-    date: new Date(),
+    title: 'Q3 Planning Workshop',
+    details: 'Strategic planning session for the next quarter.',
+    startDate: new Date(),
+    endDate: new Date(new Date().setDate(new Date().getDate() + 1)),
+    project: ProjectType.MAKERS_MOVERS,
     status: 'planned'
   }
 ];
