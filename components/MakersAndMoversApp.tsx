@@ -7,7 +7,7 @@ import {
   Plus, Calendar as CalendarIcon, List as ListIcon, Trash2, 
   ChevronLeft, ChevronRight, Rocket,
   Pencil, X, CalendarDays as CalendarDaysIcon, Briefcase, ChevronDown,
-  ArrowRight, AlignLeft, CheckSquare, ExternalLink
+  ArrowRight, AlignLeft, CheckSquare, ExternalLink, Calendar as CalendarIconLucide
 } from 'lucide-react';
 
 interface MakersAndMoversAppProps {
@@ -104,6 +104,22 @@ export const MakersAndMoversApp: React.FC<MakersAndMoversAppProps> = ({ activiti
   const sortedListItems = useMemo(() => {
     return [...allItems].sort((a, b) => a.dateStr.localeCompare(b.dateStr));
   }, [allItems]);
+
+  // Group items by month for the list view
+  const groupedListItems = useMemo(() => {
+    const groups: { monthYear: string; items: CalendarDisplayItem[] }[] = [];
+    sortedListItems.forEach(item => {
+      const date = new Date(item.dateStr);
+      const monthYear = date.toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
+      const lastGroup = groups[groups.length - 1];
+      if (lastGroup && lastGroup.monthYear === monthYear) {
+        lastGroup.items.push(item);
+      } else {
+        groups.push({ monthYear, items: [item] });
+      }
+    });
+    return groups;
+  }, [sortedListItems]);
 
   const handleSaveActivity = (e: React.FormEvent) => {
     e.preventDefault();
@@ -223,7 +239,7 @@ export const MakersAndMoversApp: React.FC<MakersAndMoversAppProps> = ({ activiti
           </div>
         </header>
 
-        <div className={`flex-1 overflow-y-auto no-scrollbar transition-all ${view === 'calendar' ? 'p-0' : 'p-8 pb-32'}`}>
+        <div className={`flex-1 overflow-y-auto no-scrollbar transition-all ${view === 'calendar' ? 'p-0' : 'p-8 pb-40'}`}>
           <AnimatePresence mode="wait">
             {view === 'calendar' ? (
               <motion.div key="calendar-v" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="w-full flex flex-col p-4 md:p-8 pb-32">
@@ -281,16 +297,37 @@ export const MakersAndMoversApp: React.FC<MakersAndMoversAppProps> = ({ activiti
                 </div>
               </motion.div>
             ) : (
-              <motion.div key="list-v" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -10 }} className="max-w-5xl mx-auto space-y-6 pb-32">
-                {sortedListItems.map((item) => (
-                  <CalendarListItem 
-                    key={item.id} 
-                    item={item} 
-                    onDelete={item.type === 'activity' ? () => handleDelete(item.id) : undefined} 
-                    onEdit={item.type === 'activity' ? () => openModal(item.originalItem as EventActivity) : undefined} 
-                    onNavigateToTask={onNavigateToTask}
-                  />
-                ))}
+              <motion.div key="list-v" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -10 }} className="max-w-4xl mx-auto space-y-12">
+                {groupedListItems.length > 0 ? (
+                  groupedListItems.map(group => (
+                    <div key={group.monthYear} className="space-y-6">
+                      <div className="sticky top-0 z-10 py-2 bg-slate-50 dark:bg-slate-950 backdrop-blur-md">
+                        <div className="flex items-center gap-4">
+                          <h3 className="text-[12px] font-black uppercase tracking-[0.4em] text-indigo-600 dark:text-indigo-400 whitespace-nowrap">
+                            {group.monthYear}
+                          </h3>
+                          <div className="h-px w-full bg-gradient-to-r from-indigo-500/30 to-transparent" />
+                        </div>
+                      </div>
+                      <div className="grid grid-cols-1 gap-4">
+                        {group.items.map(item => (
+                          <CalendarListItem 
+                            key={item.id} 
+                            item={item} 
+                            onDelete={item.type === 'activity' ? () => handleDelete(item.id) : undefined} 
+                            onEdit={item.type === 'activity' ? () => openModal(item.originalItem as EventActivity) : undefined} 
+                            onNavigateToTask={onNavigateToTask}
+                          />
+                        ))}
+                      </div>
+                    </div>
+                  ))
+                ) : (
+                  <div className="flex flex-col items-center justify-center py-40 opacity-20">
+                    <CalendarIconLucide size={64} className="mb-4 text-slate-400" />
+                    <p className="text-lg font-bold uppercase tracking-widest text-slate-400">Empty Portfolio</p>
+                  </div>
+                )}
               </motion.div>
             )}
           </AnimatePresence>
@@ -299,7 +336,7 @@ export const MakersAndMoversApp: React.FC<MakersAndMoversAppProps> = ({ activiti
 
       <AnimatePresence>
         {showDayModal && focusedDate && (
-          <div className="fixed inset-0 z-40 flex items-center justify-center p-4 bg-slate-950/40 backdrop-blur-sm">
+          <div className="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-slate-950/40 backdrop-blur-sm">
             <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 0.95 }} className="bg-white dark:bg-slate-900 rounded-[2rem] border border-slate-200 dark:border-slate-800 shadow-3xl w-full max-w-2xl overflow-hidden flex flex-col max-h-[85vh]">
               <div className="p-8 border-b border-slate-100 dark:border-slate-800 bg-slate-50 dark:bg-slate-800/30 flex items-center justify-between">
                 <div>
@@ -326,13 +363,19 @@ export const MakersAndMoversApp: React.FC<MakersAndMoversAppProps> = ({ activiti
                     {item.type === 'task' && onNavigateToTask && (
                       <button 
                         onClick={() => { setShowDayModal(false); onNavigateToTask(item.id); }}
-                        className="p-3 bg-white dark:bg-slate-900 text-indigo-600 dark:text-indigo-400 rounded-xl border border-indigo-100 dark:border-indigo-900/40 hover:bg-indigo-50 dark:hover:bg-indigo-900/20 transition-all shadow-sm flex items-center gap-2 text-[10px] font-bold uppercase tracking-widest"
+                        className="p-3 bg-white dark:bg-slate-900 text-indigo-600 dark:text-indigo-400 rounded-xl border border-indigo-100 dark:border-indigo-900/40 hover:bg-indigo-50 dark:hover:bg-indigo-900/20 transition-all shadow-sm flex items-center gap-2 text-[10px] font-bold uppercase tracking-widest shrink-0"
                       >
                         Go to Tasks <ExternalLink size={14} />
                       </button>
                     )}
                   </div>
                 ))}
+                {focusedDateItems.length === 0 && (
+                   <div className="py-20 flex flex-col items-center justify-center text-slate-400 opacity-40">
+                      <X size={48} className="mb-4" />
+                      <p className="font-bold uppercase tracking-widest">No activities scheduled</p>
+                   </div>
+                )}
               </div>
             </motion.div>
           </div>
@@ -341,7 +384,7 @@ export const MakersAndMoversApp: React.FC<MakersAndMoversAppProps> = ({ activiti
 
       <AnimatePresence>
         {showModal && (
-          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/60 backdrop-blur-md">
+          <div className="fixed inset-0 z-[70] flex items-center justify-center p-4 bg-slate-950/60 backdrop-blur-md">
             <motion.div initial={{ opacity: 0, scale: 0.95, y: 20 }} animate={{ opacity: 1, scale: 1, y: 0 }} exit={{ opacity: 0, scale: 0.95, y: 20 }} className="bg-white dark:bg-slate-900 rounded-3xl border border-slate-200 dark:border-slate-800 shadow-2xl w-full max-w-lg overflow-hidden">
               <div className="p-6 border-b border-slate-100 dark:border-slate-800 bg-slate-50 dark:bg-slate-800/30 flex items-center justify-between">
                  <h2 className="text-xl font-bold text-slate-900 dark:text-white uppercase tracking-tight">{editingActivity ? 'Modify Activity' : 'Plot Activity'}</h2>
@@ -409,42 +452,64 @@ export const MakersAndMoversApp: React.FC<MakersAndMoversAppProps> = ({ activiti
 const CalendarListItem: React.FC<{ item: CalendarDisplayItem; onDelete?: () => void; onEdit?: () => void; onNavigateToTask?: (id: string) => void }> = ({ item, onDelete, onEdit, onNavigateToTask }) => {
   const projectConfig = PROJECT_CONFIG[item.project];
   const dateObj = new Date(item.dateStr);
+  const dayName = dateObj.toLocaleDateString('en-US', { weekday: 'short' });
+  const dayNumber = dateObj.getDate();
 
   return (
-    <motion.div layout className="group bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 p-6 rounded-3xl flex items-start gap-6 shadow-sm hover:shadow-lg transition-all">
-      <div style={{ backgroundColor: `${projectConfig.color}15`, borderColor: `${projectConfig.color}40`, color: projectConfig.color }} className="w-16 h-16 rounded-2xl flex flex-col items-center justify-center shrink-0 border">
-        <span className="text-[10px] font-bold uppercase tracking-widest leading-none mb-1">{new Intl.DateTimeFormat('en-US', { month: 'short' }).format(dateObj)}</span>
-        <span className="text-xl font-bold leading-none">{dateObj.getDate()}</span>
+    <motion.div layout className="group relative bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 p-5 rounded-3xl flex items-center gap-6 shadow-sm hover:shadow-xl hover:border-indigo-500/50 transition-all duration-300">
+      {/* Visual Marker */}
+      <div className="absolute top-0 bottom-0 left-0 w-1.5 rounded-l-3xl" style={{ backgroundColor: projectConfig.color }} />
+      
+      {/* Enhanced Date Display */}
+      <div className="flex flex-col items-center justify-center w-14 h-14 rounded-2xl bg-slate-50 dark:bg-slate-800/50 border border-slate-100 dark:border-slate-700 shrink-0">
+        <span className="text-[9px] font-black uppercase tracking-widest text-slate-400 dark:text-slate-500 leading-none mb-1">{dayName}</span>
+        <span className="text-2xl font-black text-slate-900 dark:text-white leading-none tracking-tighter">{dayNumber}</span>
       </div>
+
       <div className="flex-1 min-w-0">
-        <div className="flex items-center gap-2 mb-2">
+        <div className="flex items-center gap-2 mb-1.5">
            {item.type === 'task' && (
-             <span className="px-2 py-0.5 rounded-full bg-indigo-100 dark:bg-indigo-900/40 text-indigo-600 dark:text-indigo-400 text-[9px] font-black uppercase tracking-tighter">TASK</span>
+             <span className="px-2 py-0.5 rounded-full bg-indigo-50 dark:bg-indigo-900/40 text-indigo-600 dark:text-indigo-400 text-[8px] font-black uppercase tracking-widest">TASKFLOW</span>
            )}
            <span className="text-[10px] font-bold uppercase tracking-widest text-slate-500">{item.project}</span>
            <span className="w-1.5 h-1.5 rounded-full" style={{ backgroundColor: projectConfig.color }} />
-           <div className="flex items-center gap-1.5 text-[10px] font-bold text-slate-400 uppercase tracking-widest ml-auto">
-             {item.type === 'task' ? 'Deadline' : 'Activity Date'}
+           <div className="ml-auto flex items-center gap-1.5">
+             <div className={`px-2 py-0.5 rounded text-[8px] font-black uppercase tracking-widest ${item.status === 'completed' || item.status === 'done' ? 'bg-emerald-50 text-emerald-600 dark:bg-emerald-900/20 dark:text-emerald-400' : 'bg-slate-100 text-slate-500 dark:bg-slate-800 dark:text-slate-400'}`}>
+                {item.status}
+             </div>
            </div>
         </div>
-        <h3 className="text-xl font-bold text-slate-900 dark:text-white tracking-tight mb-2 group-hover:text-purple-600 transition-colors flex items-center gap-2">
-          {item.type === 'task' && <CheckSquare size={18} className="text-indigo-500" />}
-          {item.title}
+
+        <h3 className="text-lg font-bold text-slate-900 dark:text-white tracking-tight leading-tight group-hover:text-indigo-600 dark:group-hover:text-indigo-400 transition-colors flex items-center gap-2">
+          {item.type === 'task' && <CheckSquare size={16} className="text-indigo-500 shrink-0" />}
+          <span className="truncate">{item.title}</span>
         </h3>
-        <p className="text-[13px] text-slate-500 dark:text-slate-400 italic line-clamp-2">{item.details || 'No briefing available.'}</p>
+        
+        <p className="text-[12px] text-slate-500 dark:text-slate-400 italic line-clamp-1 mt-1 font-medium opacity-80">
+          {item.details || 'No additional briefings.'}
+        </p>
       </div>
-      <div className="flex flex-col gap-2">
-         {onEdit && <button onClick={onEdit} className="p-2 text-slate-300 hover:text-indigo-600 transition-all opacity-0 group-hover:opacity-100"><Pencil size={18} /></button>}
+
+      <div className="flex items-center gap-2 pr-2">
+         {onEdit && (
+           <button onClick={onEdit} className="p-2.5 bg-slate-50 dark:bg-slate-800 rounded-xl text-slate-400 hover:text-indigo-600 dark:hover:text-indigo-400 transition-all opacity-0 group-hover:opacity-100 shadow-sm">
+             <Pencil size={18} />
+           </button>
+         )}
          {item.type === 'task' && onNavigateToTask && (
            <button 
              onClick={() => onNavigateToTask(item.id)} 
-             className="p-2 text-slate-300 hover:text-indigo-600 transition-all opacity-0 group-hover:opacity-100"
+             className="p-2.5 bg-indigo-50 dark:bg-indigo-900/20 rounded-xl text-indigo-600 dark:text-indigo-400 hover:bg-indigo-600 hover:text-white transition-all opacity-0 group-hover:opacity-100 shadow-sm"
              title="View in TaskFlow"
            >
              <ExternalLink size={18} />
            </button>
          )}
-         {onDelete && <button onClick={onDelete} className="p-2 text-slate-300 hover:text-rose-500 transition-all opacity-0 group-hover:opacity-100"><Trash2 size={18} /></button>}
+         {onDelete && (
+           <button onClick={onDelete} className="p-2.5 bg-rose-50 dark:bg-rose-900/20 rounded-xl text-slate-400 hover:text-rose-600 dark:hover:text-rose-400 transition-all opacity-0 group-hover:opacity-100 shadow-sm">
+             <Trash2 size={18} />
+           </button>
+         )}
       </div>
     </motion.div>
   );
