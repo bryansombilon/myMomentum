@@ -12,7 +12,8 @@ interface GlobalNavProps {
   onNavigate: (view: AppView) => void;
 }
 
-const SPRING_TRANSITION = { type: 'spring', stiffness: 300, damping: 30 };
+/* Added 'as const' to fix AnimationGeneratorType type mismatch */
+const SPRING_TRANSITION = { type: 'spring' as const, stiffness: 300, damping: 30 };
 
 export const GlobalNav: React.FC<GlobalNavProps> = ({ currentView, onNavigate }) => {
   const navItems = [

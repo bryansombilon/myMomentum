@@ -26,7 +26,8 @@ const STORAGE_KEY_REMINDERS = 'taskflow_reminders_v1';
 const STORAGE_KEY_SOPS = 'taskflow_sops_v1';
 const THEME_KEY = 'taskflow_theme';
 
-const SPRING_TRANSITION = { type: "spring", stiffness: 260, damping: 26, mass: 1 };
+/* Added 'as const' to fix AnimationGeneratorType type mismatch */
+const SPRING_TRANSITION = { type: "spring" as const, stiffness: 260, damping: 26, mass: 1 };
 const VIEW_VARIANTS = {
   initial: { opacity: 0, scale: 0.98, filter: 'blur(10px)' },
   animate: { opacity: 1, scale: 1, filter: 'blur(0px)' },
