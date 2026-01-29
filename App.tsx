@@ -38,7 +38,7 @@ const App: React.FC = () => {
   const [tasks, setTasks] = useState<Task[]>(() => {
     try {
       const saved = localStorage.getItem(STORAGE_KEY_TASKS);
-      if (saved) return JSON.parse(saved).map((t: any) => ({ ...t, deadline: new Date(t.deadline), updates: t.updates.map((m: any) => ({ ...m, timestamp: new Date(m.timestamp) })) }));
+      if (saved) return JSON.parse(saved).map((t: any) => ({ ...t, deadline: new Date(t.deadline), updates: Array.isArray(t.updates) ? t.updates.map((m: any) => ({ ...m, timestamp: new Date(m.timestamp) })) : [] }));
     } catch (e) {}
     return INITIAL_TASKS;
   });
@@ -132,13 +132,14 @@ const App: React.FC = () => {
       reminders,
       leaves,
       eventActivities,
+      isDarkMode,
       exportedAt: new Date().toISOString()
     };
     const blob = new Blob([JSON.stringify(backupData, null, 2)], { type: 'application/json' });
     const url = URL.createObjectURL(blob);
     const link = document.createElement('a');
     link.href = url;
-    link.download = `taskflow_backup_${new Date().toISOString().split('T')[0]}.json`;
+    link.download = `taskflow_complete_backup_${new Date().toISOString().split('T')[0]}.json`;
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
@@ -149,15 +150,62 @@ const App: React.FC = () => {
     const reader = new FileReader();
     reader.onload = (e) => {
       try {
-        const data = JSON.parse(e.target?.result as string);
-        if (data.tasks) setTasks(data.tasks.map((t: any) => ({ ...t, deadline: new Date(t.deadline), updates: t.updates.map((m: any) => ({ ...m, timestamp: new Date(m.timestamp) })) })));
-        if (data.notes) setNotes(data.notes.map((n: any) => ({ ...n, lastModified: new Date(n.lastModified) })));
-        if (data.links) setLinks(data.links.map((l: any) => ({ ...l, dateAdded: new Date(l.dateAdded) })));
-        if (data.reminders) setReminders(data.reminders);
-        if (data.leaves) setLeaves(data.leaves.map((l: any) => ({ ...l, date: new Date(l.date) })));
-        if (data.eventActivities) setEventActivities(data.eventActivities.map((e: any) => ({ ...e, startDate: new Date(e.startDate), endDate: new Date(e.endDate) })));
-        alert('Restore successful! All data has been synchronized.');
+        const result = e.target?.result;
+        if (!result) return;
+        const data = JSON.parse(result as string);
+        
+        // Comprehensive restoration with deep date parsing
+        if (Array.isArray(data.tasks)) {
+          setTasks(data.tasks.map((t: any) => ({
+            ...t,
+            deadline: new Date(t.deadline),
+            updates: Array.isArray(t.updates) 
+              ? t.updates.map((m: any) => ({ ...m, timestamp: new Date(m.timestamp) })) 
+              : []
+          })));
+        }
+
+        if (Array.isArray(data.notes)) {
+          setNotes(data.notes.map((n: any) => ({
+            ...n,
+            lastModified: new Date(n.lastModified)
+          })));
+        }
+
+        if (Array.isArray(data.links)) {
+          setLinks(data.links.map((l: any) => ({
+            ...l,
+            dateAdded: new Date(l.dateAdded)
+          })));
+        }
+
+        if (Array.isArray(data.reminders)) {
+          setReminders(data.reminders);
+        }
+
+        if (Array.isArray(data.leaves)) {
+          setLeaves(data.leaves.map((l: any) => ({
+            ...l,
+            date: new Date(l.date)
+          })));
+        }
+
+        if (Array.isArray(data.eventActivities)) {
+          setEventActivities(data.eventActivities.map((e: any) => ({
+            ...e,
+            startDate: new Date(e.startDate),
+            endDate: new Date(e.endDate)
+          })));
+        }
+
+        if (typeof data.isDarkMode === 'boolean') {
+          setIsDarkMode(data.isDarkMode);
+        }
+
+        setSelectedTaskId(null);
+        alert('Restore successful! Your complete workspace has been recovered.');
       } catch (err) {
+        console.error("Restore Error:", err);
         alert('Failed to parse backup file. Please ensure it is a valid TaskFlow JSON export.');
       }
     };
