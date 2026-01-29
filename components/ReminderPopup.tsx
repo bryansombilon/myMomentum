@@ -1,7 +1,7 @@
 
 import React, { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Linkedin, Bell, ExternalLink, Sparkles, ShieldCheck, CheckCircle2, Loader2, Info } from 'lucide-react';
+import { Bell, ExternalLink, Sparkles, ShieldCheck, CheckCircle2, Loader2 } from 'lucide-react';
 import { Reminder } from '../types';
 
 const NOTIFICATION_SOUND = 'https://assets.mixkit.co/active_storage/sfx/2869/2869-preview.mp3';
@@ -16,14 +16,35 @@ export const ReminderPopup: React.FC<ReminderPopupProps> = ({ reminders }) => {
   const [lastTriggeredTime, setLastTriggeredTime] = useState<string | null>(null);
   const audioRef = useRef<HTMLAudioElement | null>(null);
 
+  // Initialize audio once
   useEffect(() => {
-    audioRef.current = new Audio(NOTIFICATION_SOUND);
-    audioRef.current.volume = 0.4;
+    const audio = new Audio(NOTIFICATION_SOUND);
+    audio.volume = 0.4;
+    audio.loop = true; // Continuous ringtone
+    audioRef.current = audio;
     
+    return () => {
+      audio.pause();
+      audio.src = "";
+    };
+  }, []);
+
+  // Handle playing/stopping based on active state
+  useEffect(() => {
+    if (activeReminder) {
+      audioRef.current?.play().catch(e => console.warn("Audio play blocked:", e));
+    } else {
+      if (audioRef.current) {
+        audioRef.current.pause();
+        audioRef.current.currentTime = 0;
+      }
+    }
+  }, [activeReminder]);
+
+  useEffect(() => {
     const handleManualTrigger = () => {
       if (reminders.length > 0) {
         setActiveReminder(reminders[0]);
-        audioRef.current?.play().catch(() => {});
       }
     };
     window.addEventListener('trigger-engagement-reminder', handleManualTrigger);
@@ -31,7 +52,7 @@ export const ReminderPopup: React.FC<ReminderPopupProps> = ({ reminders }) => {
     const checkTime = () => {
       const now = new Date();
       const currentTimeStr = now.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit', hour12: false });
-      const day = now.getDay(); // 0 = Sun, 6 = Sat
+      const day = now.getDay();
 
       const matched = reminders.find(r => {
         if (!r.enabled || r.time !== currentTimeStr) return false;
@@ -43,7 +64,6 @@ export const ReminderPopup: React.FC<ReminderPopupProps> = ({ reminders }) => {
       if (matched && lastTriggeredTime !== currentTimeStr) {
         setActiveReminder(matched);
         setLastTriggeredTime(currentTimeStr);
-        audioRef.current?.play().catch(() => {});
       }
 
       if (!matched && lastTriggeredTime === currentTimeStr) {

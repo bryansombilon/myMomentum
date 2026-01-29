@@ -3,9 +3,9 @@ import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Reminder } from '../types';
 import { 
-  Plus, Bell, Trash2, Clock, Globe, 
-  CheckCircle2, X, Settings, ExternalLink, Activity, 
-  Zap, Calendar, ShieldCheck, ToggleLeft, ToggleRight
+  Plus, Trash2, Clock, Globe, 
+  CheckCircle2, X, ExternalLink, Activity, 
+  Zap, ShieldCheck, ToggleLeft, ToggleRight
 } from 'lucide-react';
 
 interface EngagementAppProps {
