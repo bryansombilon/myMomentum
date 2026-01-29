@@ -2,12 +2,12 @@
 import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { 
-  CheckSquare, StickyNote, LayoutGrid, Calendar, Download, 
+  CheckSquare, StickyNote, Calendar, Download, 
   Upload, ShieldCheck, Globe, Sun, Moon, CalendarDays, 
-  Rocket, Linkedin, BellRing, ChevronRight, Activity, AlarmClock,
-  Clock
+  Rocket, ChevronRight, Activity, AlarmClock,
+  Clock, AlertCircle
 } from 'lucide-react';
-import { AppView, Task, EventActivity, ProjectType } from '../types';
+import { AppView, Task, EventActivity } from '../types';
 import { PROJECT_CONFIG } from '../constants';
 
 interface HomeProps {
@@ -18,6 +18,7 @@ interface HomeProps {
   toggleTheme: () => void;
   tasks: Task[];
   activities: EventActivity[];
+  onNavigateToTask: (taskId: string) => void;
 }
 
 const CONTAINER_VARIANTS = {
@@ -37,7 +38,8 @@ export const Home: React.FC<HomeProps> = ({
   isDarkMode, 
   toggleTheme,
   tasks,
-  activities 
+  activities,
+  onNavigateToTask
 }) => {
   const [time, setTime] = useState(new Date());
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -49,45 +51,55 @@ export const Home: React.FC<HomeProps> = ({
 
   const weeklyActivities = useMemo(() => {
     const now = new Date();
-    // Get start of current week (Sunday)
-    const startOfWeek = new Date(now);
-    startOfWeek.setDate(now.getDate() - now.getDay());
+    const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+    
+    const startOfWeek = new Date(today);
+    startOfWeek.setDate(today.getDate() - today.getDay());
     startOfWeek.setHours(0, 0, 0, 0);
 
-    // Get end of current week (Saturday)
     const endOfWeek = new Date(startOfWeek);
     endOfWeek.setDate(startOfWeek.getDate() + 6);
     endOfWeek.setHours(23, 59, 59, 999);
 
     const taskItems = tasks
       .filter(t => {
-        const deadline = new Date(t.deadline);
-        return deadline >= startOfWeek && deadline <= endOfWeek && t.status !== 'done';
+        const d = new Date(t.deadline);
+        const deadlineDate = new Date(d.getFullYear(), d.getMonth(), d.getDate());
+        return deadlineDate >= startOfWeek && deadlineDate <= endOfWeek && t.status !== 'done';
       })
       .map(t => ({
         id: t.id,
         title: t.title,
         date: new Date(t.deadline),
         project: t.project,
-        type: 'task' as const
+        type: 'task' as const,
+        priority: t.priority
       }));
 
     const eventItems = activities
       .filter(a => {
         const start = new Date(a.startDate);
         const end = new Date(a.endDate);
-        // Overlaps with the week
-        return (start <= endOfWeek && end >= startOfWeek);
+        const startDate = new Date(start.getFullYear(), start.getMonth(), start.getDate());
+        const endDate = new Date(end.getFullYear(), end.getMonth(), end.getDate());
+        return (startDate <= endOfWeek && endDate >= startOfWeek);
       })
       .map(a => ({
         id: a.id,
         title: a.title,
         date: new Date(a.startDate),
         project: a.project,
-        type: 'activity' as const
+        type: 'activity' as const,
+        priority: 'not-urgent' as any
       }));
 
-    return [...taskItems, ...eventItems].sort((a, b) => a.date.getTime() - b.date.getTime());
+    return [...taskItems, ...eventItems].sort((a, b) => {
+      const timeDiff = a.date.getTime() - b.date.getTime();
+      if (timeDiff !== 0) return timeDiff;
+      if (a.priority === 'urgent' && b.priority !== 'urgent') return -1;
+      if (a.priority !== 'urgent' && b.priority === 'urgent') return 1;
+      return 0;
+    });
   }, [tasks, activities]);
 
   const formatTime = (date: Date) => date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
@@ -104,68 +116,102 @@ export const Home: React.FC<HomeProps> = ({
 
   return (
     <div className="relative w-full h-full flex flex-col items-center justify-center p-8 overflow-hidden bg-slate-100 dark:bg-slate-950 transition-colors duration-500">
-      {/* Background blobs */}
       <div className="absolute top-[-10%] left-[-10%] w-[50%] h-[50%] bg-indigo-500/10 blur-[120px] rounded-full" />
       <div className="absolute bottom-[-10%] right-[-10%] w-[50%] h-[50%] bg-purple-500/10 blur-[120px] rounded-full" />
 
-      {/* Theme Toggle */}
       <div className="absolute top-8 right-8 z-20 flex items-center gap-4">
         <motion.button whileHover={{ scale: 1.1 }} whileTap={{ scale: 0.9 }} onClick={toggleTheme} className="p-3 rounded-2xl bg-white/60 dark:bg-slate-900/60 backdrop-blur-xl border border-white/40 dark:border-slate-800/60 shadow-lg text-slate-700 dark:text-slate-200">
           {isDarkMode ? <Sun size={20} /> : <Moon size={20} />}
         </motion.button>
       </div>
 
-      {/* Clock & Date */}
       <motion.div initial={{ opacity: 0, y: -40 }} animate={{ opacity: 1, y: 0 }} className="mb-6 text-center z-10">
-        <div className="text-[100px] leading-none font-bold text-slate-900 dark:text-white mb-6 select-none">{formatTime(time)}</div>
-        <div className="text-sm font-semibold uppercase text-slate-600 dark:text-slate-300 flex items-center justify-center gap-3 bg-white/40 dark:bg-slate-900/40 px-6 py-2 rounded-full backdrop-blur-sm border border-white/20 dark:border-slate-800/50">
-          <Calendar size={16} className="text-indigo-600 dark:text-indigo-400" /> {formatDate(time)}
+        <div className="text-[90px] leading-none font-black text-slate-900 dark:text-white mb-4 select-none drop-shadow-sm tracking-tightest">{formatTime(time)}</div>
+        <div className="text-[10px] font-black uppercase tracking-[0.3em] text-slate-500 dark:text-slate-400 flex items-center justify-center gap-4 bg-white/40 dark:bg-slate-900/40 px-6 py-2.5 rounded-full backdrop-blur-md border border-white/20 dark:border-slate-800/50 shadow-sm">
+          <Calendar size={12} className="text-indigo-600 dark:text-indigo-400" /> {formatDate(time)}
         </div>
       </motion.div>
 
-      {/* Weekly Activity Cards */}
       <motion.div 
-        initial={{ opacity: 0, scale: 0.95 }} 
-        animate={{ opacity: 1, scale: 1 }} 
+        initial={{ opacity: 0, y: 20 }} 
+        animate={{ opacity: 1, y: 0 }} 
         transition={{ delay: 0.2 }}
-        className="w-full max-w-6xl mb-12 z-10 overflow-x-auto no-scrollbar"
+        className="w-full max-w-5xl mb-10 z-10"
       >
-        <div className="flex items-center justify-center gap-4 py-2 min-w-max px-4">
+        <div className="flex items-center justify-between mb-4 px-4">
+          <div className="flex items-center gap-2">
+             <Activity size={12} className="text-indigo-500" />
+             <span className="text-[9px] font-black uppercase tracking-widest text-slate-400">Next 7 Days</span>
+          </div>
+          <button onClick={() => onLaunchApp('event-timeline')} className="text-[9px] font-black uppercase tracking-widest text-indigo-600 hover:text-indigo-500 flex items-center gap-1 transition-all">
+            Full View <ChevronRight size={12} />
+          </button>
+        </div>
+
+        <div className="flex items-center gap-3 py-2 overflow-x-auto no-scrollbar snap-x px-4">
           {weeklyActivities.length > 0 ? (
-            weeklyActivities.slice(0, 5).map((item) => (
+            weeklyActivities.slice(0, 10).map((item) => (
               <motion.div 
                 key={item.id} 
-                whileHover={{ y: -5 }}
-                onClick={() => onLaunchApp(item.type === 'task' ? 'tasks' : 'event-timeline')}
-                className="w-48 bg-white/40 dark:bg-slate-900/40 backdrop-blur-md border border-white/20 dark:border-slate-800/50 rounded-2xl p-4 shadow-xl shadow-slate-950/5 flex flex-col gap-2 cursor-pointer transition-all border-l-4"
-                style={{ borderLeftColor: PROJECT_CONFIG[item.project].color }}
+                whileHover={{ y: -4, scale: 1.02 }}
+                whileTap={{ scale: 0.98 }}
+                onClick={() => {
+                  if (item.type === 'task') onNavigateToTask(item.id);
+                  else onLaunchApp('event-timeline');
+                }}
+                className="min-w-[190px] w-[190px] bg-white/80 dark:bg-slate-900/80 backdrop-blur-xl border border-white/40 dark:border-slate-800/60 rounded-2xl p-4 shadow-xl shadow-slate-950/5 flex flex-col gap-3 cursor-pointer transition-all snap-start relative group"
               >
-                <div className="flex items-center justify-between">
-                  <span className="text-[10px] font-bold uppercase text-slate-500 dark:text-slate-400">
-                    {item.date.toLocaleDateString([], { weekday: 'short', day: 'numeric' })}
-                  </span>
-                  {item.type === 'task' ? <CheckSquare size={12} className="text-indigo-500" /> : <Rocket size={12} className="text-purple-500" />}
+                <div 
+                  className="absolute top-4 right-4 w-2 h-2 rounded-full" 
+                  style={{ backgroundColor: PROJECT_CONFIG[item.project].color }} 
+                />
+                
+                <div className="flex items-start gap-3">
+                  <div className="flex flex-col items-center justify-center w-10 h-11 rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-100 dark:border-slate-700 shrink-0">
+                    <span className="text-[8px] font-black uppercase text-indigo-600 dark:text-indigo-400 leading-none mb-0.5">
+                      {item.date.toLocaleDateString([], { weekday: 'short' })}
+                    </span>
+                    <span className="text-base font-black text-slate-900 dark:text-white leading-none">
+                      {item.date.getDate()}
+                    </span>
+                  </div>
+                  
+                  <div className="flex flex-col min-w-0 pt-0.5">
+                    <div className="flex items-center gap-1 mb-0.5">
+                      {item.type === 'task' ? <CheckSquare size={10} className="text-indigo-500" /> : <Rocket size={10} className="text-purple-500" />}
+                      <span className="text-[8px] font-black uppercase tracking-widest text-slate-400 truncate">
+                        {item.date.toLocaleDateString([], { month: 'short' })}
+                      </span>
+                    </div>
+                    <h4 className="text-[12px] font-bold text-slate-800 dark:text-slate-100 line-clamp-1 leading-tight group-hover:text-indigo-600 dark:group-hover:text-indigo-400 transition-colors">
+                      {item.title}
+                    </h4>
+                  </div>
                 </div>
-                <h4 className="text-[13px] font-bold text-slate-800 dark:text-slate-100 line-clamp-2 leading-tight">
-                  {item.title}
-                </h4>
-                <div className="mt-auto flex items-center gap-1.5 pt-1">
-                  <div className="w-1.5 h-1.5 rounded-full" style={{ backgroundColor: PROJECT_CONFIG[item.project].color }} />
-                  <span className="text-[9px] font-bold uppercase text-slate-500 truncate">{item.project}</span>
+
+                <div className="flex items-center justify-between pt-2 border-t border-slate-100 dark:border-slate-800/50">
+                  <span className="text-[8px] font-black uppercase text-slate-400 truncate max-w-[120px]">
+                    {item.project}
+                  </span>
+                  {item.priority === 'urgent' && (
+                    <div className="flex items-center gap-1">
+                      <AlertCircle size={8} className="text-red-500" />
+                      <span className="text-[7px] font-black uppercase text-red-500">Urgent</span>
+                    </div>
+                  )}
                 </div>
               </motion.div>
             ))
           ) : (
-            <div className="text-center py-4 bg-white/20 dark:bg-slate-900/20 px-8 rounded-2xl border border-dashed border-slate-300 dark:border-slate-800">
-               <p className="text-[11px] font-bold uppercase text-slate-400 flex items-center gap-2">
-                 <Clock size={14} /> No activities scheduled for this week
+            <div className="w-full text-center py-8 bg-white/20 dark:bg-slate-900/20 px-8 rounded-2xl border border-dashed border-slate-300 dark:border-slate-800/50">
+               <p className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400 flex items-center justify-center gap-3">
+                 <Clock size={14} /> Clear Agenda for the week
                </p>
             </div>
           )}
         </div>
       </motion.div>
 
-      {/* App Grid */}
       <motion.div variants={CONTAINER_VARIANTS} initial="hidden" animate="show" className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-6 md:gap-10 z-10">
         {apps.map((app) => (
           <motion.button key={app.id} variants={ITEM_VARIANTS} whileHover={{ y: -12, scale: 1.05 }} whileTap={{ scale: 0.95 }} onClick={() => onLaunchApp(app.id)} className="group flex flex-col items-center gap-6 outline-none">
@@ -180,8 +226,7 @@ export const Home: React.FC<HomeProps> = ({
         ))}
       </motion.div>
 
-      {/* Footer / System Bar */}
-      <motion.div initial={{ opacity: 0, y: 50 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.8 }} className="mt-20 z-10 flex flex-col xl:flex-row items-center gap-6 p-4 bg-white/60 dark:bg-slate-900/60 backdrop-blur-2xl rounded-[2.5rem] border border-white/40 dark:border-slate-800/60 shadow-2xl">
+      <motion.div initial={{ opacity: 0, y: 50 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.8 }} className="mt-16 z-10 flex flex-col xl:flex-row items-center gap-6 p-4 bg-white/60 dark:bg-slate-900/60 backdrop-blur-2xl rounded-[2.5rem] border border-white/40 dark:border-slate-800/60 shadow-2xl">
         <div className="flex items-center gap-6 px-4">
           <div className="flex items-center gap-3">
             <ShieldCheck size={18} className="text-emerald-600 dark:text-emerald-400" />
@@ -191,7 +236,7 @@ export const Home: React.FC<HomeProps> = ({
           <button onClick={() => onLaunchApp('engagement')} className="flex items-center gap-3 group px-4 py-2 hover:bg-slate-100 dark:hover:bg-slate-800/50 rounded-2xl transition-all text-left">
              <Activity size={18} className="text-indigo-600 dark:text-indigo-400" />
              <div>
-               <div className="text-[9px] font-black uppercase text-slate-500">System Engagement</div>
+               <div className="text-[9px] font-black uppercase text-slate-500">Engagement</div>
                <div className="text-[11px] font-bold text-slate-800 dark:text-white flex items-center gap-1">Protocol Standby <ChevronRight size={14} /></div>
              </div>
           </button>

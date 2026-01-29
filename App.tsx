@@ -223,6 +223,7 @@ const App: React.FC = () => {
           toggleTheme={() => setIsDarkMode(!isDarkMode)}
           tasks={tasks}
           activities={eventActivities}
+          onNavigateToTask={handleNavigateToTask}
         />
       );
       case 'tasks': return (
