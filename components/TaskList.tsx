@@ -3,7 +3,7 @@ import React, { useState, useMemo } from 'react';
 import { Reorder, useDragControls, motion, AnimatePresence } from 'framer-motion';
 import { Task, ProjectType } from '../types';
 import { PROJECT_CONFIG, STATUS_CONFIG } from '../constants';
-import { Calendar, GripVertical, Plus, Search, Filter, Clock, Flag, Briefcase, Activity, ChevronLeft, Menu } from 'lucide-react';
+import { Calendar, GripVertical, Plus, Search, Filter, Clock, Flag, Briefcase, Activity } from 'lucide-react';
 
 interface TaskListProps {
   tasks: Task[];
@@ -150,7 +150,6 @@ export const TaskList: React.FC<TaskListProps> = ({ tasks, setTasks, selectedTas
   const [filterPriorityValue, setFilterPriority] = useState('all');
   const [filterTime, setFilterTime] = useState('all');
   const [showFilters, setShowFilters] = useState(false);
-  const [isSidebarOpen, setIsSidebarOpen] = useState(true);
 
   const filteredTasks = useMemo(() => {
     return tasks.filter(task => {
@@ -187,192 +186,160 @@ export const TaskList: React.FC<TaskListProps> = ({ tasks, setTasks, selectedTas
 
   const isFiltered = searchQuery !== '' || filterStatus !== 'all' || filterProject !== 'all' || filterPriorityValue !== 'all' || filterTime !== 'all';
 
-  const handleSelectTask = (task: Task) => {
-    onSelectTask(task);
-    if (window.innerWidth < 768) {
-      setIsSidebarOpen(false);
-    }
-  };
-
   return (
-    <div className={`relative h-full flex flex-col bg-slate-50 dark:bg-slate-900 border-r border-slate-200 dark:border-slate-800 transition-all duration-300 ease-in-out ${isSidebarOpen ? 'w-full md:w-80' : 'w-0 overflow-hidden md:w-16'}`}>
-      <div className={`flex-1 flex flex-col ${!isSidebarOpen && 'md:opacity-0'}`}>
-        <div className="p-4 border-b border-slate-200 dark:border-slate-800 flex items-center justify-between bg-white dark:bg-slate-900 shrink-0">
-          <h2 className="text-xl md:text-2xl font-bold uppercase bg-clip-text text-transparent bg-gradient-to-br from-indigo-500 to-blue-600 truncate mr-2">TaskFlow</h2>
-          <div className="flex gap-1 md:gap-2 shrink-0">
-              <button 
-                  onClick={() => setShowFilters(!showFilters)}
-                  className={`p-1.5 md:p-2 rounded-md transition-all border ${showFilters ? 'bg-indigo-50 border-indigo-200 text-indigo-600 shadow-inner' : 'bg-white border-slate-200 text-slate-500 dark:bg-slate-800 dark:border-slate-700'}`}
-                  title="Toggle Filters"
-              >
-                  <Filter size={16} />
-              </button>
-              <button onClick={onAddNewTask} className="p-1.5 md:p-2 bg-indigo-600 hover:bg-indigo-500 text-white rounded-md shadow transition-transform active:scale-95">
-                  <Plus size={16} strokeWidth={2} />
-              </button>
-              <button onClick={() => setIsSidebarOpen(false)} className="md:hidden p-1.5 text-slate-500 bg-white border border-slate-200 rounded-md">
-                  <ChevronLeft size={16} />
-              </button>
-          </div>
-        </div>
-
-        <div className="p-4 space-y-4 shrink-0">
-          <div className="relative">
-            <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 dark:text-slate-500" />
-            <input 
-              type="text" 
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              placeholder="Search..."
-              className="w-full bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-md pl-9 pr-3 py-2 text-[13px] font-semibold focus:border-indigo-500 outline-none text-slate-700 dark:text-slate-200 placeholder:text-slate-400 dark:placeholder:text-slate-600 shadow-sm"
-            />
-          </div>
-
-          <AnimatePresence>
-            {showFilters && (
-              <motion.div 
-                initial={{ height: 0, opacity: 0 }}
-                animate={{ height: 'auto', opacity: 1 }}
-                exit={{ height: 0, opacity: 0 }}
-                className="space-y-3 pt-2 border-t border-slate-100 dark:border-slate-800 overflow-hidden"
-              >
-                <div className="flex flex-col gap-1.5">
-                    <label className="text-[9px] font-bold uppercase text-slate-400 dark:text-slate-500 flex items-center gap-1.5">
-                        <Activity size={10} /> Status
-                    </label>
-                    <select 
-                        value={filterStatus} 
-                        onChange={(e) => setFilterStatus(e.target.value)}
-                        className="w-full bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-md px-2 py-1.5 text-[11px] font-bold outline-none cursor-pointer focus:border-indigo-500 dark:text-slate-200"
-                    >
-                        <option value="all">All Statuses</option>
-                        <option value="todo">To Do</option>
-                        <option value="in-progress">In Progress</option>
-                        <option value="on-hold">On Hold</option>
-                        <option value="under-review">Under Review</option>
-                        <option value="follow-up">Follow Up</option>
-                        <option value="watcher">Watcher</option>
-                        <option value="done">Done</option>
-                    </select>
-                </div>
-
-                <div className="flex flex-col gap-1.5">
-                    <label className="text-[9px] font-bold uppercase text-slate-400 dark:text-slate-500 flex items-center gap-1.5">
-                        <Briefcase size={10} /> Project
-                    </label>
-                    <select 
-                        value={filterProject} 
-                        onChange={(e) => setFilterProject(e.target.value)}
-                        className="w-full bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-md px-2 py-1.5 text-[11px] font-bold outline-none cursor-pointer focus:border-indigo-500 dark:text-slate-200"
-                    >
-                        <option value="all">All Projects</option>
-                        {Object.values(ProjectType).map(p => <option key={p} value={p}>{p}</option>)}
-                    </select>
-                </div>
-
-                <div className="grid grid-cols-2 gap-2">
-                    <div className="flex flex-col gap-1.5">
-                        <label className="text-[9px] font-bold uppercase text-slate-400 dark:text-slate-500 flex items-center gap-1.5">
-                            <Flag size={10} /> Priority
-                        </label>
-                        <select 
-                            value={filterPriorityValue} 
-                            onChange={(e) => setFilterPriority(e.target.value)}
-                            className="w-full bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-md px-2 py-1.5 text-[11px] font-bold outline-none cursor-pointer focus:border-indigo-500 dark:text-slate-200"
-                        >
-                            <option value="all">Any</option>
-                            <option value="urgent">Urgent</option>
-                            <option value="not-urgent">Normal</option>
-                        </select>
-                    </div>
-                    <div className="flex flex-col gap-1.5">
-                        <label className="text-[9px] font-bold uppercase text-slate-400 dark:text-slate-500 flex items-center gap-1.5">
-                            <Clock size={10} /> Schedule
-                        </label>
-                        <select 
-                            value={filterTime} 
-                            onChange={(e) => setFilterTime(e.target.value)}
-                            className="w-full bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-md px-2 py-1.5 text-[11px] font-bold outline-none cursor-pointer focus:border-indigo-500 dark:text-slate-200"
-                        >
-                            <option value="all">Anytime</option>
-                            <option value="overdue">Overdue</option>
-                            <option value="today">Today</option>
-                            <option value="week">This Week</option>
-                        </select>
-                    </div>
-                </div>
-              </motion.div>
-            )}
-          </AnimatePresence>
-        </div>
-
-        <div className="flex-1 overflow-y-auto px-4 pb-32 space-y-1 relative no-scrollbar">
-          {!isFiltered ? (
-            <Reorder.Group 
-              axis="y" 
-              values={tasks} 
-              onReorder={setTasks} 
-              className="space-y-1"
+    <div className="h-full flex flex-col bg-slate-50 dark:bg-slate-900 border-r border-slate-200 dark:border-slate-800 w-64 md:w-80 flex-shrink-0">
+      <div className="p-4 border-b border-slate-200 dark:border-slate-800 flex items-center justify-between bg-white dark:bg-slate-900">
+        <h2 className="text-2xl font-bold uppercase bg-clip-text text-transparent bg-gradient-to-br from-indigo-500 to-blue-600">TaskFlow</h2>
+        <div className="flex gap-2">
+            <button 
+                onClick={() => setShowFilters(!showFilters)}
+                className={`p-2 rounded-md transition-all border ${showFilters ? 'bg-indigo-50 border-indigo-200 text-indigo-600 shadow-inner' : 'bg-white border-slate-200 text-slate-500 dark:bg-slate-800 dark:border-slate-700'}`}
+                title="Toggle Filters"
             >
-              <AnimatePresence mode="popLayout" initial={false}>
-                {filteredTasks.map((task) => (
-                  <TaskItem 
-                    key={task.id} 
-                    task={task} 
-                    isSelected={selectedTaskId === task.id} 
-                    onSelect={handleSelectTask} 
-                    isDragEnabled={true} 
-                  />
-                ))}
-              </AnimatePresence>
-            </Reorder.Group>
-          ) : (
-            <div className="space-y-1">
-              <AnimatePresence mode="popLayout" initial={false}>
-                {filteredTasks.map((task) => (
-                  <TaskItem 
-                    key={task.id} 
-                    task={task} 
-                    isSelected={selectedTaskId === task.id} 
-                    onSelect={handleSelectTask} 
-                    isDragEnabled={false} 
-                  />
-                ))}
-              </AnimatePresence>
-              {filteredTasks.length === 0 && (
-                  <motion.div 
-                    initial={{ opacity: 0 }} 
-                    animate={{ opacity: 1 }} 
-                    className="flex flex-col items-center justify-center py-20 text-slate-400 dark:text-slate-600 text-center"
-                  >
-                      <Search size={32} className="mb-4 opacity-10" />
-                      <p className="text-[10px] font-bold uppercase">No Matches</p>
-                  </motion.div>
-              )}
-            </div>
-          )}
+                <Filter size={18} />
+            </button>
+            <button onClick={onAddNewTask} className="p-2 bg-indigo-600 hover:bg-indigo-500 text-white rounded-md shadow transition-transform active:scale-95">
+                <Plus size={18} strokeWidth={2} />
+            </button>
         </div>
       </div>
 
-      {/* Floating Toggle for Sidebar on MD screens */}
-      {!isSidebarOpen && (
-        <button 
-          onClick={() => setIsSidebarOpen(true)}
-          className="hidden md:flex absolute top-4 left-4 z-50 p-2 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg shadow-md text-slate-500 hover:text-indigo-600 transition-all"
-        >
-          <Menu size={20} />
-        </button>
-      )}
+      <div className="p-4 space-y-4">
+        <div className="relative">
+          <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 dark:text-slate-500" />
+          <input 
+            type="text" 
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            placeholder="Search tasks..."
+            className="w-full bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-md pl-9 pr-3 py-2 text-[13px] font-semibold focus:border-indigo-500 dark:focus:border-indigo-400 outline-none text-slate-700 dark:text-slate-200 placeholder:text-slate-400 dark:placeholder:text-slate-600 shadow-sm"
+          />
+        </div>
 
-      {/* Mobile Sidebar Toggle Button when Closed */}
-      {!isSidebarOpen && (
-        <button 
-          onClick={() => setIsSidebarOpen(true)}
-          className="md:hidden fixed top-4 left-4 z-50 p-3 bg-indigo-600 text-white rounded-full shadow-lg"
-        >
-          <Menu size={20} />
-        </button>
-      )}
+        <AnimatePresence>
+          {showFilters && (
+            <motion.div 
+              initial={{ height: 0, opacity: 0 }}
+              animate={{ height: 'auto', opacity: 1 }}
+              exit={{ height: 0, opacity: 0 }}
+              className="space-y-3 pt-2 border-t border-slate-100 dark:border-slate-800 overflow-hidden"
+            >
+              <div className="flex flex-col gap-1.5">
+                  <label className="text-[9px] font-bold uppercase text-slate-400 dark:text-slate-500 flex items-center gap-1.5">
+                      <Activity size={10} /> Status
+                  </label>
+                  <select 
+                      value={filterStatus} 
+                      onChange={(e) => setFilterStatus(e.target.value)}
+                      className="w-full bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-md px-2 py-1.5 text-[11px] font-bold outline-none cursor-pointer focus:border-indigo-500 dark:text-slate-200"
+                  >
+                      <option value="all">All Statuses</option>
+                      <option value="todo">To Do</option>
+                      <option value="in-progress">In Progress</option>
+                      <option value="on-hold">On Hold</option>
+                      <option value="under-review">Under Review</option>
+                      <option value="follow-up">Follow Up</option>
+                      <option value="watcher">Watcher</option>
+                      <option value="done">Done</option>
+                  </select>
+              </div>
+
+              <div className="flex flex-col gap-1.5">
+                  <label className="text-[9px] font-bold uppercase text-slate-400 dark:text-slate-500 flex items-center gap-1.5">
+                      <Briefcase size={10} /> Project
+                  </label>
+                  <select 
+                      value={filterProject} 
+                      onChange={(e) => setFilterProject(e.target.value)}
+                      className="w-full bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-md px-2 py-1.5 text-[11px] font-bold outline-none cursor-pointer focus:border-indigo-500 dark:text-slate-200"
+                  >
+                      <option value="all">All Projects</option>
+                      {Object.values(ProjectType).map(p => <option key={p} value={p}>{p}</option>)}
+                  </select>
+              </div>
+
+              <div className="grid grid-cols-2 gap-2">
+                  <div className="flex flex-col gap-1.5">
+                      <label className="text-[9px] font-bold uppercase text-slate-400 dark:text-slate-500 flex items-center gap-1.5">
+                          <Flag size={10} /> Priority
+                      </label>
+                      <select 
+                          value={filterPriorityValue} 
+                          onChange={(e) => setFilterPriority(e.target.value)}
+                          className="w-full bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-md px-2 py-1.5 text-[11px] font-bold outline-none cursor-pointer focus:border-indigo-500 dark:text-slate-200"
+                      >
+                          <option value="all">Any</option>
+                          <option value="urgent">Urgent</option>
+                          <option value="not-urgent">Normal</option>
+                      </select>
+                  </div>
+                  <div className="flex flex-col gap-1.5">
+                      <label className="text-[9px] font-bold uppercase text-slate-400 dark:text-slate-500 flex items-center gap-1.5">
+                          <Clock size={10} /> Schedule
+                      </label>
+                      <select 
+                          value={filterTime} 
+                          onChange={(e) => setFilterTime(e.target.value)}
+                          className="w-full bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-md px-2 py-1.5 text-[11px] font-bold outline-none cursor-pointer focus:border-indigo-500 dark:text-slate-200"
+                      >
+                          <option value="all">Anytime</option>
+                          <option value="overdue">Overdue</option>
+                          <option value="today">Today</option>
+                          <option value="week">This Week</option>
+                      </select>
+                  </div>
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
+      </div>
+
+      <div className="flex-1 overflow-y-auto px-4 pb-32 space-y-1 relative no-scrollbar">
+        {!isFiltered ? (
+          <Reorder.Group 
+            axis="y" 
+            values={tasks} 
+            onReorder={setTasks} 
+            className="space-y-1"
+          >
+            <AnimatePresence mode="popLayout" initial={false}>
+              {filteredTasks.map((task) => (
+                <TaskItem 
+                  key={task.id} 
+                  task={task} 
+                  isSelected={selectedTaskId === task.id} 
+                  onSelect={onSelectTask} 
+                  isDragEnabled={true} 
+                />
+              ))}
+            </AnimatePresence>
+          </Reorder.Group>
+        ) : (
+          <div className="space-y-1">
+            <AnimatePresence mode="popLayout" initial={false}>
+              {filteredTasks.map((task) => (
+                <TaskItem 
+                  key={task.id} 
+                  task={task} 
+                  isSelected={selectedTaskId === task.id} 
+                  onSelect={onSelectTask} 
+                  isDragEnabled={false} 
+                />
+              ))}
+            </AnimatePresence>
+            {filteredTasks.length === 0 && (
+                <motion.div 
+                  initial={{ opacity: 0 }} 
+                  animate={{ opacity: 1 }} 
+                  className="flex flex-col items-center justify-center py-20 text-slate-400 dark:text-slate-600 text-center"
+                >
+                    <Search size={32} className="mb-4 opacity-10" />
+                    <p className="text-[10px] font-bold uppercase">No Matches Found</p>
+                </motion.div>
+            )}
+          </div>
+        )}
+      </div>
     </div>
   );
 };
