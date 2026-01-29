@@ -49,6 +49,13 @@ export const Home: React.FC<HomeProps> = ({
     return () => clearInterval(timer);
   }, []);
 
+  const greeting = useMemo(() => {
+    const hour = time.getHours();
+    if (hour < 12) return "Good Morning";
+    if (hour < 18) return "Good Afternoon";
+    return "Good Evening";
+  }, [time]);
+
   const weeklyActivities = useMemo(() => {
     const now = new Date();
     const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
@@ -116,13 +123,13 @@ export const Home: React.FC<HomeProps> = ({
   ];
 
   return (
-    <div className="relative w-full h-full flex flex-col items-center justify-center p-8 overflow-hidden bg-slate-100 dark:bg-slate-950 transition-colors duration-500">
+    <div className="relative w-full h-full flex flex-col items-center justify-center p-4 md:p-8 overflow-y-auto no-scrollbar bg-slate-100 dark:bg-slate-950 transition-colors duration-500">
       {/* Dynamic Background Blurs */}
       <div className="absolute top-[-10%] left-[-10%] w-[60%] h-[60%] bg-indigo-500/10 blur-[150px] rounded-full" />
       <div className="absolute bottom-[-10%] right-[-10%] w-[60%] h-[60%] bg-purple-500/10 blur-[150px] rounded-full" />
 
       {/* Top Bar (Theme Toggle) */}
-      <div className="absolute top-8 right-8 z-20 flex items-center gap-4">
+      <div className="absolute top-6 right-6 z-20 flex items-center gap-4">
         <motion.button 
           whileHover={{ scale: 1.1 }} 
           whileTap={{ scale: 0.9 }} 
@@ -134,22 +141,29 @@ export const Home: React.FC<HomeProps> = ({
       </div>
 
       {/* Side-by-Side Main Layout */}
-      <div className="relative z-10 w-full max-w-7xl flex flex-col lg:flex-row items-stretch justify-center gap-12 lg:gap-16">
+      <div className="relative z-10 w-full max-w-7xl flex flex-col lg:flex-row items-stretch justify-center gap-10 lg:gap-16 pb-32 pt-16 lg:pt-0">
         
         {/* Left Side: Time, Date & Activities */}
         <div className="flex-1 flex flex-col justify-center min-w-0">
           <motion.div 
             initial={{ opacity: 0, x: -40 }} 
             animate={{ opacity: 1, x: 0 }} 
-            className="mb-10 text-center lg:text-left"
+            className="mb-8 lg:mb-10 text-center lg:text-left"
           >
-            {/* Time display: Reduced weight from font-black to font-bold */}
-            <div className="text-[90px] leading-none font-bold text-slate-900 dark:text-white mb-2 select-none drop-shadow-sm tracking-tightest">
+            <motion.div 
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.3 }}
+              className="mb-2 text-[14px] md:text-[16px] font-bold text-indigo-600 dark:text-indigo-400 uppercase tracking-[0.3em]"
+            >
+              {greeting}, Bryan
+            </motion.div>
+            <div className="text-[56px] sm:text-[72px] lg:text-[90px] leading-none font-bold text-slate-900 dark:text-white mb-4 select-none drop-shadow-sm tracking-tightest">
               {formatTime(time)}
             </div>
-            <div className="inline-flex items-center gap-3 bg-white/40 dark:bg-slate-900/40 px-6 py-2 rounded-full backdrop-blur-md border border-white/20 dark:border-slate-800/50 shadow-sm">
+            <div className="inline-flex items-center gap-3 bg-white/40 dark:bg-slate-900/40 px-5 sm:px-6 py-2 rounded-full backdrop-blur-md border border-white/20 dark:border-slate-800/50 shadow-sm">
               <Calendar size={14} className="text-indigo-600 dark:text-indigo-400" />
-              <span className="text-[11px] font-black uppercase tracking-[0.2em] text-slate-500 dark:text-slate-400">
+              <span className="text-[9px] sm:text-[11px] font-black uppercase tracking-[0.2em] text-slate-500 dark:text-slate-400">
                 {formatDate(time)}
               </span>
             </div>
@@ -169,7 +183,7 @@ export const Home: React.FC<HomeProps> = ({
               </div>
             </div>
 
-            <div className="space-y-3 max-h-[380px] overflow-y-auto no-scrollbar pr-2 py-1 overflow-x-hidden">
+            <div className="space-y-3 max-h-[300px] lg:max-h-[380px] overflow-y-auto no-scrollbar pr-2 py-1 overflow-x-hidden">
               {weeklyActivities.length > 0 ? (
                 weeklyActivities.slice(0, 5).map((item) => (
                   <motion.div 
@@ -179,7 +193,6 @@ export const Home: React.FC<HomeProps> = ({
                       if (item.type === 'task') onNavigateToTask(item.id);
                       else onLaunchApp('event-timeline');
                     }}
-                    /* Updated background to be more 'faded' (subtle transparency) and not super white */
                     className="flex items-center gap-4 bg-slate-400/5 dark:bg-slate-800/20 backdrop-blur-xl border border-white/10 dark:border-slate-800/40 rounded-2xl p-4 shadow-xl shadow-slate-950/5 cursor-pointer transition-all relative group"
                   >
                     <div 
@@ -216,7 +229,7 @@ export const Home: React.FC<HomeProps> = ({
                   </motion.div>
                 ))
               ) : (
-                <div className="text-center py-12 bg-white/10 dark:bg-slate-900/10 rounded-3xl border border-dashed border-slate-300 dark:border-slate-800/50">
+                <div className="text-center py-10 bg-white/10 dark:bg-slate-900/10 rounded-3xl border border-dashed border-slate-300 dark:border-slate-800/50">
                    <p className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400 flex items-center justify-center gap-3">
                      <Clock size={14} /> Agenda Clear
                    </p>
@@ -229,13 +242,13 @@ export const Home: React.FC<HomeProps> = ({
         {/* Center Vertical Separator */}
         <div className="hidden lg:block w-[3px] self-stretch bg-gradient-to-b from-transparent via-slate-300 dark:via-indigo-500/30 to-transparent rounded-full opacity-60" />
 
-        {/* Right Side: App Hub - 4 items per row grid */}
+        {/* Right Side: App Hub - Responsive Grid */}
         <div className="flex-[1.2] flex flex-col items-center justify-center">
           <motion.div 
             variants={CONTAINER_VARIANTS} 
             initial="hidden" 
             animate="show" 
-            className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-4 gap-6 lg:gap-8 xl:gap-10"
+            className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-4 gap-6 sm:gap-8 lg:gap-10"
           >
             {apps.map((app) => (
               <motion.button 
@@ -244,14 +257,14 @@ export const Home: React.FC<HomeProps> = ({
                 whileHover={{ y: -12, scale: 1.05 }} 
                 whileTap={{ scale: 0.95 }} 
                 onClick={() => onLaunchApp(app.id)} 
-                className="group flex flex-col items-center gap-4 outline-none"
+                className="group flex flex-col items-center gap-3 sm:gap-4 outline-none"
               >
-                <div className={`w-20 h-20 sm:w-22 sm:h-22 rounded-[2.5rem] ${app.color} ${app.shadow} shadow-2xl flex items-center justify-center transition-all duration-300 group-hover:brightness-110 group-hover:rotate-2 relative`}>
-                  <app.icon size={32} className="drop-shadow-lg text-white" strokeWidth={1.5} />
+                <div className={`w-16 h-16 sm:w-20 sm:h-20 lg:w-22 lg:h-22 rounded-[1.8rem] sm:rounded-[2.5rem] ${app.color} ${app.shadow} shadow-2xl flex items-center justify-center transition-all duration-300 group-hover:brightness-110 group-hover:rotate-2 relative`}>
+                  <app.icon className="w-8 h-8 sm:w-9 sm:h-9 lg:w-10 lg:h-10 drop-shadow-lg text-white" strokeWidth={1.5} />
                 </div>
                 <div className="text-center">
-                  <div className="font-semibold text-slate-500 dark:text-slate-400 text-[10px] uppercase mb-0.5 tracking-widest">{app.desc}</div>
-                  <div className="font-black text-slate-900 dark:text-white text-base">{app.name}</div>
+                  <div className="font-semibold text-slate-500 dark:text-slate-400 text-[8px] sm:text-[10px] uppercase mb-0.5 tracking-widest">{app.desc}</div>
+                  <div className="font-black text-slate-900 dark:text-white text-sm sm:text-base">{app.name}</div>
                 </div>
               </motion.button>
             ))}
@@ -259,34 +272,35 @@ export const Home: React.FC<HomeProps> = ({
         </div>
       </div>
 
-      {/* Footer / System Bar - Fixed at Bottom */}
+      {/* Footer / System Bar - Enhanced for Mobile Visibility */}
       <motion.div 
         initial={{ opacity: 0, y: 50, x: '-50%' }} 
         animate={{ opacity: 1, y: 0, x: '-50%' }} 
         transition={{ delay: 0.8 }} 
-        className="fixed bottom-12 left-1/2 z-20 flex flex-col xl:flex-row items-center gap-6 p-4 bg-white/60 dark:bg-slate-900/60 backdrop-blur-2xl rounded-[3rem] border border-white/40 dark:border-slate-800/60 shadow-2xl whitespace-nowrap"
+        className="fixed bottom-6 lg:bottom-10 left-1/2 z-20 flex flex-col lg:flex-row items-center gap-4 lg:gap-6 p-3 sm:p-4 bg-white/70 dark:bg-slate-900/80 backdrop-blur-2xl rounded-[2.5rem] sm:rounded-[3rem] border border-white/40 dark:border-slate-800/60 shadow-2xl whitespace-nowrap w-[90%] sm:w-auto"
       >
-        <div className="flex items-center gap-6 px-4">
-          <div className="flex items-center gap-3">
+        <div className="flex items-center gap-4 sm:gap-6 px-2 sm:px-4">
+          <div className="flex items-center gap-2 sm:gap-3">
             <ShieldCheck size={18} className="text-emerald-600 dark:text-emerald-400" />
-            <span className="text-[11px] font-black uppercase text-slate-700 dark:text-slate-300">Flow OS 2.0</span>
+            <span className="text-[9px] sm:text-[11px] font-black uppercase text-slate-700 dark:text-slate-300">Flow OS 2.0</span>
           </div>
-          <div className="h-8 w-px bg-slate-200 dark:bg-slate-800" />
-          <button onClick={() => onLaunchApp('engagement')} className="flex items-center gap-3 group px-4 py-2 hover:bg-slate-100 dark:hover:bg-slate-800/50 rounded-2xl transition-all text-left">
+          <div className="h-6 sm:h-8 w-px bg-slate-200 dark:bg-slate-800" />
+          <button onClick={() => onLaunchApp('engagement')} className="flex items-center gap-2 sm:gap-3 group px-2 sm:px-4 py-1.5 sm:py-2 hover:bg-slate-100 dark:hover:bg-slate-800/50 rounded-2xl transition-all text-left">
              <Activity size={18} className="text-indigo-600 dark:text-indigo-400" />
-             <div>
+             <div className="hidden sm:block">
                <div className="text-[9px] font-black uppercase text-slate-500">Security</div>
                <div className="text-[11px] font-bold text-slate-800 dark:text-white flex items-center gap-1">Monitoring Standby <ChevronRight size={14} /></div>
              </div>
+             <div className="sm:hidden text-[10px] font-bold dark:text-white">Secure</div>
           </button>
         </div>
-        <div className="flex items-center gap-4 p-1">
+        <div className="flex items-center gap-2 sm:gap-4 p-0.5 sm:p-1 w-full lg:w-auto">
           <input type="file" ref={fileInputRef} onChange={(e) => e.target.files?.[0] && onImport(e.target.files[0])} accept=".json" className="hidden" />
-          <button onClick={() => fileInputRef.current?.click()} className="flex items-center gap-2 px-5 py-2.5 rounded-xl hover:bg-slate-200 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-200 text-[11px] font-bold uppercase">
-            <Upload size={16} /> Restore
+          <button onClick={() => fileInputRef.current?.click()} className="flex-1 lg:flex-none flex items-center justify-center gap-2 px-4 py-2 sm:px-5 sm:py-2.5 rounded-xl hover:bg-slate-200 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-200 text-[9px] sm:text-[11px] font-bold uppercase">
+            <Upload size={14} className="sm:size-4" /> <span className="hidden sm:inline">Restore</span>
           </button>
-          <button onClick={onExport} className="flex items-center gap-2 px-6 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white shadow-xl shadow-indigo-500/30 text-[11px] font-bold uppercase">
-            <Download size={16} /> Export
+          <button onClick={onExport} className="flex-1 lg:flex-none flex items-center justify-center gap-2 px-4 py-2 sm:px-6 sm:py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white shadow-xl shadow-indigo-500/30 text-[9px] sm:text-[11px] font-bold uppercase">
+            <Download size={14} className="sm:size-4" /> <span className="hidden sm:inline">Export</span>
           </button>
         </div>
       </motion.div>
