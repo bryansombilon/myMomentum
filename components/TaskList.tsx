@@ -75,8 +75,9 @@ const TaskItem: React.FC<TaskItemProps> = React.memo(({
     </>
   );
 
+  // Added 'as const' to fix Transition type errors where 'type' was inferred as a generic string.
   const springConfig = { 
-    type: "spring", 
+    type: "spring" as const, 
     stiffness: 450, 
     damping: 38, 
     mass: 0.8 
@@ -152,7 +153,8 @@ export const TaskList: React.FC<TaskListProps> = ({ tasks, setTasks, selectedTas
   const [searchQuery, setSearchQuery] = useState('');
   const [filterStatus, setFilterStatus] = useState('all');
   const [filterProject, setFilterProject] = useState('all');
-  const [filterPriority, setFilterPriority] = useState('all');
+  const [filterPriority, setFilterProjectPriority] = useState('all');
+  const [filterPriorityValue, setFilterPriority] = useState('all');
   const [filterTime, setFilterTime] = useState('all');
   const [showFilters, setShowFilters] = useState(false);
 
@@ -165,7 +167,7 @@ export const TaskList: React.FC<TaskListProps> = ({ tasks, setTasks, selectedTas
       
       const matchStatus = filterStatus === 'all' || task.status === filterStatus;
       const matchProject = filterProject === 'all' || task.project === filterProject;
-      const matchPriority = filterPriority === 'all' || task.priority === filterPriority;
+      const matchPriority = filterPriorityValue === 'all' || task.priority === filterPriorityValue;
 
       let matchTime = true;
       if (filterTime !== 'all') {
@@ -187,9 +189,9 @@ export const TaskList: React.FC<TaskListProps> = ({ tasks, setTasks, selectedTas
 
       return matchSearch && matchStatus && matchProject && matchPriority && matchTime;
     });
-  }, [tasks, searchQuery, filterStatus, filterProject, filterPriority, filterTime]);
+  }, [tasks, searchQuery, filterStatus, filterProject, filterPriorityValue, filterTime]);
 
-  const isFiltered = searchQuery !== '' || filterStatus !== 'all' || filterProject !== 'all' || filterPriority !== 'all' || filterTime !== 'all';
+  const isFiltered = searchQuery !== '' || filterStatus !== 'all' || filterProject !== 'all' || filterPriorityValue !== 'all' || filterTime !== 'all';
 
   return (
     <div className="h-full flex flex-col bg-slate-50 dark:bg-slate-900 border-r border-slate-200 dark:border-slate-800 w-64 md:w-80 flex-shrink-0">
@@ -267,7 +269,7 @@ export const TaskList: React.FC<TaskListProps> = ({ tasks, setTasks, selectedTas
                         <Flag size={10} /> Priority
                     </label>
                     <select 
-                        value={filterPriority} 
+                        value={filterPriorityValue} 
                         onChange={(e) => setFilterPriority(e.target.value)}
                         className="w-full bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-md px-2 py-1.5 text-[11px] font-bold outline-none cursor-pointer focus:border-indigo-500 dark:text-slate-200"
                     >

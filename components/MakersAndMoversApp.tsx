@@ -7,7 +7,8 @@ import {
   Plus, Calendar as CalendarIcon, List as ListIcon, Trash2, 
   ChevronLeft, ChevronRight, Rocket,
   Pencil, X, CalendarDays as CalendarDaysIcon, Briefcase, ChevronDown,
-  ArrowRight, AlignLeft, CheckSquare, ExternalLink, Calendar as CalendarIconLucide
+  ArrowRight, AlignLeft, CheckSquare, ExternalLink, Calendar as CalendarIconLucide,
+  Layers
 } from 'lucide-react';
 
 interface MakersAndMoversAppProps {
@@ -29,6 +30,19 @@ interface CalendarDisplayItem {
   originalItem: EventActivity | Task;
 }
 
+/**
+ * Helper to get YYYY-MM-DD string from a Date object using local time parts.
+ * This avoids the common "one day off" bug caused by toISOString()'s UTC conversion.
+ */
+const formatLocalYMD = (date: Date | string | number) => {
+  const d = new Date(date);
+  if (isNaN(d.getTime())) return '';
+  const year = d.getFullYear();
+  const month = String(d.getMonth() + 1).padStart(2, '0');
+  const day = String(d.getDate()).padStart(2, '0');
+  return `${year}-${month}-${day}`;
+};
+
 export const MakersAndMoversApp: React.FC<MakersAndMoversAppProps> = ({ activities, tasks, onSaveActivities, onNavigateToTask }) => {
   const [view, setView] = useState<'calendar' | 'list'>('calendar');
   const [currentMonth, setCurrentMonth] = useState(new Date());
@@ -37,31 +51,32 @@ export const MakersAndMoversApp: React.FC<MakersAndMoversAppProps> = ({ activiti
   const [editingActivity, setEditingActivity] = useState<EventActivity | null>(null);
   const [focusedDate, setFocusedDate] = useState<string | null>(null);
   const [activeProjectFilter, setActiveProjectFilter] = useState<ProjectType | 'All'>('All');
+  const [typeFilter, setTypeFilter] = useState<'all' | 'activity' | 'task'>('all');
 
   // Form State for Activities
   const [title, setTitle] = useState('');
   const [details, setDetails] = useState('');
-  const [startDate, setStartDate] = useState(new Date().toISOString().split('T')[0]);
-  const [endDate, setEndDate] = useState(new Date().toISOString().split('T')[0]);
+  const [startDate, setStartDate] = useState(formatLocalYMD(new Date()));
+  const [endDate, setEndDate] = useState(formatLocalYMD(new Date()));
   const [project, setProject] = useState<ProjectType>(ProjectType.MAKERS_MOVERS);
   const [status, setStatus] = useState<EventActivity['status']>('planned');
 
-  const todayStr = useMemo(() => new Date().toISOString().split('T')[0], []);
+  const todayStr = useMemo(() => formatLocalYMD(new Date()), []);
 
   const openModal = (activity?: EventActivity, defaultDate?: string) => {
     if (activity) {
       setEditingActivity(activity);
       setTitle(activity.title);
       setDetails(activity.details);
-      setStartDate(new Date(activity.startDate).toISOString().split('T')[0]);
-      setEndDate(new Date(activity.endDate).toISOString().split('T')[0]);
+      setStartDate(formatLocalYMD(activity.startDate));
+      setEndDate(formatLocalYMD(activity.endDate));
       setProject(activity.project);
       setStatus(activity.status);
     } else {
       setEditingActivity(null);
       setTitle('');
       setDetails('');
-      const dateVal = defaultDate || new Date().toISOString().split('T')[0];
+      const dateVal = defaultDate || formatLocalYMD(new Date());
       setStartDate(dateVal);
       setEndDate(dateVal);
       setProject(ProjectType.MAKERS_MOVERS);
@@ -77,7 +92,7 @@ export const MakersAndMoversApp: React.FC<MakersAndMoversAppProps> = ({ activiti
         id: a.id,
         title: a.title,
         details: a.details,
-        dateStr: new Date(a.startDate).toISOString().split('T')[0],
+        dateStr: formatLocalYMD(a.startDate),
         project: a.project,
         type: 'activity',
         status: a.status,
@@ -89,17 +104,19 @@ export const MakersAndMoversApp: React.FC<MakersAndMoversAppProps> = ({ activiti
       id: t.id,
       title: t.title,
       details: t.description,
-      dateStr: new Date(t.deadline).toISOString().split('T')[0],
+      dateStr: formatLocalYMD(t.deadline),
       project: t.project,
       type: 'task',
       status: t.status,
       originalItem: t
     }));
 
-    return [...activityItems, ...taskItems].filter(item => 
-      activeProjectFilter === 'All' || item.project === activeProjectFilter
-    );
-  }, [activities, tasks, activeProjectFilter]);
+    return [...activityItems, ...taskItems].filter(item => {
+      const matchProject = activeProjectFilter === 'All' || item.project === activeProjectFilter;
+      const matchType = typeFilter === 'all' || item.type === typeFilter;
+      return matchProject && matchType;
+    });
+  }, [activities, tasks, activeProjectFilter, typeFilter]);
 
   const sortedListItems = useMemo(() => {
     return [...allItems].sort((a, b) => a.dateStr.localeCompare(b.dateStr));
@@ -109,7 +126,9 @@ export const MakersAndMoversApp: React.FC<MakersAndMoversAppProps> = ({ activiti
   const groupedListItems = useMemo(() => {
     const groups: { monthYear: string; items: CalendarDisplayItem[] }[] = [];
     sortedListItems.forEach(item => {
-      const date = new Date(item.dateStr);
+      // Create date from YYYY-MM-DD string
+      const [y, m, d] = item.dateStr.split('-').map(Number);
+      const date = new Date(y, m - 1, d);
       const monthYear = date.toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
       const lastGroup = groups[groups.length - 1];
       if (lastGroup && lastGroup.monthYear === monthYear) {
@@ -175,8 +194,8 @@ export const MakersAndMoversApp: React.FC<MakersAndMoversAppProps> = ({ activiti
       } else {
         // For activities, check range
         const act = item.originalItem as EventActivity;
-        const start = new Date(act.startDate).toISOString().split('T')[0];
-        const end = new Date(act.endDate).toISOString().split('T')[0];
+        const start = formatLocalYMD(act.startDate);
+        const end = formatLocalYMD(act.endDate);
         return dateStr >= start && dateStr <= end;
       }
     });
@@ -217,17 +236,32 @@ export const MakersAndMoversApp: React.FC<MakersAndMoversAppProps> = ({ activiti
                </button>
              </div>
 
-             <div className="flex items-center gap-2 bg-slate-100 dark:bg-slate-800 rounded-xl px-3 py-1.5 border border-slate-200 dark:border-slate-700">
-               <Briefcase size={14} className="text-slate-400" />
-               <select 
-                 value={activeProjectFilter} 
-                 onChange={(e) => setActiveProjectFilter(e.target.value as any)}
-                 className="bg-transparent text-[11px] font-bold uppercase tracking-widest outline-none text-slate-600 dark:text-slate-300"
-               >
-                 <option value="All">All Projects</option>
-                 {Object.values(ProjectType).map(p => <option key={p} value={p}>{p}</option>)}
-               </select>
-            </div>
+             <div className="flex items-center gap-4">
+               <div className="flex items-center gap-2 bg-slate-100 dark:bg-slate-800 rounded-xl px-3 py-1.5 border border-slate-200 dark:border-slate-700">
+                 <Briefcase size={14} className="text-slate-400" />
+                 <select 
+                   value={activeProjectFilter} 
+                   onChange={(e) => setActiveProjectFilter(e.target.value as any)}
+                   className="bg-transparent text-[11px] font-bold uppercase tracking-widest outline-none text-slate-600 dark:text-slate-300"
+                 >
+                   <option value="All">All Projects</option>
+                   {Object.values(ProjectType).map(p => <option key={p} value={p}>{p}</option>)}
+                 </select>
+               </div>
+
+               <div className="flex items-center gap-2 bg-slate-100 dark:bg-slate-800 rounded-xl px-3 py-1.5 border border-slate-200 dark:border-slate-700">
+                 <Layers size={14} className="text-slate-400" />
+                 <select 
+                   value={typeFilter} 
+                   onChange={(e) => setTypeFilter(e.target.value as any)}
+                   className="bg-transparent text-[11px] font-bold uppercase tracking-widest outline-none text-slate-600 dark:text-slate-300"
+                 >
+                   <option value="all">All Types</option>
+                   <option value="activity">Activities</option>
+                   <option value="task">Tasks</option>
+                 </select>
+               </div>
+             </div>
             
             <button 
               onClick={() => openModal()}
@@ -262,7 +296,7 @@ export const MakersAndMoversApp: React.FC<MakersAndMoversAppProps> = ({ activiti
                   ))}
                   {calendarDays.map((day, i) => {
                     const dateObj = day ? new Date(currentMonth.getFullYear(), currentMonth.getMonth(), day) : null;
-                    const dateStr = dateObj ? dateObj.toISOString().split('T')[0] : '';
+                    const dateStr = dateObj ? formatLocalYMD(dateObj) : '';
                     const dayItems = day ? getItemsForDate(dateStr) : [];
                     const activityCount = dayItems.length;
                     const isToday = dateStr === todayStr;
@@ -341,7 +375,7 @@ export const MakersAndMoversApp: React.FC<MakersAndMoversAppProps> = ({ activiti
               <div className="p-8 border-b border-slate-100 dark:border-slate-800 bg-slate-50 dark:bg-slate-800/30 flex items-center justify-between">
                 <div>
                    <h2 className="text-2xl font-bold text-slate-900 dark:text-white uppercase tracking-tight">
-                     {new Intl.DateTimeFormat('en-US', { weekday: 'long', month: 'long', day: 'numeric' }).format(new Date(focusedDate))}
+                     {new Intl.DateTimeFormat('en-US', { weekday: 'long', month: 'long', day: 'numeric' }).format(new Date(focusedDate.split('-').map(Number)[0], focusedDate.split('-').map(Number)[1] - 1, focusedDate.split('-').map(Number)[2]))}
                    </h2>
                 </div>
                 <button onClick={() => setShowDayModal(false)} className="p-3 hover:bg-slate-200 dark:hover:bg-slate-700 rounded-2xl transition-colors"><X size={24} /></button>
@@ -451,7 +485,8 @@ export const MakersAndMoversApp: React.FC<MakersAndMoversAppProps> = ({ activiti
 
 const CalendarListItem: React.FC<{ item: CalendarDisplayItem; onDelete?: () => void; onEdit?: () => void; onNavigateToTask?: (id: string) => void }> = ({ item, onDelete, onEdit, onNavigateToTask }) => {
   const projectConfig = PROJECT_CONFIG[item.project];
-  const dateObj = new Date(item.dateStr);
+  const [y, m, d] = item.dateStr.split('-').map(Number);
+  const dateObj = new Date(y, m - 1, d);
   const dayName = dateObj.toLocaleDateString('en-US', { weekday: 'short' });
   const dayNumber = dateObj.getDate();
 
