@@ -94,7 +94,7 @@ const TaskItem: React.FC<TaskItemProps> = React.memo(({
   );
 
   const containerClasses = `
-    relative group border cursor-pointer select-none overflow-hidden touch-none rounded-xl flex mb-2
+    relative group border cursor-pointer select-none overflow-hidden rounded-xl flex mb-2
     ${isSelected 
       ? 'bg-white dark:bg-slate-800 border-indigo-500 dark:border-indigo-400 shadow-lg shadow-indigo-500/10 z-10' 
       : 'bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-800 hover:border-slate-300 dark:hover:border-slate-700 shadow-sm'}
@@ -218,7 +218,7 @@ export const TaskList: React.FC<TaskListProps> = ({ tasks, setTasks, selectedTas
 
   return (
     <div className={`relative h-full flex flex-col bg-slate-50 dark:bg-slate-900 border-r border-slate-200 dark:border-slate-800 transition-all duration-300 ease-in-out ${isSidebarOpen ? 'w-full md:w-80' : 'w-0 overflow-hidden md:w-16'}`}>
-      <div className={`flex-1 flex flex-col ${!isSidebarOpen && 'md:opacity-0'}`}>
+      <div className={`flex-1 flex flex-col h-full ${!isSidebarOpen && 'md:opacity-0'}`}>
         <div className="p-4 border-b border-slate-200 dark:border-slate-800 flex items-center justify-between bg-white dark:bg-slate-900 shrink-0">
           <h2 className="text-xl md:text-2xl font-bold uppercase bg-clip-text text-transparent bg-gradient-to-br from-indigo-500 to-blue-600 truncate mr-2">TaskFlow</h2>
           <div className="flex gap-1 md:gap-2 shrink-0">
@@ -328,7 +328,7 @@ export const TaskList: React.FC<TaskListProps> = ({ tasks, setTasks, selectedTas
           </AnimatePresence>
         </div>
 
-        <div className="flex-1 overflow-y-auto px-4 pb-32 space-y-1 relative no-scrollbar">
+        <div className="flex-1 overflow-y-auto px-4 pb-32 space-y-1 relative scroll-smooth">
           {!isFiltered ? (
             <Reorder.Group 
               axis="y" 
