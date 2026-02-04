@@ -90,11 +90,13 @@ export interface Reminder {
   customDays?: number[]; // 0 for Sunday, 1 for Monday, etc.
 }
 
+// Added for SOPApp
 export interface SOPStep {
   id: string;
   text: string;
 }
 
+// Added for SOPApp
 export interface SOP {
   id: string;
   title: string;

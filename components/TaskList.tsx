@@ -328,7 +328,7 @@ export const TaskList: React.FC<TaskListProps> = ({ tasks, setTasks, selectedTas
           </AnimatePresence>
         </div>
 
-        <div className="flex-1 overflow-y-auto px-4 pb-32 space-y-1 relative scroll-smooth">
+        <div className="flex-1 overflow-y-auto px-4 pb-32 space-y-1 relative scroll-smooth overscroll-contain">
           {!isFiltered ? (
             <Reorder.Group 
               axis="y" 

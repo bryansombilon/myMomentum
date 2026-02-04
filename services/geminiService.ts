@@ -31,16 +31,17 @@ export const generateTaskSummaryOrAdvice = async (task: Task, query: string, con
   }
 };
 
+// Added generateSOPContent to fix error in SOPApp.tsx
 export const generateSOPContent = async (title: string, context: string): Promise<{ toolsUsed: string[], steps: string[] }> => {
   const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
-
-  const prompt = `
-    Create a professional Standard Operating Procedure (SOP) for: "${title}".
-    Additional Context: ${context}
+  
+  const prompt = `Generate a Standard Operating Procedure (SOP) for the task: "${title}".
+    Context and Requirements:
+    ${context}
     
-    Return the response in JSON format with two keys:
-    "toolsUsed": string[]
-    "steps": string[] (sequential, clear instructions)
+    The response must be a JSON object with:
+    - toolsUsed: array of strings listing tools, software or resources.
+    - steps: array of strings containing the procedure steps.
   `;
 
   try {
@@ -52,21 +53,30 @@ export const generateSOPContent = async (title: string, context: string): Promis
         responseSchema: {
           type: Type.OBJECT,
           properties: {
-            toolsUsed: { type: Type.ARRAY, items: { type: Type.STRING } },
-            steps: { type: Type.ARRAY, items: { type: Type.STRING } }
+            toolsUsed: {
+              type: Type.ARRAY,
+              items: { type: Type.STRING },
+              description: "List of tools and resources used."
+            },
+            steps: {
+              type: Type.ARRAY,
+              items: { type: Type.STRING },
+              description: "Sequential steps of the SOP."
+            }
           },
-          required: ["toolsUsed", "steps"]
+          required: ["toolsUsed", "steps"],
+          propertyOrdering: ["toolsUsed", "steps"]
         }
       }
     });
 
-    const data = JSON.parse(response.text || "{}");
-    return {
-      toolsUsed: data.toolsUsed || [],
-      steps: data.steps || []
-    };
+    const jsonText = response.text || '{"toolsUsed":[], "steps":[]}';
+    return JSON.parse(jsonText);
   } catch (error) {
-    console.error("Gemini SOP Error:", error);
-    return { toolsUsed: [], steps: [] };
+    console.error("Gemini API Error (SOP Generation):", error);
+    return {
+      toolsUsed: [],
+      steps: ["Error generating AI content. Please add steps manually."]
+    };
   }
 };

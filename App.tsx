@@ -10,12 +10,11 @@ import { NotesApp } from './components/NotesApp';
 import { LinksApp } from './components/LinksApp';
 import { LeavesApp } from './components/LeavesApp';
 import { MakersAndMoversApp } from './components/MakersAndMoversApp';
-import { SOPApp } from './components/SOPApp';
 import { GlobalNav } from './components/GlobalNav';
 import { ReminderPopup } from './components/ReminderPopup';
 import { EngagementApp } from './components/EngagementApp';
 import { INITIAL_TASKS, INITIAL_NOTES, INITIAL_LINKS, INITIAL_LEAVES, INITIAL_EVENT_ACTIVITIES, INITIAL_REMINDERS } from './constants';
-import { Task, Message, Priority, AppView, Note, LinkEntry, LeaveEntry, EventActivity, Reminder, SOP } from './types';
+import { Task, Message, Priority, AppView, Note, LinkEntry, LeaveEntry, EventActivity, Reminder } from './types';
 
 const STORAGE_KEY_TASKS = 'taskflow_tasks_v1';
 const STORAGE_KEY_NOTES = 'taskflow_notes_v1';
@@ -23,10 +22,8 @@ const STORAGE_KEY_LINKS = 'taskflow_links_v1';
 const STORAGE_KEY_LEAVES = 'taskflow_leaves_v1';
 const STORAGE_KEY_EVENTS = 'taskflow_events_v2'; 
 const STORAGE_KEY_REMINDERS = 'taskflow_reminders_v1';
-const STORAGE_KEY_SOPS = 'taskflow_sops_v1';
 const THEME_KEY = 'taskflow_theme';
 
-/* Added 'as const' to fix AnimationGeneratorType type mismatch */
 const SPRING_TRANSITION = { type: "spring" as const, stiffness: 260, damping: 26, mass: 1 };
 const VIEW_VARIANTS = {
   initial: { opacity: 0, scale: 0.98, filter: 'blur(10px)' },
@@ -86,14 +83,6 @@ const App: React.FC = () => {
     return INITIAL_EVENT_ACTIVITIES;
   });
 
-  const [sops, setSops] = useState<SOP[]>(() => {
-    try {
-      const saved = localStorage.getItem(STORAGE_KEY_SOPS);
-      if (saved) return JSON.parse(saved).map((s: any) => ({ ...s, lastModified: new Date(s.lastModified) }));
-    } catch (e) {}
-    return [];
-  });
-
   const [selectedTaskId, setSelectedTaskId] = useState<string | null>(null);
   const [isNewTaskModalOpen, setIsNewTaskModalOpen] = useState(false);
   const [editingTask, setEditingTask] = useState<Task | null>(null);
@@ -112,8 +101,7 @@ const App: React.FC = () => {
     localStorage.setItem(STORAGE_KEY_LEAVES, JSON.stringify(leaves));
     localStorage.setItem(STORAGE_KEY_EVENTS, JSON.stringify(eventActivities));
     localStorage.setItem(STORAGE_KEY_REMINDERS, JSON.stringify(reminders));
-    localStorage.setItem(STORAGE_KEY_SOPS, JSON.stringify(sops));
-  }, [tasks, notes, links, leaves, eventActivities, reminders, sops]);
+  }, [tasks, notes, links, leaves, eventActivities, reminders]);
 
   const handleTaskReorder = (newOrder: Task[]) => setTasks(newOrder);
   const handleUpdateTask = (taskId: string, updates: Message[]) => setTasks(prev => prev.map(t => t.id === taskId ? { ...t, updates } : t));
@@ -144,7 +132,6 @@ const App: React.FC = () => {
       reminders,
       leaves,
       eventActivities,
-      sops,
       isDarkMode,
       exportedAt: new Date().toISOString()
     };
@@ -208,13 +195,6 @@ const App: React.FC = () => {
           })));
         }
 
-        if (Array.isArray(data.sops)) {
-          setSops(data.sops.map((s: any) => ({
-            ...s,
-            lastModified: new Date(s.lastModified)
-          })));
-        }
-
         if (typeof data.isDarkMode === 'boolean') {
           setIsDarkMode(data.isDarkMode);
         }
@@ -257,7 +237,6 @@ const App: React.FC = () => {
       case 'leaves': return <LeavesApp leaves={leaves} onSaveLeaves={setLeaves} />;
       case 'event-timeline': return <MakersAndMoversApp activities={eventActivities} tasks={tasks} onSaveActivities={setEventActivities} onNavigateToTask={handleNavigateToTask} />;
       case 'engagement': return <EngagementApp reminders={reminders} onSaveReminders={setReminders} />;
-      case 'sop': return <SOPApp sops={sops} onSaveSops={setSops} />;
       default: return null;
     }
   };

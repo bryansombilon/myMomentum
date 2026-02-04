@@ -5,7 +5,7 @@ import {
   CheckSquare, StickyNote, Calendar, Download, 
   Upload, ShieldCheck, Globe, Sun, Moon, CalendarDays, 
   Rocket, ChevronRight, Activity, AlarmClock,
-  Clock, AlertCircle, FileText
+  Clock, AlertCircle
 } from 'lucide-react';
 import { AppView, Task, EventActivity } from '../types';
 import { PROJECT_CONFIG } from '../constants';
@@ -116,7 +116,6 @@ export const Home: React.FC<HomeProps> = ({
     { id: 'tasks' as AppView, name: 'Tasks', icon: CheckSquare, color: 'bg-indigo-600', shadow: 'shadow-indigo-500/40', desc: 'TaskFlow' },
     { id: 'notes' as AppView, name: 'Notes', icon: StickyNote, color: 'bg-amber-500', shadow: 'shadow-amber-500/40', desc: 'NoteFlow' },
     { id: 'links' as AppView, name: 'Hub', icon: Globe, color: 'bg-emerald-500', shadow: 'shadow-emerald-500/40', desc: 'LinkFlow' },
-    { id: 'sop' as AppView, name: 'SOP', icon: FileText, color: 'bg-rose-500', shadow: 'shadow-rose-500/40', desc: 'DocFlow' },
     { id: 'leaves' as AppView, name: 'Leaves', icon: CalendarDays, color: 'bg-sky-500', shadow: 'shadow-sky-500/40', desc: 'LeaveFlow' },
     { id: 'event-timeline' as AppView, name: 'Calendar', icon: Rocket, color: 'bg-purple-600', shadow: 'shadow-purple-500/40', desc: 'EventFlow' },
     { id: 'engagement' as AppView, name: 'Protocol', icon: AlarmClock, color: 'bg-slate-800 dark:bg-indigo-950', shadow: 'shadow-slate-800/40', desc: 'Engagement' },
@@ -124,14 +123,11 @@ export const Home: React.FC<HomeProps> = ({
 
   return (
     <div className="relative w-full h-screen overflow-hidden bg-slate-100 dark:bg-slate-950 transition-colors duration-500">
-      {/* Centered container with optimized padding */}
       <div className="h-full w-full flex flex-col items-center justify-center p-4 sm:p-6 lg:p-8">
         
-        {/* Dynamic Background Blurs */}
         <div className="absolute top-[-5%] left-[-5%] w-[50%] h-[50%] bg-indigo-500/10 blur-[120px] rounded-full pointer-events-none" />
         <div className="absolute bottom-[-5%] right-[-5%] w-[50%] h-[50%] bg-purple-500/10 blur-[120px] rounded-full pointer-events-none" />
 
-        {/* Top Bar (Theme Toggle) - Pinned to corner */}
         <div className="absolute top-4 right-4 sm:top-6 sm:right-6 z-20 flex items-center gap-4">
           <motion.button 
             whileHover={{ scale: 1.1 }} 
@@ -143,10 +139,8 @@ export const Home: React.FC<HomeProps> = ({
           </motion.button>
         </div>
 
-        {/* Side-by-Side Main Layout - Adjusted spacing and vertical padding to prevent overflow */}
         <div className="relative z-10 w-full max-w-7xl flex flex-col lg:flex-row items-stretch justify-center gap-8 lg:gap-12 py-10 lg:py-0">
           
-          {/* Left Side: Time, Date & Activities */}
           <div className="flex-1 flex flex-col justify-center min-w-0">
             <motion.div 
               initial={{ opacity: 0, x: -40 }} 
@@ -179,7 +173,6 @@ export const Home: React.FC<HomeProps> = ({
               </div>
             </motion.div>
 
-            {/* Vertical Agenda Section - Slightly more compact */}
             <motion.div 
               initial={{ opacity: 0, y: 20 }} 
               animate={{ opacity: 1, y: 0 }} 
@@ -249,10 +242,8 @@ export const Home: React.FC<HomeProps> = ({
             </motion.div>
           </div>
 
-          {/* Center Vertical Separator */}
           <div className="hidden lg:block w-[2px] self-stretch bg-gradient-to-b from-transparent via-slate-300 dark:via-indigo-500/20 to-transparent rounded-full opacity-60" />
 
-          {/* Right Side: App Hub - Responsive Grid */}
           <div className="flex-[1.2] flex flex-col items-center justify-center">
             <motion.div 
               variants={CONTAINER_VARIANTS} 
@@ -282,7 +273,6 @@ export const Home: React.FC<HomeProps> = ({
           </div>
         </div>
 
-        {/* Footer / System Bar - Adjusted position and width */}
         <motion.div 
           initial={{ opacity: 0, y: 50, x: '-50%' }} 
           animate={{ opacity: 1, y: 0, x: '-50%' }} 
