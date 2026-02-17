@@ -43,6 +43,21 @@ const formatLocalYMD = (date: Date | string | number) => {
   return `${year}-${month}-${day}`;
 };
 
+// Safe date formatting helper
+const safeFormatFullDate = (dateStr: string) => {
+  if (!dateStr) return 'Unknown Date';
+  const parts = dateStr.split('-').map(Number);
+  if (parts.length !== 3) return 'Invalid Date';
+  const [y, m, d] = parts;
+  const dateObj = new Date(y, m - 1, d);
+  if (isNaN(dateObj.getTime())) return 'Invalid Date';
+  try {
+    return new Intl.DateTimeFormat('en-US', { weekday: 'long', month: 'long', day: 'numeric' }).format(dateObj);
+  } catch (e) {
+    return 'Invalid Date';
+  }
+};
+
 export const MakersAndMoversApp: React.FC<MakersAndMoversAppProps> = ({ activities, tasks, onSaveActivities, onNavigateToTask }) => {
   const [view, setView] = useState<'calendar' | 'list'>('calendar');
   const [currentMonth, setCurrentMonth] = useState(new Date());
@@ -87,7 +102,7 @@ export const MakersAndMoversApp: React.FC<MakersAndMoversAppProps> = ({ activiti
 
   // Convert tasks and activities into a flat list for calendar logic
   const allItems = useMemo(() => {
-    const activityItems: CalendarDisplayItem[] = activities.map(a => {
+    const activityItems: CalendarDisplayItem[] = (activities || []).map(a => {
       return {
         id: a.id,
         title: a.title,
@@ -100,7 +115,7 @@ export const MakersAndMoversApp: React.FC<MakersAndMoversAppProps> = ({ activiti
       };
     });
 
-    const taskItems: CalendarDisplayItem[] = tasks.map(t => ({
+    const taskItems: CalendarDisplayItem[] = (tasks || []).map(t => ({
       id: t.id,
       title: t.title,
       details: t.description,
@@ -119,16 +134,17 @@ export const MakersAndMoversApp: React.FC<MakersAndMoversAppProps> = ({ activiti
   }, [activities, tasks, activeProjectFilter, typeFilter]);
 
   const sortedListItems = useMemo(() => {
-    return [...allItems].sort((a, b) => a.dateStr.localeCompare(b.dateStr));
+    return [...allItems].sort((a, b) => (a.dateStr || '').localeCompare(b.dateStr || ''));
   }, [allItems]);
 
   // Group items by month for the list view
   const groupedListItems = useMemo(() => {
     const groups: { monthYear: string; items: CalendarDisplayItem[] }[] = [];
     sortedListItems.forEach(item => {
-      // Create date from YYYY-MM-DD string
-      const [y, m, d] = item.dateStr.split('-').map(Number);
-      const date = new Date(y, m - 1, d);
+      if (!item.dateStr) return;
+      const parts = item.dateStr.split('-').map(Number);
+      const date = new Date(parts[0], parts[1] - 1, parts[2]);
+      if (isNaN(date.getTime())) return;
       const monthYear = date.toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
       const lastGroup = groups[groups.length - 1];
       if (lastGroup && lastGroup.monthYear === monthYear) {
@@ -375,7 +391,7 @@ export const MakersAndMoversApp: React.FC<MakersAndMoversAppProps> = ({ activiti
               <div className="p-8 border-b border-slate-100 dark:border-slate-800 bg-slate-50 dark:bg-slate-800/30 flex items-center justify-between">
                 <div>
                    <h2 className="text-2xl font-bold text-slate-900 dark:text-white uppercase tracking-tight">
-                     {new Intl.DateTimeFormat('en-US', { weekday: 'long', month: 'long', day: 'numeric' }).format(new Date(focusedDate.split('-').map(Number)[0], focusedDate.split('-').map(Number)[1] - 1, focusedDate.split('-').map(Number)[2]))}
+                     {safeFormatFullDate(focusedDate)}
                    </h2>
                 </div>
                 <button onClick={() => setShowDayModal(false)} className="p-3 hover:bg-slate-200 dark:hover:bg-slate-700 rounded-2xl transition-colors"><X size={24} /></button>
@@ -485,10 +501,11 @@ export const MakersAndMoversApp: React.FC<MakersAndMoversAppProps> = ({ activiti
 
 const CalendarListItem: React.FC<{ item: CalendarDisplayItem; onDelete?: () => void; onEdit?: () => void; onNavigateToTask?: (id: string) => void }> = ({ item, onDelete, onEdit, onNavigateToTask }) => {
   const projectConfig = PROJECT_CONFIG[item.project];
-  const [y, m, d] = item.dateStr.split('-').map(Number);
-  const dateObj = new Date(y, m - 1, d);
-  const dayName = dateObj.toLocaleDateString('en-US', { weekday: 'short' });
-  const dayNumber = dateObj.getDate();
+  const dateParts = (item.dateStr || '').split('-').map(Number);
+  const isValidDate = dateParts.length === 3 && !isNaN(new Date(dateParts[0], dateParts[1] - 1, dateParts[2]).getTime());
+  
+  const dayName = isValidDate ? new Date(dateParts[0], dateParts[1] - 1, dateParts[2]).toLocaleDateString('en-US', { weekday: 'short' }) : '??';
+  const dayNumber = isValidDate ? dateParts[2] : '00';
 
   return (
     <motion.div layout className="group relative bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 p-5 rounded-3xl flex items-center gap-6 shadow-sm hover:shadow-xl hover:border-indigo-500/50 transition-all duration-300">

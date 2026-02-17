@@ -26,6 +26,7 @@ const PRESET_COLORS = [
 ];
 
 const renderPreviewWithLinks = (text: string) => {
+  if (!text) return null;
   const urlRegex = /(https?:\/\/[^\s]+|www\.[^\s]+)/gi;
   const parts = text.split(urlRegex);
   return parts.map((part, index) => {
@@ -53,19 +54,19 @@ export const NotesApp: React.FC<NotesAppProps> = ({ notes, tasks, onSaveNotes, o
 
   const allAvailableTags = useMemo(() => {
     const tagsSet = new Set<string>();
-    notes.forEach(n => n.tags.forEach(t => tagsSet.add(t)));
+    notes.forEach(n => (n.tags || []).forEach(t => tagsSet.add(t)));
     projectTags.forEach(t => tagsSet.add(t));
     return Array.from(tagsSet).sort();
   }, [notes, projectTags]);
 
   const filteredNotes = useMemo(() => {
-    const q = searchQuery.toLowerCase();
+    const q = (searchQuery || '').toLowerCase();
     return notes.filter(n => {
-      const matchesSearch = n.title.toLowerCase().includes(q) ||
-        n.content.toLowerCase().includes(q) ||
-        n.tags.some(tag => tag.toLowerCase().includes(q));
+      const matchesSearch = (n.title || '').toLowerCase().includes(q) ||
+        (n.content || '').toLowerCase().includes(q) ||
+        (n.tags || []).some(tag => (tag || '').toLowerCase().includes(q));
       
-      const matchesTag = !activeTagFilter || n.tags.includes(activeTagFilter);
+      const matchesTag = !activeTagFilter || (n.tags || []).includes(activeTagFilter);
       
       return matchesSearch && matchesTag;
     }).sort((a, b) => {
@@ -80,7 +81,7 @@ export const NotesApp: React.FC<NotesAppProps> = ({ notes, tasks, onSaveNotes, o
   useEffect(() => {
     if (editorRef.current && activeNote) {
       if (editorRef.current.innerHTML !== activeNote.content) {
-        editorRef.current.innerHTML = activeNote.content;
+        editorRef.current.innerHTML = activeNote.content || '';
       }
     }
     setPendingContent(null);
@@ -92,7 +93,7 @@ export const NotesApp: React.FC<NotesAppProps> = ({ notes, tasks, onSaveNotes, o
 
   const handleDetectLinks = (isAutomatic = false) => {
     if (!editorRef.current || !activeNote) return;
-    const content = editorRef.current.innerHTML;
+    const content = editorRef.current.innerHTML || '';
     const urlRegex = /(?<!href="|">|src=")(https?:\/\/[^\s<]+|www\.[^\s<]+)/gi;
     const newContent = content.replace(urlRegex, (match) => {
       const href = match.toLowerCase().startsWith('http') ? match : `https://${match}`;
@@ -213,22 +214,22 @@ export const NotesApp: React.FC<NotesAppProps> = ({ notes, tasks, onSaveNotes, o
   const toggleTag = (tag: string) => {
     if (!activeNote) return;
     const cleanTag = tag.trim();
-    if (activeNote.tags.includes(cleanTag)) {
+    if ((activeNote.tags || []).includes(cleanTag)) {
       handleUpdateNote(activeNote.id, { tags: activeNote.tags.filter(t => t !== cleanTag) });
     } else {
-      handleUpdateNote(activeNote.id, { tags: [...activeNote.tags, cleanTag] });
+      handleUpdateNote(activeNote.id, { tags: [...(activeNote.tags || []), cleanTag] });
     }
   };
 
   const addTag = (tag: string) => {
-    if (!activeNote || !tag.trim() || activeNote.tags.includes(tag.trim())) return;
-    handleUpdateNote(activeNote.id, { tags: [...activeNote.tags, tag.trim()] });
+    if (!activeNote || !tag.trim() || (activeNote.tags || []).includes(tag.trim())) return;
+    handleUpdateNote(activeNote.id, { tags: [...(activeNote.tags || []), tag.trim()] });
     setNewTagInput('');
   };
 
   const handleRemoveTag = (tagToRemove: string) => {
     if (!activeNote) return;
-    handleUpdateNote(activeNote.id, { tags: activeNote.tags.filter(t => t !== tagToRemove) });
+    handleUpdateNote(activeNote.id, { tags: (activeNote.tags || []).filter(t => t !== tagToRemove) });
   };
 
   const handleKeyDown = (e: React.KeyboardEvent<HTMLDivElement>) => {
@@ -382,7 +383,7 @@ export const NotesApp: React.FC<NotesAppProps> = ({ notes, tasks, onSaveNotes, o
                 {note.title || 'Untitled Note'}
               </h3>
               <p className="text-[11px] text-slate-600 dark:text-slate-500 line-clamp-1 mt-2 font-semibold italic opacity-70">
-                {renderPreviewWithLinks(note.content.replace(/<[^>]*>?/gm, ' '))}
+                {renderPreviewWithLinks((note.content || '').replace(/<[^>]*>?/gm, ' '))}
               </p>
               
               <div 
@@ -503,7 +504,7 @@ export const NotesApp: React.FC<NotesAppProps> = ({ notes, tasks, onSaveNotes, o
             <div className="flex-1 overflow-y-auto px-12 md:px-24 lg:px-32 py-8 pb-32 w-full">
               <input 
                 type="text"
-                value={activeNote.title}
+                value={activeNote.title || ''}
                 onChange={(e) => handleUpdateNote(activeNote.id, { title: e.target.value })}
                 onBlur={flushSave}
                 placeholder="Untitled Note"
@@ -519,7 +520,7 @@ export const NotesApp: React.FC<NotesAppProps> = ({ notes, tasks, onSaveNotes, o
                      <button
                        key={proj}
                        onClick={() => toggleTag(proj)}
-                       className={`px-2 py-0.5 rounded border text-[9px] font-bold uppercase tracking-tighter transition-all ${activeNote.tags.includes(proj) ? 'bg-indigo-600 border-indigo-500 text-white shadow-sm' : 'bg-slate-100 dark:bg-slate-800 border-slate-200 dark:border-slate-700 text-slate-500 hover:border-indigo-400'}`}
+                       className={`px-2 py-0.5 rounded border text-[9px] font-bold uppercase tracking-tighter transition-all ${(activeNote.tags || []).includes(proj) ? 'bg-indigo-600 border-indigo-500 text-white shadow-sm' : 'bg-slate-100 dark:bg-slate-800 border-slate-200 dark:border-slate-700 text-slate-500 hover:border-indigo-400'}`}
                      >
                        {proj}
                      </button>
@@ -528,7 +529,7 @@ export const NotesApp: React.FC<NotesAppProps> = ({ notes, tasks, onSaveNotes, o
 
                 <div className="flex flex-wrap items-center gap-3 relative">
                   <TagIcon size={14} className="text-slate-500 dark:text-slate-400" />
-                  {activeNote.tags.map(tag => (
+                  {(activeNote.tags || []).map(tag => (
                     <span key={tag} className="flex items-center gap-2 px-3 py-1 rounded-full text-[10px] font-semibold uppercase tracking-wider bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300">
                       {tag}
                       <button onClick={() => handleRemoveTag(tag)} className="opacity-40 hover:opacity-100 transition-opacity p-0.5"><XIcon size={10} /></button>

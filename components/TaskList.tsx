@@ -1,9 +1,9 @@
 
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useRef } from 'react';
 import { Reorder, useDragControls, motion, AnimatePresence } from 'framer-motion';
 import { Task, ProjectType } from '../types';
 import { PROJECT_CONFIG, STATUS_CONFIG } from '../constants';
-import { Calendar, GripVertical, Plus, Search, Filter, Clock, Flag, Briefcase, Activity, ChevronLeft, Menu } from 'lucide-react';
+import { Calendar, GripVertical, Plus, Search, Filter, Clock, Flag, Briefcase, Activity, ChevronLeft, Menu, FileUp, AlertCircle, Check, X, Trash2 } from 'lucide-react';
 
 interface TaskListProps {
   tasks: Task[];
@@ -11,12 +11,14 @@ interface TaskListProps {
   selectedTaskId: string | null;
   onSelectTask: (task: Task) => void;
   onAddNewTask: () => void;
+  onDeleteTask: (taskId: string) => void;
 }
 
 interface TaskItemProps {
   task: Task;
   isSelected: boolean;
   onSelect: (task: Task) => void;
+  onDelete: (taskId: string) => void;
   isDragEnabled: boolean;
 }
 
@@ -27,7 +29,6 @@ const SPRING_TRANSITION = {
   mass: 0.8 
 };
 
-// Priority map for automatic status sorting
 const STATUS_PRIORITY: Record<string, number> = {
   'follow-up': 0,
   'under-review': 1,
@@ -38,16 +39,49 @@ const STATUS_PRIORITY: Record<string, number> = {
   'done': 6
 };
 
+const safeFormatDate = (date: Date | string | number, options: Intl.DateTimeFormatOptions = { month: 'short', day: 'numeric' }) => {
+  const d = new Date(date);
+  if (isNaN(d.getTime())) return 'Invalid Date';
+  try {
+    return new Intl.DateTimeFormat('en-US', options).format(d);
+  } catch (e) {
+    return 'Error Date';
+  }
+};
+
+const MAP_CSV_STATUS = (status: string): Task['status'] => {
+  const s = (status || '').toLowerCase().replace(/[\s-]/g, '');
+  if (s.includes('follow')) return 'follow-up';
+  if (s.includes('review')) return 'under-review';
+  if (s.includes('todo')) return 'todo';
+  if (s.includes('progress')) return 'in-progress';
+  if (s.includes('watch')) return 'watcher';
+  if (s.includes('hold')) return 'on-hold';
+  if (s.includes('done') || s.includes('complete')) return 'done';
+  return 'todo';
+};
+
 const TaskItem: React.FC<TaskItemProps> = React.memo(({ 
   task, 
   isSelected, 
   onSelect,
+  onDelete,
   isDragEnabled
 }) => {
   const controls = useDragControls();
   const statusStyle = STATUS_CONFIG[task.status] || STATUS_CONFIG['todo'];
   const isUrgent = task.priority === 'urgent';
+  const deadlineDate = new Date(task.deadline);
+  const isValidDate = !isNaN(deadlineDate.getTime());
+  const isOverdue = isValidDate && deadlineDate < new Date() && task.status !== 'done';
   
+  const handleDelete = (e: React.MouseEvent | React.PointerEvent) => {
+    e.stopPropagation();
+    if (window.confirm(`Delete task "${task.title}"?`)) {
+      onDelete(task.id);
+    }
+  };
+
   const Content = (
     <>
       <div className={`w-[4px] ${statusStyle.color} shrink-0`} />
@@ -64,14 +98,25 @@ const TaskItem: React.FC<TaskItemProps> = React.memo(({
               </span>
             )}
           </div>
-          {isDragEnabled && (
-            <div 
-              onPointerDown={(e) => controls.start(e)} 
-              className="text-slate-300 dark:text-slate-600 cursor-grab active:cursor-grabbing p-1 touch-none hover:text-indigo-500 transition-colors"
+          <div className="flex items-center gap-0.5">
+            <button 
+              type="button"
+              onClick={handleDelete}
+              onPointerDown={(e) => e.stopPropagation()}
+              className="p-1.5 text-slate-400 dark:text-slate-500 hover:text-red-500 dark:hover:text-red-400 transition-colors opacity-0 group-hover:opacity-100 focus:opacity-100 outline-none"
+              title="Delete Task"
             >
-              <GripVertical size={14} />
-            </div>
-          )}
+              <Trash2 size={14} />
+            </button>
+            {isDragEnabled && (
+              <div 
+                onPointerDown={(e) => controls.start(e)} 
+                className="text-slate-300 dark:text-slate-600 cursor-grab active:cursor-grabbing p-1.5 touch-none hover:text-indigo-500 transition-colors"
+              >
+                <GripVertical size={14} />
+              </div>
+            )}
+          </div>
         </div>
 
         <h3 className={`font-semibold text-[14px] leading-tight break-words ${isSelected ? 'text-indigo-950 dark:text-white' : 'text-slate-800 dark:text-slate-200'}`}>
@@ -81,8 +126,8 @@ const TaskItem: React.FC<TaskItemProps> = React.memo(({
         <div className="flex items-center justify-between mt-1">
           <div className="flex items-center gap-1 text-[11px] font-bold text-slate-400 dark:text-slate-500 uppercase">
             <Calendar size={12} />
-            <span className={new Date(task.deadline) < new Date() && task.status !== 'done' ? 'text-red-500' : ''}>
-              {new Intl.DateTimeFormat('en-US', { month: 'short', day: 'numeric' }).format(new Date(task.deadline))}
+            <span className={isOverdue ? 'text-red-500' : ''}>
+              {safeFormatDate(task.deadline)}
             </span>
           </div>
           <div className={`text-[9px] px-2 py-0.5 rounded font-bold uppercase ${statusStyle.color} ${statusStyle.text}`}>
@@ -154,7 +199,7 @@ const TaskItem: React.FC<TaskItemProps> = React.memo(({
   );
 });
 
-export const TaskList: React.FC<TaskListProps> = ({ tasks, setTasks, selectedTaskId, onSelectTask, onAddNewTask }) => {
+export const TaskList: React.FC<TaskListProps> = ({ tasks, setTasks, selectedTaskId, onSelectTask, onAddNewTask, onDeleteTask }) => {
   const [searchQuery, setSearchQuery] = useState('');
   const [filterStatus, setFilterStatus] = useState('all');
   const [filterProject, setFilterProject] = useState('all');
@@ -162,12 +207,15 @@ export const TaskList: React.FC<TaskListProps> = ({ tasks, setTasks, selectedTas
   const [filterTime, setFilterTime] = useState('all');
   const [showFilters, setShowFilters] = useState(false);
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
+  
+  const [duplicateSummary, setDuplicateSummary] = useState<{ duplicates: any[], unique: any[] } | null>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const filteredTasks = useMemo(() => {
     return tasks.filter(task => {
-      const q = searchQuery.toLowerCase();
+      const q = (searchQuery || '').toLowerCase();
       const matchSearch = !searchQuery || 
-        task.title.toLowerCase().includes(q) || 
+        (task.title || '').toLowerCase().includes(q) || 
         (task.clickupLink && task.clickupLink.toLowerCase().includes(q));
       
       const matchStatus = filterStatus === 'all' || task.status === filterStatus;
@@ -181,31 +229,114 @@ export const TaskList: React.FC<TaskListProps> = ({ tasks, setTasks, selectedTas
         const startOfDay = new Date(now.getFullYear(), now.getMonth(), now.getDate());
         const endOfDay = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 23, 59, 59);
 
-        if (filterTime === 'overdue') {
-          matchTime = deadline < startOfDay && task.status !== 'done';
-        } else if (filterTime === 'today') {
-          matchTime = deadline >= startOfDay && deadline <= endOfDay;
-        } else if (filterTime === 'week') {
-          const nextWeek = new Date(startOfDay);
-          nextWeek.setDate(nextWeek.getDate() + 7);
-          matchTime = deadline >= startOfDay && deadline <= nextWeek;
+        if (!isNaN(deadline.getTime())) {
+          if (filterTime === 'overdue') {
+            matchTime = deadline < startOfDay && task.status !== 'done';
+          } else if (filterTime === 'today') {
+            matchTime = deadline >= startOfDay && deadline <= endOfDay;
+          } else if (filterTime === 'week') {
+            const nextWeek = new Date(startOfDay);
+            nextWeek.setDate(nextWeek.getDate() + 7);
+            matchTime = deadline >= startOfDay && deadline <= nextWeek;
+          }
+        } else {
+          matchTime = filterTime === 'all';
         }
       }
 
       return matchSearch && matchStatus && matchProject && matchPriority && matchTime;
     }).sort((a, b) => {
-      // Priority sorting based on status sequence
       const priorityA = STATUS_PRIORITY[a.status] ?? 99;
       const priorityB = STATUS_PRIORITY[b.status] ?? 99;
-      
-      if (priorityA !== priorityB) {
-        return priorityA - priorityB;
-      }
-      
-      // Secondary sort: Deadline
-      return new Date(a.deadline).getTime() - new Date(b.deadline).getTime();
+      if (priorityA !== priorityB) return priorityA - priorityB;
+      const dateA = new Date(a.deadline).getTime();
+      const dateB = new Date(b.deadline).getTime();
+      return (isNaN(dateA) ? Infinity : dateA) - (isNaN(dateB) ? Infinity : dateB);
     });
   }, [tasks, searchQuery, filterStatus, filterProject, filterPriorityValue, filterTime]);
+
+  const handleCsvImport = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    const reader = new FileReader();
+    reader.onload = (event) => {
+      const text = event.target?.result as string;
+      if (!text) return;
+
+      const lines = text.split(/\r?\n/).filter(l => l.trim());
+      if (lines.length === 0) return;
+
+      const headers = lines[0].split(',').map(h => h.trim().toLowerCase());
+      
+      const idIdx = headers.findIndex(h => h.includes('id'));
+      const nameIdx = headers.findIndex(h => h.includes('name') || h.includes('title'));
+      const dateIdx = headers.findIndex(h => h.includes('date') || h.includes('due'));
+      const statusIdx = headers.findIndex(h => h.includes('status'));
+
+      if (idIdx === -1 || nameIdx === -1) {
+        alert("Could not find required columns (Task ID, Task Name) in CSV headers.");
+        return;
+      }
+
+      const parsedItems = lines.slice(1).map(line => {
+        const cols = line.split(',');
+        const clickupId = (cols[idIdx] || '').trim();
+        const title = (cols[nameIdx] || '').trim() || 'Untitled Task';
+        const deadlineStr = dateIdx !== -1 ? (cols[dateIdx] || '').trim() : '';
+        const csvStatus = statusIdx !== -1 ? (cols[statusIdx] || '').trim() : 'todo';
+        
+        let deadline = new Date(deadlineStr);
+        if (isNaN(deadline.getTime())) {
+          deadline = new Date();
+        }
+        
+        return {
+          clickupId,
+          title,
+          deadline,
+          status: MAP_CSV_STATUS(csvStatus)
+        };
+      });
+
+      const uniqueItems: any[] = [];
+      const duplicateItems: any[] = [];
+
+      parsedItems.forEach(item => {
+        const isDuplicate = tasks.some(t => {
+          const existingId = (t.clickupLink || '').replace(/.*\/t\//, '');
+          return existingId && existingId === item.clickupId;
+        });
+        if (isDuplicate) duplicateItems.push(item);
+        else uniqueItems.push(item);
+      });
+
+      if (duplicateItems.length > 0) {
+        setDuplicateSummary({ unique: uniqueItems, duplicates: duplicateItems });
+      } else {
+        finalizeImport(uniqueItems);
+      }
+    };
+    reader.readAsText(file);
+    if (fileInputRef.current) fileInputRef.current.value = '';
+  };
+
+  const finalizeImport = (newItems: any[]) => {
+    const tasksToAdd = newItems.map(item => ({
+      id: `imported-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+      title: item.title,
+      description: 'Imported via CSV',
+      deadline: item.deadline,
+      clickupLink: item.clickupId ? `https://app.clickup.com/t/${item.clickupId}` : '',
+      project: ProjectType.GALA,
+      updates: [],
+      status: item.status,
+      priority: 'not-urgent' as any
+    }));
+
+    setTasks([...tasksToAdd, ...tasks]);
+    setDuplicateSummary(null);
+  };
 
   const isFiltered = searchQuery !== '' || filterStatus !== 'all' || filterProject !== 'all' || filterPriorityValue !== 'all' || filterTime !== 'all';
 
@@ -222,17 +353,27 @@ export const TaskList: React.FC<TaskListProps> = ({ tasks, setTasks, selectedTas
         <div className="p-4 border-b border-slate-200 dark:border-slate-800 flex items-center justify-between bg-white dark:bg-slate-900 shrink-0">
           <h2 className="text-xl md:text-2xl font-bold uppercase bg-clip-text text-transparent bg-gradient-to-br from-indigo-500 to-blue-600 truncate mr-2">TaskFlow</h2>
           <div className="flex gap-1 md:gap-2 shrink-0">
+              <input type="file" ref={fileInputRef} onChange={handleCsvImport} accept=".csv" className="hidden" />
               <button 
+                  type="button"
+                  onClick={() => fileInputRef.current?.click()}
+                  className="p-1.5 md:p-2 bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 rounded-md hover:bg-slate-200 dark:hover:bg-slate-700 transition-all border border-slate-200 dark:border-slate-700"
+                  title="Import CSV"
+              >
+                  <FileUp size={16} />
+              </button>
+              <button 
+                  type="button"
                   onClick={() => setShowFilters(!showFilters)}
                   className={`p-1.5 md:p-2 rounded-md transition-all border ${showFilters ? 'bg-indigo-50 border-indigo-200 text-indigo-600 shadow-inner' : 'bg-white border-slate-200 text-slate-500 dark:bg-slate-800 dark:border-slate-700'}`}
                   title="Toggle Filters"
               >
                   <Filter size={16} />
               </button>
-              <button onClick={onAddNewTask} className="p-1.5 md:p-2 bg-indigo-600 hover:bg-indigo-500 text-white rounded-md shadow transition-transform active:scale-95">
+              <button type="button" onClick={onAddNewTask} className="p-1.5 md:p-2 bg-indigo-600 hover:bg-indigo-500 text-white rounded-md shadow transition-transform active:scale-95">
                   <Plus size={16} strokeWidth={2} />
               </button>
-              <button onClick={() => setIsSidebarOpen(false)} className="md:hidden p-1.5 text-slate-500 bg-white border border-slate-200 rounded-md">
+              <button type="button" onClick={() => setIsSidebarOpen(false)} className="md:hidden p-1.5 text-slate-500 bg-white border border-slate-200 rounded-md">
                   <ChevronLeft size={16} />
               </button>
           </div>
@@ -328,14 +469,12 @@ export const TaskList: React.FC<TaskListProps> = ({ tasks, setTasks, selectedTas
           </AnimatePresence>
         </div>
 
-        <div className="flex-1 overflow-y-auto px-4 pb-32 space-y-1 relative scroll-smooth overscroll-contain">
+        <div className="flex-1 overflow-y-auto px-4 pb-32 space-y-1 relative scroll-smooth overscroll-contain no-scrollbar">
           {!isFiltered ? (
             <Reorder.Group 
               axis="y" 
               values={filteredTasks} 
               onReorder={(newOrder) => {
-                // Manual reorder is disabled here to respect "Always arrange automatically"
-                // But the UI still feels reactive.
                 setTasks(newOrder);
               }} 
               className="space-y-1"
@@ -347,6 +486,7 @@ export const TaskList: React.FC<TaskListProps> = ({ tasks, setTasks, selectedTas
                     task={task} 
                     isSelected={selectedTaskId === task.id} 
                     onSelect={handleSelectTask} 
+                    onDelete={onDeleteTask}
                     isDragEnabled={true} 
                   />
                 ))}
@@ -361,6 +501,7 @@ export const TaskList: React.FC<TaskListProps> = ({ tasks, setTasks, selectedTas
                     task={task} 
                     isSelected={selectedTaskId === task.id} 
                     onSelect={handleSelectTask} 
+                    onDelete={onDeleteTask}
                     isDragEnabled={false} 
                   />
                 ))}
@@ -380,9 +521,69 @@ export const TaskList: React.FC<TaskListProps> = ({ tasks, setTasks, selectedTas
         </div>
       </div>
 
-      {/* Floating Toggle for Sidebar on MD screens */}
+      <AnimatePresence>
+        {duplicateSummary && (
+          <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm">
+            <motion.div 
+              initial={{ opacity: 0, scale: 0.95 }} 
+              animate={{ opacity: 1, scale: 1 }} 
+              exit={{ opacity: 0, scale: 0.95 }}
+              className="bg-white dark:bg-slate-900 rounded-3xl border border-slate-200 dark:border-slate-800 shadow-2xl w-full max-w-lg overflow-hidden flex flex-col max-h-[80vh]"
+            >
+              <div className="p-6 border-b border-slate-100 dark:border-slate-800 bg-slate-50 dark:bg-slate-800/30 flex items-center justify-between">
+                <div>
+                  <h3 className="text-xl font-bold text-slate-900 dark:text-white uppercase tracking-tight">Import Summary</h3>
+                  <p className="text-[10px] font-bold uppercase text-slate-400 mt-1">Found {duplicateSummary.duplicates.length} Duplicate Task IDs</p>
+                </div>
+                <button type="button" onClick={() => setDuplicateSummary(null)} className="p-2 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-xl transition-colors"><X size={20} /></button>
+              </div>
+              <div className="flex-1 overflow-y-auto p-6 space-y-6">
+                <div className="bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800/50 rounded-2xl p-4 flex gap-4">
+                  <AlertCircle className="text-amber-600 shrink-0" size={20} />
+                  <p className="text-sm text-amber-800 dark:text-amber-200 font-medium">
+                    The following task IDs already exist in your system. Would you like to import them anyway, or only the {duplicateSummary.unique.length} new tasks?
+                  </p>
+                </div>
+
+                <div className="space-y-2">
+                  <h4 className="text-[9px] font-bold uppercase tracking-widest text-slate-400">Duplicate IDs</h4>
+                  <div className="space-y-2">
+                    {duplicateSummary.duplicates.slice(0, 5).map((d, i) => (
+                      <div key={i} className="flex items-center justify-between p-3 bg-slate-50 dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700">
+                        <span className="text-xs font-bold text-slate-700 dark:text-slate-200 truncate pr-4">{d.title}</span>
+                        <span className="text-[10px] font-mono text-slate-400 uppercase">#{d.clickupId}</span>
+                      </div>
+                    ))}
+                    {duplicateSummary.duplicates.length > 5 && (
+                      <p className="text-[10px] text-slate-400 text-center uppercase font-bold tracking-widest">+ {duplicateSummary.duplicates.length - 5} others</p>
+                    )}
+                  </div>
+                </div>
+              </div>
+              <div className="p-6 bg-slate-50 dark:bg-slate-800/50 border-t border-slate-100 dark:border-slate-800 flex gap-4">
+                <button 
+                  type="button"
+                  onClick={() => finalizeImport(duplicateSummary.unique)} 
+                  className="flex-1 py-3 text-[11px] font-bold uppercase tracking-widest text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700 rounded-2xl transition-all"
+                >
+                  Import New Only ({duplicateSummary.unique.length})
+                </button>
+                <button 
+                  type="button"
+                  onClick={() => finalizeImport([...duplicateSummary.unique, ...duplicateSummary.duplicates])} 
+                  className="flex-1 py-3 bg-indigo-600 text-white rounded-2xl text-[11px] font-bold uppercase tracking-widest shadow-xl shadow-indigo-500/20 active:scale-95 transition-all"
+                >
+                  Import All ({duplicateSummary.unique.length + duplicateSummary.duplicates.length})
+                </button>
+              </div>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
+
       {!isSidebarOpen && (
         <button 
+          type="button"
           onClick={() => setIsSidebarOpen(true)}
           className="hidden md:flex absolute top-4 left-4 z-50 p-2 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg shadow-md text-slate-500 hover:text-indigo-600 transition-all"
         >
@@ -390,9 +591,9 @@ export const TaskList: React.FC<TaskListProps> = ({ tasks, setTasks, selectedTas
         </button>
       )}
 
-      {/* Mobile Sidebar Toggle Button when Closed */}
       {!isSidebarOpen && (
         <button 
+          type="button"
           onClick={() => setIsSidebarOpen(true)}
           className="md:hidden fixed top-4 left-4 z-50 p-3 bg-indigo-600 text-white rounded-full shadow-lg"
         >

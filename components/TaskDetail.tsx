@@ -15,6 +15,16 @@ interface TaskDetailProps {
   onNavigateToTask?: (taskId: string) => void;
 }
 
+const safeFormatDate = (date: Date | string | number, options: Intl.DateTimeFormatOptions = { month: 'long', day: 'numeric' }) => {
+  const d = new Date(date);
+  if (isNaN(d.getTime())) return 'No Deadline Set';
+  try {
+    return new Intl.DateTimeFormat('en-US', options).format(d);
+  } catch (e) {
+    return 'Invalid Date';
+  }
+};
+
 const MetadataCard: React.FC<{ icon: React.ElementType; label: string; children: React.ReactNode; onClick?: () => void; iconColor?: string }> = ({ 
   icon: Icon, label, children, onClick, iconColor = "text-slate-500"
 }) => (
@@ -45,11 +55,19 @@ export const TaskDetail: React.FC<TaskDetailProps> = ({ task, onUpdateTask, onSt
   const now = new Date();
   const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
   const deadlineDay = new Date(deadlineDate.getFullYear(), deadlineDate.getMonth(), deadlineDate.getDate());
-  const isOverdue = deadlineDay < today && task.status !== 'done';
+  
+  const isDateValid = !isNaN(deadlineDate.getTime());
+  const isOverdue = isDateValid && deadlineDay < today && task.status !== 'done';
   const isUrgent = task.priority === 'urgent';
   
   // Extract ID from full ClickUp link
   const clickupId = task.clickupLink ? task.clickupLink.replace(/.*\/t\//, '') : '';
+
+  const handleDelete = () => {
+    if (window.confirm('Delete this task permanently? This action cannot be undone.')) {
+      onDeleteTask(task.id);
+    }
+  };
 
   return (
     <div className="flex-1 h-full overflow-y-auto bg-slate-50 dark:bg-slate-950 transition-colors">
@@ -87,7 +105,7 @@ export const TaskDetail: React.FC<TaskDetailProps> = ({ task, onUpdateTask, onSt
                 Mark Done
               </button>
             )}
-            <button onClick={() => window.confirm('Delete this task permanently?') && onDeleteTask(task.id)} className="p-2 text-slate-500 dark:text-slate-400 hover:text-red-500 rounded-lg transition-all">
+            <button onClick={handleDelete} className="p-2 text-slate-500 dark:text-slate-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-950 rounded-lg transition-all" title="Delete Task">
               <Trash2 size={18} />
             </button>
           </div>
@@ -121,7 +139,9 @@ export const TaskDetail: React.FC<TaskDetailProps> = ({ task, onUpdateTask, onSt
             <span className={isUrgent ? 'text-red-600 dark:text-red-400 font-bold' : 'font-bold'}>{isUrgent ? 'Urgent' : 'Normal'}</span>
           </MetadataCard>
           <MetadataCard icon={Calendar} label="Due Date" iconColor={isOverdue ? 'text-red-600 dark:text-red-400' : 'text-slate-500'}>
-            <span className={isOverdue ? 'text-red-600 dark:text-red-400 font-bold' : 'font-bold'}>{deadlineDate.toLocaleDateString([], { month: 'long', day: 'numeric' })}</span>
+            <span className={isOverdue ? 'text-red-600 dark:text-red-400 font-bold' : 'font-bold'}>
+              {safeFormatDate(task.deadline)}
+            </span>
           </MetadataCard>
           <MetadataCard icon={LinkIcon} label="Hub Access" onClick={task.clickupLink ? () => window.open(task.clickupLink, '_blank') : undefined} iconColor="text-emerald-600 dark:text-emerald-400">
             {task.clickupLink ? `ID: ${clickupId}` : 'None Linked'}

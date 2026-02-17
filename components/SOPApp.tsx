@@ -36,7 +36,8 @@ export const SOPApp: React.FC<SOPAppProps> = ({ sops, onSaveSops }) => {
   const activeSop = useMemo(() => sops.find(s => s.id === selectedSopId), [sops, selectedSopId]);
 
   const filteredSops = useMemo(() => {
-    return sops.filter(s => s.title.toLowerCase().includes(searchQuery.toLowerCase()))
+    const q = (searchQuery || '').toLowerCase();
+    return sops.filter(s => (s.title || '').toLowerCase().includes(q))
                .sort((a, b) => new Date(b.lastModified).getTime() - new Date(a.lastModified).getTime());
   }, [sops, searchQuery]);
 

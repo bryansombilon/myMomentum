@@ -1,5 +1,5 @@
 
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { AnimatePresence, motion } from 'framer-motion';
 import { TaskList } from './components/TaskList';
 import { TaskDetail } from './components/TaskDetail';
@@ -34,11 +34,22 @@ const VIEW_VARIANTS = {
 const App: React.FC = () => {
   const [currentView, setCurrentView] = useState<AppView>('home');
 
-  // Load state from local storage
   const [tasks, setTasks] = useState<Task[]>(() => {
     try {
       const saved = localStorage.getItem(STORAGE_KEY_TASKS);
-      if (saved) return JSON.parse(saved).map((t: any) => ({ ...t, deadline: new Date(t.deadline), updates: Array.isArray(t.updates) ? t.updates.map((m: any) => ({ ...m, timestamp: new Date(m.timestamp) })) : [] }));
+      if (saved) {
+        return JSON.parse(saved).map((t: any) => {
+          const deadline = new Date(t.deadline);
+          return { 
+            ...t, 
+            deadline: isNaN(deadline.getTime()) ? new Date() : deadline, 
+            updates: Array.isArray(t.updates) ? t.updates.map((m: any) => {
+              const ts = new Date(m.timestamp);
+              return { ...m, timestamp: isNaN(ts.getTime()) ? new Date() : ts };
+            }) : [] 
+          };
+        });
+      }
     } catch (e) {}
     return INITIAL_TASKS;
   });
@@ -46,7 +57,10 @@ const App: React.FC = () => {
   const [notes, setNotes] = useState<Note[]>(() => {
     try {
       const saved = localStorage.getItem(STORAGE_KEY_NOTES);
-      if (saved) return JSON.parse(saved).map((n: any) => ({ ...n, lastModified: new Date(n.lastModified) }));
+      if (saved) return JSON.parse(saved).map((n: any) => {
+        const mod = new Date(n.lastModified);
+        return { ...n, lastModified: isNaN(mod.getTime()) ? new Date() : mod };
+      });
     } catch (e) {}
     return INITIAL_NOTES;
   });
@@ -54,7 +68,10 @@ const App: React.FC = () => {
   const [links, setLinks] = useState<LinkEntry[]>(() => {
     try {
       const saved = localStorage.getItem(STORAGE_KEY_LINKS);
-      if (saved) return JSON.parse(saved).map((l: any) => ({ ...l, dateAdded: new Date(l.dateAdded) }));
+      if (saved) return JSON.parse(saved).map((l: any) => {
+        const ad = new Date(l.dateAdded);
+        return { ...l, dateAdded: isNaN(ad.getTime()) ? new Date() : ad };
+      });
     } catch (e) {}
     return INITIAL_LINKS;
   });
@@ -70,7 +87,10 @@ const App: React.FC = () => {
   const [leaves, setLeaves] = useState<LeaveEntry[]>(() => {
     try {
       const saved = localStorage.getItem(STORAGE_KEY_LEAVES);
-      if (saved) return JSON.parse(saved).map((l: any) => ({ ...l, date: new Date(l.date) }));
+      if (saved) return JSON.parse(saved).map((l: any) => {
+        const ld = new Date(l.date);
+        return { ...l, date: isNaN(ld.getTime()) ? new Date() : ld };
+      });
     } catch (e) {}
     return INITIAL_LEAVES;
   });
@@ -78,7 +98,15 @@ const App: React.FC = () => {
   const [eventActivities, setEventActivities] = useState<EventActivity[]>(() => {
     try {
       const saved = localStorage.getItem(STORAGE_KEY_EVENTS);
-      if (saved) return JSON.parse(saved).map((e: any) => ({ ...e, startDate: new Date(e.startDate), endDate: new Date(e.endDate) }));
+      if (saved) return JSON.parse(saved).map((e: any) => {
+        const sd = new Date(e.startDate);
+        const ed = new Date(e.endDate);
+        return { 
+          ...e, 
+          startDate: isNaN(sd.getTime()) ? new Date() : sd, 
+          endDate: isNaN(ed.getTime()) ? new Date() : ed 
+        };
+      });
     } catch (e) {}
     return INITIAL_EVENT_ACTIVITIES;
   });
@@ -107,10 +135,12 @@ const App: React.FC = () => {
   const handleUpdateTask = (taskId: string, updates: Message[]) => setTasks(prev => prev.map(t => t.id === taskId ? { ...t, updates } : t));
   const handleStatusChange = (taskId: string, status: Task['status']) => setTasks(prev => prev.map(t => t.id === taskId ? { ...t, status } : t));
   const handlePriorityChange = (taskId: string, priority: Priority) => setTasks(prev => prev.map(t => t.id === taskId ? { ...t, priority } : t));
-  const handleDeleteTask = (taskId: string) => {
+  
+  const handleDeleteTask = useCallback((taskId: string) => {
     setTasks(prev => prev.filter(t => t.id !== taskId));
-    if (selectedTaskId === taskId) setSelectedTaskId(null);
-  };
+    setSelectedTaskId(prevId => prevId === taskId ? null : prevId);
+  }, []);
+
   const handleSaveTask = (taskData: any) => {
     if (editingTask) setTasks(prev => prev.map(t => t.id === editingTask.id ? { ...t, ...taskData } : t));
     else {
@@ -155,44 +185,54 @@ const App: React.FC = () => {
         const data = JSON.parse(result as string);
         
         if (Array.isArray(data.tasks)) {
-          setTasks(data.tasks.map((t: any) => ({
-            ...t,
-            deadline: new Date(t.deadline),
-            updates: Array.isArray(t.updates) 
-              ? t.updates.map((m: any) => ({ ...m, timestamp: new Date(m.timestamp) })) 
-              : []
-          })));
+          setTasks(data.tasks.map((t: any) => {
+            const deadline = new Date(t.deadline);
+            return {
+              ...t,
+              deadline: isNaN(deadline.getTime()) ? new Date() : deadline,
+              updates: Array.isArray(t.updates) 
+                ? t.updates.map((m: any) => {
+                  const ts = new Date(m.timestamp);
+                  return { ...m, timestamp: isNaN(ts.getTime()) ? new Date() : ts };
+                }) 
+                : []
+            };
+          }));
         }
 
         if (Array.isArray(data.notes)) {
-          setNotes(data.notes.map((n: any) => ({
-            ...n,
-            lastModified: new Date(n.lastModified)
-          })));
+          setNotes(data.notes.map((n: any) => {
+            const mod = new Date(n.lastModified);
+            return { ...n, lastModified: isNaN(mod.getTime()) ? new Date() : mod };
+          }));
         }
 
         if (Array.isArray(data.links)) {
-          setLinks(data.links.map((l: any) => ({
-            ...l,
-            dateAdded: new Date(l.dateAdded)
-          })));
+          setLinks(data.links.map((l: any) => {
+            const ad = new Date(l.dateAdded);
+            return { ...l, dateAdded: isNaN(ad.getTime()) ? new Date() : ad };
+          }));
         }
 
         if (Array.isArray(data.reminders)) setReminders(data.reminders);
 
         if (Array.isArray(data.leaves)) {
-          setLeaves(data.leaves.map((l: any) => ({
-            ...l,
-            date: new Date(l.date)
-          })));
+          setLeaves(data.leaves.map((l: any) => {
+            const ld = new Date(l.date);
+            return { ...l, date: isNaN(ld.getTime()) ? new Date() : ld };
+          }));
         }
 
         if (Array.isArray(data.eventActivities)) {
-          setEventActivities(data.eventActivities.map((e: any) => ({
-            ...e,
-            startDate: new Date(e.startDate),
-            endDate: new Date(e.endDate)
-          })));
+          setEventActivities(data.eventActivities.map((e: any) => {
+            const sd = new Date(e.startDate);
+            const ed = new Date(e.endDate);
+            return {
+              ...e,
+              startDate: isNaN(sd.getTime()) ? new Date() : sd,
+              endDate: isNaN(ed.getTime()) ? new Date() : ed
+            };
+          }));
         }
 
         if (typeof data.isDarkMode === 'boolean') {
@@ -225,7 +265,14 @@ const App: React.FC = () => {
       );
       case 'tasks': return (
         <div className="w-full h-full flex flex-col md:flex-row overflow-hidden">
-          <TaskList tasks={tasks} setTasks={handleTaskReorder} selectedTaskId={selectedTaskId} onSelectTask={(task) => setSelectedTaskId(task.id)} onAddNewTask={() => { setEditingTask(null); setIsNewTaskModalOpen(true); }} />
+          <TaskList 
+            tasks={tasks} 
+            setTasks={handleTaskReorder} 
+            selectedTaskId={selectedTaskId} 
+            onSelectTask={(task) => setSelectedTaskId(task.id)} 
+            onAddNewTask={() => { setEditingTask(null); setIsNewTaskModalOpen(true); }} 
+            onDeleteTask={handleDeleteTask}
+          />
           <div className="flex flex-col flex-1 min-w-0">
             <ProjectProgress tasks={tasks} />
             <TaskDetail task={selectedTask} onUpdateTask={handleUpdateTask} onStatusChange={handleStatusChange} onPriorityChange={handlePriorityChange} onDeleteTask={handleDeleteTask} onEditTask={(t) => { setEditingTask(t); setIsNewTaskModalOpen(true); }} />

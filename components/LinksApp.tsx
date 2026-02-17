@@ -31,9 +31,10 @@ export const LinksApp: React.FC<LinksAppProps> = ({ links, onSaveLinks }) => {
   const [category, setCategory] = useState<LinkEntry['category']>('Awards');
 
   const filteredLinks = useMemo(() => {
+    const q = (searchQuery || '').toLowerCase();
     return links.filter(link => {
-      const matchSearch = link.title.toLowerCase().includes(searchQuery.toLowerCase()) || 
-                          link.url.toLowerCase().includes(searchQuery.toLowerCase());
+      const matchSearch = (link.title || '').toLowerCase().includes(q) || 
+                          (link.url || '').toLowerCase().includes(q);
       const matchCategory = activeCategory === 'All' || link.category === activeCategory;
       return matchSearch && matchCategory;
     });
