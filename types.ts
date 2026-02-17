@@ -36,7 +36,7 @@ export interface Task {
   priority: Priority;
 }
 
-export type AppView = 'home' | 'tasks' | 'notes' | 'links' | 'leaves' | 'event-timeline' | 'engagement' | 'sop';
+export type AppView = 'home' | 'tasks' | 'notes' | 'links' | 'leaves' | 'event-timeline' | 'engagement' | 'sop' | 'clickup';
 
 export interface Note {
   id: string;

@@ -5,7 +5,7 @@ import {
   CheckSquare, StickyNote, Calendar, Download, 
   Upload, ShieldCheck, Globe, Sun, Moon, CalendarDays, 
   Rocket, ChevronRight, Activity, AlarmClock,
-  Clock, AlertCircle
+  Clock, AlertCircle, LayoutGrid
 } from 'lucide-react';
 import { AppView, Task, EventActivity } from '../types';
 import { PROJECT_CONFIG } from '../constants';
@@ -118,6 +118,7 @@ export const Home: React.FC<HomeProps> = ({
     { id: 'links' as AppView, name: 'Hub', icon: Globe, color: 'bg-emerald-500', shadow: 'shadow-emerald-500/40', desc: 'LinkFlow' },
     { id: 'leaves' as AppView, name: 'Leaves', icon: CalendarDays, color: 'bg-sky-500', shadow: 'shadow-sky-500/40', desc: 'LeaveFlow' },
     { id: 'event-timeline' as AppView, name: 'Calendar', icon: Rocket, color: 'bg-purple-600', shadow: 'shadow-purple-500/40', desc: 'EventFlow' },
+    { id: 'clickup' as AppView, name: 'ClickUp', icon: LayoutGrid, color: 'bg-slate-900', shadow: 'shadow-slate-800/40', desc: 'External Sync' },
     { id: 'engagement' as AppView, name: 'Protocol', icon: AlarmClock, color: 'bg-slate-800 dark:bg-indigo-950', shadow: 'shadow-slate-800/40', desc: 'Engagement' },
   ];
 

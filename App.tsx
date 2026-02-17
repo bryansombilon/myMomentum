@@ -13,6 +13,7 @@ import { MakersAndMoversApp } from './components/MakersAndMoversApp';
 import { GlobalNav } from './components/GlobalNav';
 import { ReminderPopup } from './components/ReminderPopup';
 import { EngagementApp } from './components/EngagementApp';
+import { ClickUpApp } from './components/ClickUpApp';
 import { INITIAL_TASKS, INITIAL_NOTES, INITIAL_LINKS, INITIAL_LEAVES, INITIAL_EVENT_ACTIVITIES, INITIAL_REMINDERS } from './constants';
 import { Task, Message, Priority, AppView, Note, LinkEntry, LeaveEntry, EventActivity, Reminder } from './types';
 
@@ -284,6 +285,7 @@ const App: React.FC = () => {
       case 'leaves': return <LeavesApp leaves={leaves} onSaveLeaves={setLeaves} />;
       case 'event-timeline': return <MakersAndMoversApp activities={eventActivities} tasks={tasks} onSaveActivities={setEventActivities} onNavigateToTask={handleNavigateToTask} />;
       case 'engagement': return <EngagementApp reminders={reminders} onSaveReminders={setReminders} />;
+      case 'clickup': return <ClickUpApp existingTasks={tasks} onImportTasks={(newTasks) => setTasks([...newTasks, ...tasks])} />;
       default: return null;
     }
   };
