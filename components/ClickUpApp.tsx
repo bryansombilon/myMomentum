@@ -6,7 +6,8 @@ import {
   Loader2, AlertCircle, CheckCircle2, Clock, 
   User, Briefcase, ChevronRight, LayoutGrid,
   DownloadCloud, Check, Info, ShieldAlert,
-  Hash, Layers, ChevronDown, List as ListIcon
+  Hash, Layers, ChevronDown, List as ListIcon,
+  BellRing
 } from 'lucide-react';
 import { Task, ProjectType } from '../types';
 
@@ -18,6 +19,7 @@ interface ClickUpTask {
   name: string;
   status: { status: string; color: string; type: string };
   priority: { priority: string; color: string } | null;
+  start_date: string | null;
   due_date: string | null;
   url: string;
   list: { name: string; id: string };
@@ -27,8 +29,10 @@ interface ClickUpTask {
 
 interface ClickUpNotification {
   id: string;
-  title: string;
+  title?: string;
+  text_content?: string;
   date: string;
+  type?: string;
   task?: { id: string; name: string };
 }
 
@@ -89,13 +93,13 @@ export const ClickUpApp: React.FC<ClickUpAppProps> = ({ existingTasks, onImportT
           }
         } catch (e) { console.error(`Failed to fetch tasks for team ${team.id}`); }
 
-        // Fetch Notifications (Global Inbox Fix)
+        // Fetch Notifications (Disable unread_only to ensure feed visibility)
         try {
-          // Changed to standard notification endpoint
-          const notifyRes = await fetch(`${BASE_URL}/team/${team.id}/notification`, { headers });
+          // Use unread_only=false to populate the inbox even if user has cleared it in the web app
+          const notifyRes = await fetch(`${BASE_URL}/team/${team.id}/notification?unread_only=false`, { headers });
           if (notifyRes.ok) {
             const notifyData = await notifyRes.json();
-            if (notifyData.notifications) {
+            if (notifyData.notifications && Array.isArray(notifyData.notifications)) {
               allNotifications = [...allNotifications, ...notifyData.notifications];
             }
           }
@@ -104,9 +108,8 @@ export const ClickUpApp: React.FC<ClickUpAppProps> = ({ existingTasks, onImportT
 
       setTasks(allTasks);
       
-      // Sort notifications by date (newest first)
       const sortedNotifications = allNotifications.sort((a, b) => 
-        new Date(b.date).getTime() - new Date(a.date).getTime()
+        new Date(parseInt(b.date)).getTime() - new Date(parseInt(a.date)).getTime()
       );
       setNotifications(sortedNotifications);
 
@@ -167,6 +170,7 @@ export const ClickUpApp: React.FC<ClickUpAppProps> = ({ existingTasks, onImportT
       id: `cu-${cuTask.id}-${Date.now()}`,
       title: cuTask.name,
       description: `Imported from ClickUp. List: ${cuTask.list.name} • Space: ${cuTask.space?.name || 'N/A'}`,
+      startDate: cuTask.start_date ? new Date(parseInt(cuTask.start_date)) : new Date(),
       deadline: cuTask.due_date ? new Date(parseInt(cuTask.due_date)) : new Date(),
       clickupLink: cuTask.url,
       project: ProjectType.GALA, 
@@ -306,7 +310,7 @@ export const ClickUpApp: React.FC<ClickUpAppProps> = ({ existingTasks, onImportT
               </h2>
             </div>
             <p className="text-[10px] font-bold uppercase text-indigo-500 tracking-[0.3em]">
-              {activeTab === 'tasks' ? `${filteredTasksList.length} Active Modules Found` : `System Feed • ${notifications.length} Multi-Workspace Alerts`}
+              {activeTab === 'tasks' ? `${filteredTasksList.length} Active Modules Found` : `System Feed • ${notifications.length} Historical Signals Found`}
             </p>
           </div>
           {isLoading && (
@@ -444,30 +448,47 @@ export const ClickUpApp: React.FC<ClickUpAppProps> = ({ existingTasks, onImportT
                     initial={{ opacity: 0, y: 15 }}
                     animate={{ opacity: 1, y: 0 }}
                     exit={{ opacity: 0, y: -15 }}
-                    className="space-y-5"
+                    className="space-y-6"
                   >
-                    {notifications.length > 0 ? (notifications as ClickUpNotification[]).map(notif => (
-                      <div key={notif.id} className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 p-8 rounded-[2.5rem] flex items-center gap-6 shadow-sm group hover:border-indigo-500/30 transition-all">
-                         <div className="w-14 h-14 bg-slate-100 dark:bg-slate-800 rounded-[1.5rem] flex items-center justify-center text-slate-400 shrink-0 group-hover:bg-indigo-50 dark:group-hover:bg-indigo-900/20 transition-colors">
-                            <Inbox size={24} />
-                         </div>
-                         <div className="flex-1 min-w-0">
-                            <p className="text-base font-bold text-slate-900 dark:text-white leading-tight mb-2">{notif.title}</p>
-                            <div className="flex items-center gap-3">
-                               <p className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">{new Date(parseInt(notif.date)).toLocaleString()}</p>
-                               <span className="text-[9px] font-black uppercase text-indigo-500 bg-indigo-50 dark:bg-indigo-900/20 px-2 py-0.5 rounded">Signal Match</span>
-                            </div>
-                         </div>
-                         {notif.task && (
-                           <button 
-                             onClick={() => window.open(`https://app.clickup.com/t/${notif.task?.id}`, '_blank')}
-                             className="px-6 py-3 bg-indigo-600 text-white rounded-xl text-[10px] font-black uppercase tracking-widest shadow-lg shadow-indigo-600/20 active:scale-95 transition-all"
-                           >
-                             Respond
-                           </button>
-                         )}
-                      </div>
-                    )) : (
+                    {notifications.length > 0 ? (notifications as ClickUpNotification[]).map(notif => {
+                      const date = new Date(parseInt(notif.date));
+                      const title = notif.title || notif.text_content || 'System Update';
+                      
+                      return (
+                        <div key={notif.id} className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 p-8 rounded-[2.5rem] flex items-center gap-8 shadow-sm group hover:border-indigo-500/30 hover:shadow-xl transition-all duration-500">
+                           <div className="w-16 h-16 bg-slate-50 dark:bg-slate-800 rounded-[1.8rem] flex items-center justify-center text-slate-400 shrink-0 group-hover:bg-indigo-50 dark:group-hover:bg-indigo-900/20 group-hover:text-indigo-600 transition-colors">
+                              <BellRing size={28} />
+                           </div>
+                           <div className="flex-1 min-w-0">
+                              <div className="flex items-center gap-3 mb-2">
+                                <span className="text-[9px] font-black uppercase text-indigo-500 bg-indigo-50 dark:bg-indigo-900/20 px-2 py-0.5 rounded border border-indigo-100 dark:border-indigo-800/40">
+                                  {notif.type || 'Activity'}
+                                </span>
+                                <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">
+                                  {date.toLocaleDateString()} • {date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                                </p>
+                              </div>
+                              <h3 className="text-lg font-bold text-slate-900 dark:text-white leading-tight mb-2 group-hover:text-indigo-600 dark:group-hover:text-indigo-400 transition-colors">{title}</h3>
+                              {notif.task && (
+                                <div className="flex items-center gap-2 text-xs font-bold text-slate-500 dark:text-slate-400 bg-slate-50 dark:bg-slate-800/50 w-fit px-3 py-1.5 rounded-xl border border-slate-100 dark:border-slate-800">
+                                   <Hash size={12} className="text-indigo-500" />
+                                   <span className="truncate">{notif.task.name}</span>
+                                </div>
+                              )}
+                           </div>
+                           <div className="flex items-center gap-3">
+                             {notif.task && (
+                               <button 
+                                 onClick={() => window.open(`https://app.clickup.com/t/${notif.task?.id}`, '_blank')}
+                                 className="px-8 py-4 bg-indigo-600 hover:bg-indigo-500 text-white rounded-[1.5rem] text-[10px] font-black uppercase tracking-widest shadow-xl shadow-indigo-600/20 active:scale-95 transition-all"
+                               >
+                                 Respond
+                               </button>
+                             )}
+                           </div>
+                        </div>
+                      );
+                    }) : (
                       <div className="flex flex-col items-center justify-center py-40 opacity-20 text-slate-400 select-none pointer-events-none">
                         <Inbox size={80} strokeWidth={1} className="mb-6" />
                         <p className="text-xl font-black uppercase tracking-[0.3em] text-center">Inbox Neutral • No New Signals</p>
@@ -483,3 +504,4 @@ export const ClickUpApp: React.FC<ClickUpAppProps> = ({ existingTasks, onImportT
     </div>
   );
 };
+

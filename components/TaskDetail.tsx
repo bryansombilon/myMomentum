@@ -2,7 +2,7 @@
 import React from 'react';
 import { Task, Message, Priority } from '../types';
 import { PROJECT_CONFIG, STATUS_CONFIG } from '../constants';
-import { Calendar, CheckCircle2, Trash2, Briefcase, Link as LinkIcon, Pencil, AlertTriangle, Flag } from 'lucide-react';
+import { Calendar, CheckCircle2, Trash2, Briefcase, Link as LinkIcon, Pencil, AlertTriangle, Flag, PlayCircle } from 'lucide-react';
 import { ChatSection } from './ChatSection';
 
 interface TaskDetailProps {
@@ -17,7 +17,7 @@ interface TaskDetailProps {
 
 const safeFormatDate = (date: Date | string | number, options: Intl.DateTimeFormatOptions = { month: 'long', day: 'numeric' }) => {
   const d = new Date(date);
-  if (isNaN(d.getTime())) return 'No Deadline Set';
+  if (isNaN(d.getTime())) return 'No Date Set';
   try {
     return new Intl.DateTimeFormat('en-US', options).format(d);
   } catch (e) {
@@ -51,6 +51,7 @@ export const TaskDetail: React.FC<TaskDetailProps> = ({ task, onUpdateTask, onSt
   }
 
   const project = PROJECT_CONFIG[task.project];
+  const startDate = new Date(task.startDate || Date.now());
   const deadlineDate = new Date(task.deadline);
   const now = new Date();
   const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
@@ -130,20 +131,25 @@ export const TaskDetail: React.FC<TaskDetailProps> = ({ task, onUpdateTask, onSt
         </div>
 
         {/* Metadata Grid */}
-        <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 md:gap-4">
+        <div className="grid grid-cols-2 lg:grid-cols-5 gap-3 md:gap-4">
           <MetadataCard icon={Briefcase} label="Project" iconColor="text-indigo-600 dark:text-indigo-400">
             <span className="w-2 h-2 rounded-full mr-2 inline-block" style={{ backgroundColor: project.color }} />
             {project.name}
           </MetadataCard>
+          <MetadataCard icon={PlayCircle} label="Start Date" iconColor="text-emerald-500">
+            <span className="font-bold">
+              {safeFormatDate(startDate)}
+            </span>
+          </MetadataCard>
+          <MetadataCard icon={Calendar} label="Deadline" iconColor={isOverdue ? 'text-red-600 dark:text-red-400' : 'text-rose-500'}>
+            <span className={isOverdue ? 'text-red-600 dark:text-red-400 font-bold' : 'font-bold'}>
+              {safeFormatDate(deadlineDate)}
+            </span>
+          </MetadataCard>
           <MetadataCard icon={Flag} label="Priority" onClick={() => onPriorityChange(task.id, isUrgent ? 'not-urgent' : 'urgent')} iconColor={isUrgent ? 'text-red-600 dark:text-red-400' : 'text-slate-500'}>
             <span className={isUrgent ? 'text-red-600 dark:text-red-400 font-bold' : 'font-bold'}>{isUrgent ? 'Urgent' : 'Normal'}</span>
           </MetadataCard>
-          <MetadataCard icon={Calendar} label="Due Date" iconColor={isOverdue ? 'text-red-600 dark:text-red-400' : 'text-slate-500'}>
-            <span className={isOverdue ? 'text-red-600 dark:text-red-400 font-bold' : 'font-bold'}>
-              {safeFormatDate(task.deadline)}
-            </span>
-          </MetadataCard>
-          <MetadataCard icon={LinkIcon} label="Hub Access" onClick={task.clickupLink ? () => window.open(task.clickupLink, '_blank') : undefined} iconColor="text-emerald-600 dark:text-emerald-400">
+          <MetadataCard icon={LinkIcon} label="Hub Access" onClick={task.clickupLink ? () => window.open(task.clickupLink, '_blank') : undefined} iconColor="text-blue-500">
             {task.clickupLink ? `ID: ${clickupId}` : 'None Linked'}
           </MetadataCard>
         </div>

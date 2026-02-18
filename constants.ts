@@ -41,6 +41,7 @@ export const INITIAL_TASKS: Task[] = [
     id: 't-1',
     title: 'GALA Website Launch',
     description: 'Finalize the homepage assets and deploy to production.',
+    startDate: new Date(),
     deadline: new Date(new Date().setDate(new Date().getDate() + 2)), 
     clickupLink: 'https://clickup.com/t/12345',
     project: ProjectType.GALA,

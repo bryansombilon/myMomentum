@@ -10,6 +10,7 @@ interface NewTaskModalProps {
   onSave: (taskData: {
     title: string;
     description: string;
+    startDate: Date;
     deadline: Date;
     clickupLink: string;
     project: ProjectType;
@@ -21,6 +22,7 @@ interface NewTaskModalProps {
 export const NewTaskModal: React.FC<NewTaskModalProps> = ({ isOpen, onClose, onSave, taskToEdit }) => {
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
+  const [startDate, setStartDate] = useState('');
   const [deadline, setDeadline] = useState('');
   const [clickupTaskId, setClickupTaskId] = useState('');
   const [project, setProject] = useState<ProjectType>(ProjectType.GALA);
@@ -34,7 +36,13 @@ export const NewTaskModal: React.FC<NewTaskModalProps> = ({ isOpen, onClose, onS
       if (taskToEdit) {
         setTitle(taskToEdit.title);
         setDescription(taskToEdit.description);
-        // Format date to YYYY-MM-DD for input[type="date"]
+        
+        // Format dates to YYYY-MM-DD for input[type="date"]
+        const sDateStr = taskToEdit.startDate instanceof Date 
+          ? taskToEdit.startDate.toISOString().split('T')[0] 
+          : new Date(taskToEdit.startDate || Date.now()).toISOString().split('T')[0];
+        setStartDate(sDateStr);
+
         const dateStr = taskToEdit.deadline instanceof Date 
           ? taskToEdit.deadline.toISOString().split('T')[0] 
           : new Date(taskToEdit.deadline).toISOString().split('T')[0];
@@ -51,6 +59,7 @@ export const NewTaskModal: React.FC<NewTaskModalProps> = ({ isOpen, onClose, onS
         // Reset for new task
         setTitle('');
         setDescription('');
+        setStartDate(new Date().toISOString().split('T')[0]);
         setDeadline('');
         setClickupTaskId('');
         setProject(ProjectType.GALA);
@@ -71,6 +80,7 @@ export const NewTaskModal: React.FC<NewTaskModalProps> = ({ isOpen, onClose, onS
     onSave({
       title,
       description,
+      startDate: new Date(startDate || Date.now()),
       deadline: new Date(deadline),
       clickupLink: fullClickupLink,
       project,
@@ -127,6 +137,36 @@ export const NewTaskModal: React.FC<NewTaskModalProps> = ({ isOpen, onClose, onS
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            {/* Start Date */}
+            <div className="space-y-1.5">
+              <label className="text-[13px] font-medium text-slate-500 dark:text-slate-400 flex items-center gap-1.5">
+                <Calendar size={14} className="text-emerald-500" /> Start Date
+              </label>
+              <input
+                type="date"
+                required
+                value={startDate}
+                onChange={(e) => setStartDate(e.target.value)}
+                className="w-full bg-slate-50 dark:bg-slate-800/50 border border-slate-300 dark:border-slate-700 rounded-lg px-3 py-2 text-[15px] text-slate-900 dark:text-slate-200 focus:outline-none focus:border-indigo-500 [color-scheme:light] dark:[color-scheme:dark]"
+              />
+            </div>
+
+            {/* Deadline */}
+            <div className="space-y-1.5">
+              <label className="text-[13px] font-medium text-slate-500 dark:text-slate-400 flex items-center gap-1.5">
+                <Calendar size={14} className="text-rose-500" /> Deadline
+              </label>
+              <input
+                type="date"
+                required
+                value={deadline}
+                onChange={(e) => setDeadline(e.target.value)}
+                className="w-full bg-slate-50 dark:bg-slate-800/50 border border-slate-300 dark:border-slate-700 rounded-lg px-3 py-2 text-[15px] text-slate-900 dark:text-slate-200 focus:outline-none focus:border-indigo-500 [color-scheme:light] dark:[color-scheme:dark]"
+              />
+            </div>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             {/* Project */}
             <div className="space-y-1.5">
               <label className="text-[13px] font-medium text-slate-500 dark:text-slate-400 flex items-center gap-1.5">
@@ -145,54 +185,40 @@ export const NewTaskModal: React.FC<NewTaskModalProps> = ({ isOpen, onClose, onS
               </select>
             </div>
 
-            {/* Deadline */}
+            {/* Priority Toggle */}
             <div className="space-y-1.5">
               <label className="text-[13px] font-medium text-slate-500 dark:text-slate-400 flex items-center gap-1.5">
-                <Calendar size={14} /> Deadline
+                <AlertTriangle size={14} /> Priority Level
               </label>
-              <input
-                type="date"
-                required
-                value={deadline}
-                onChange={(e) => setDeadline(e.target.value)}
-                className="w-full bg-slate-50 dark:bg-slate-800/50 border border-slate-300 dark:border-slate-700 rounded-lg px-3 py-2 text-[15px] text-slate-900 dark:text-slate-200 focus:outline-none focus:border-indigo-500 [color-scheme:light] dark:[color-scheme:dark]"
-              />
-            </div>
-          </div>
-
-          {/* Priority Toggle */}
-          <div className="space-y-1.5">
-            <label className="text-[13px] font-medium text-slate-500 dark:text-slate-400 flex items-center gap-1.5">
-              <AlertTriangle size={14} /> Priority Level
-            </label>
-            <div className="flex items-center gap-3 p-1">
-              {/* Toggle Switch */}
-              <button
-                type="button"
-                onClick={() => setPriority(prev => prev === 'urgent' ? 'not-urgent' : 'urgent')}
-                className={`relative w-12 h-6 rounded-full transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 dark:focus:ring-offset-slate-900 ${
-                  priority === 'urgent' 
-                    ? 'bg-red-500' 
-                    : 'bg-slate-300 dark:bg-slate-600'
-                }`}
-                role="switch"
-                aria-checked={priority === 'urgent'}
-              >
-                <span
-                  className={`absolute top-1 left-1 bg-white rounded-full w-4 h-4 shadow-sm transition-transform duration-200 transform ${
-                    priority === 'urgent' ? 'translate-x-6' : 'translate-x-0'
+              <div className="flex items-center gap-3 p-1">
+                {/* Toggle Switch */}
+                <button
+                  type="button"
+                  onClick={() => setPriority(prev => prev === 'urgent' ? 'not-urgent' : 'urgent')}
+                  className={`relative w-12 h-6 rounded-full transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 dark:focus:ring-offset-slate-900 ${
+                    priority === 'urgent' 
+                      ? 'bg-red-500' 
+                      : 'bg-slate-300 dark:bg-slate-600'
                   }`}
-                />
-              </button>
-              
-              {/* Label */}
-              <span className={`text-[15px] font-medium transition-colors ${
-                priority === 'urgent' 
-                  ? 'text-red-600 dark:text-red-400 font-bold' 
-                  : 'text-slate-600 dark:text-slate-400'
-              }`}>
-                {priority === 'urgent' ? 'URGENT' : 'Not Urgent'}
-              </span>
+                  role="switch"
+                  aria-checked={priority === 'urgent'}
+                >
+                  <span
+                    className={`absolute top-1 left-1 bg-white rounded-full w-4 h-4 shadow-sm transition-transform duration-200 transform ${
+                      priority === 'urgent' ? 'translate-x-6' : 'translate-x-0'
+                    }`}
+                  />
+                </button>
+                
+                {/* Label */}
+                <span className={`text-[15px] font-medium transition-colors ${
+                  priority === 'urgent' 
+                    ? 'text-red-600 dark:text-red-400 font-bold' 
+                    : 'text-slate-600 dark:text-slate-400'
+                }`}>
+                  {priority === 'urgent' ? 'URGENT' : 'Normal'}
+                </span>
+              </div>
             </div>
           </div>
 

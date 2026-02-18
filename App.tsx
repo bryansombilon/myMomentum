@@ -4,7 +4,7 @@ import { AnimatePresence, motion } from 'framer-motion';
 import { TaskList } from './components/TaskList';
 import { TaskDetail } from './components/TaskDetail';
 import { NewTaskModal } from './components/NewTaskModal';
-import { ProjectProgress } from './components/ProjectProgress';
+import { KanbanView, TableView, TaskCalendarView } from './components/TaskVisualViews';
 import { Home } from './components/Home';
 import { NotesApp } from './components/NotesApp';
 import { LinksApp } from './components/LinksApp';
@@ -15,7 +15,8 @@ import { ReminderPopup } from './components/ReminderPopup';
 import { EngagementApp } from './components/EngagementApp';
 import { ClickUpApp } from './components/ClickUpApp';
 import { INITIAL_TASKS, INITIAL_NOTES, INITIAL_LINKS, INITIAL_LEAVES, INITIAL_EVENT_ACTIVITIES, INITIAL_REMINDERS } from './constants';
-import { Task, Message, Priority, AppView, Note, LinkEntry, LeaveEntry, EventActivity, Reminder } from './types';
+import { Task, Message, Priority, AppView, Note, LinkEntry, LeaveEntry, EventActivity, Reminder, TaskViewType } from './types';
+import { LayoutGrid, Trello, Table as TableIcon, Calendar as CalendarIcon, List as ListIcon } from 'lucide-react';
 
 const STORAGE_KEY_TASKS = 'taskflow_tasks_v1';
 const STORAGE_KEY_NOTES = 'taskflow_notes_v1';
@@ -34,15 +35,18 @@ const VIEW_VARIANTS = {
 
 const App: React.FC = () => {
   const [currentView, setCurrentView] = useState<AppView>('home');
+  const [taskView, setTaskView] = useState<TaskViewType>('detail');
 
   const [tasks, setTasks] = useState<Task[]>(() => {
     try {
       const saved = localStorage.getItem(STORAGE_KEY_TASKS);
       if (saved) {
         return JSON.parse(saved).map((t: any) => {
+          const startDate = new Date(t.startDate || t.deadline || Date.now());
           const deadline = new Date(t.deadline);
           return { 
             ...t, 
+            startDate: isNaN(startDate.getTime()) ? new Date() : startDate,
             deadline: isNaN(deadline.getTime()) ? new Date() : deadline, 
             updates: Array.isArray(t.updates) ? t.updates.map((m: any) => {
               const ts = new Date(m.timestamp);
@@ -133,10 +137,14 @@ const App: React.FC = () => {
   }, [tasks, notes, links, leaves, eventActivities, reminders]);
 
   const handleTaskReorder = (newOrder: Task[]) => setTasks(newOrder);
-  const handleUpdateTask = (taskId: string, updates: Message[]) => setTasks(prev => prev.map(t => t.id === taskId ? { ...t, updates } : t));
+  const handleUpdateTaskMessages = (taskId: string, updates: Message[]) => setTasks(prev => prev.map(t => t.id === taskId ? { ...t, updates } : t));
   const handleStatusChange = (taskId: string, status: Task['status']) => setTasks(prev => prev.map(t => t.id === taskId ? { ...t, status } : t));
   const handlePriorityChange = (taskId: string, priority: Priority) => setTasks(prev => prev.map(t => t.id === taskId ? { ...t, priority } : t));
   
+  const handleUpdateTaskGeneric = (taskId: string, updates: Partial<Task>) => {
+    setTasks(prev => prev.map(t => t.id === taskId ? { ...t, ...updates } : t));
+  };
+
   const handleDeleteTask = useCallback((taskId: string) => {
     setTasks(prev => prev.filter(t => t.id !== taskId));
     setSelectedTaskId(prevId => prevId === taskId ? null : prevId);
@@ -152,7 +160,12 @@ const App: React.FC = () => {
     setIsNewTaskModalOpen(false);
   };
 
-  const handleNavigateToTask = (taskId: string) => { setSelectedTaskId(taskId); setCurrentView('tasks'); };
+  const handleNavigateToTask = (taskId: string) => { 
+    setSelectedTaskId(taskId); 
+    setCurrentView('tasks'); 
+    setTaskView('detail'); // Default to detail when navigating to a specific task
+  };
+
   const selectedTask = tasks.find(t => t.id === selectedTaskId) || null;
 
   const handleExport = () => {
@@ -187,9 +200,11 @@ const App: React.FC = () => {
         
         if (Array.isArray(data.tasks)) {
           setTasks(data.tasks.map((t: any) => {
+            const startDate = new Date(t.startDate || t.deadline || Date.now());
             const deadline = new Date(t.deadline);
             return {
               ...t,
+              startDate: isNaN(startDate.getTime()) ? new Date() : startDate,
               deadline: isNaN(deadline.getTime()) ? new Date() : deadline,
               updates: Array.isArray(t.updates) 
                 ? t.updates.map((m: any) => {
@@ -250,6 +265,38 @@ const App: React.FC = () => {
     reader.readAsText(file);
   };
 
+  const handleSelectTaskAndDetail = (task: Task) => {
+    setSelectedTaskId(task.id);
+    setTaskView('detail');
+  };
+
+  const renderTaskDashboard = () => {
+    const commonProps = {
+      tasks,
+      onSelectTask: handleSelectTaskAndDetail,
+      onStatusChange: handleStatusChange,
+      onDeleteTask: handleDeleteTask,
+      onUpdateTask: handleUpdateTaskGeneric,
+    };
+
+    switch(taskView) {
+      case 'kanban': return <KanbanView {...commonProps} />;
+      case 'table': return <TableView {...commonProps} />;
+      case 'calendar': return <TaskCalendarView {...commonProps} />;
+      case 'detail':
+      default: return (
+        <TaskDetail 
+          task={selectedTask} 
+          onUpdateTask={handleUpdateTaskMessages} 
+          onStatusChange={handleStatusChange} 
+          onPriorityChange={handlePriorityChange} 
+          onDeleteTask={handleDeleteTask} 
+          onEditTask={(t) => { setEditingTask(t); setIsNewTaskModalOpen(true); }} 
+        />
+      );
+    }
+  };
+
   const renderView = () => {
     switch(currentView) {
       case 'home': return (
@@ -270,13 +317,39 @@ const App: React.FC = () => {
             tasks={tasks} 
             setTasks={handleTaskReorder} 
             selectedTaskId={selectedTaskId} 
-            onSelectTask={(task) => setSelectedTaskId(task.id)} 
+            onSelectTask={(task) => { setSelectedTaskId(task.id); setTaskView('detail'); }} 
             onAddNewTask={() => { setEditingTask(null); setIsNewTaskModalOpen(true); }} 
             onDeleteTask={handleDeleteTask}
           />
-          <div className="flex flex-col flex-1 min-w-0">
-            <ProjectProgress tasks={tasks} />
-            <TaskDetail task={selectedTask} onUpdateTask={handleUpdateTask} onStatusChange={handleStatusChange} onPriorityChange={handlePriorityChange} onDeleteTask={handleDeleteTask} onEditTask={(t) => { setEditingTask(t); setIsNewTaskModalOpen(true); }} />
+          <div className="flex flex-col flex-1 min-w-0 bg-slate-50 dark:bg-slate-950">
+            <div className="flex items-center justify-between p-4 bg-white dark:bg-slate-900 border-b border-slate-200 dark:border-slate-800 transition-colors">
+              <div className="flex bg-slate-100 dark:bg-slate-800 rounded-xl p-1 border border-slate-200 dark:border-slate-700">
+                <ViewTab active={taskView === 'detail'} onClick={() => setTaskView('detail')} icon={ListIcon} label="Detail" />
+                <ViewTab active={taskView === 'kanban'} onClick={() => setTaskView('kanban')} icon={Trello} label="Board" />
+                <ViewTab active={taskView === 'table'} onClick={() => setTaskView('table')} icon={TableIcon} label="Table" />
+                <ViewTab active={taskView === 'calendar'} onClick={() => setTaskView('calendar')} icon={CalendarIcon} label="Calendar" />
+              </div>
+              <div className="hidden sm:block">
+                <span className="text-[10px] font-black uppercase text-indigo-50 tracking-[0.2em]">Workspace Control</span>
+              </div>
+            </div>
+            
+            {/* Completion Progress Bar removed as requested */}
+            
+            <div className="flex-1 overflow-hidden relative">
+              <AnimatePresence mode="wait">
+                <motion.div
+                  key={taskView}
+                  initial={{ opacity: 0, x: 10 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  exit={{ opacity: 0, x: -10 }}
+                  transition={{ duration: 0.2 }}
+                  className="h-full w-full"
+                >
+                  {renderTaskDashboard()}
+                </motion.div>
+              </AnimatePresence>
+            </div>
           </div>
         </div>
       );
@@ -311,5 +384,15 @@ const App: React.FC = () => {
     </div>
   );
 };
+
+const ViewTab: React.FC<{ active: boolean; onClick: () => void; icon: React.ElementType; label: string }> = ({ active, onClick, icon: Icon, label }) => (
+  <button 
+    onClick={onClick}
+    className={`flex items-center gap-2 px-4 py-2 rounded-lg text-[10px] font-black uppercase tracking-widest transition-all ${active ? 'bg-white dark:bg-slate-700 text-indigo-600 dark:text-indigo-400 shadow-sm' : 'text-slate-400 hover:text-slate-600'}`}
+  >
+    <Icon size={14} />
+    <span className="hidden sm:inline">{label}</span>
+  </button>
+);
 
 export default App;

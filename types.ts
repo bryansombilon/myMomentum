@@ -28,6 +28,7 @@ export interface Task {
   id: string;
   title: string;
   description: string;
+  startDate: Date;
   deadline: Date;
   clickupLink: string;
   project: ProjectType;
@@ -37,6 +38,7 @@ export interface Task {
 }
 
 export type AppView = 'home' | 'tasks' | 'notes' | 'links' | 'leaves' | 'event-timeline' | 'engagement' | 'sop' | 'clickup';
+export type TaskViewType = 'detail' | 'kanban' | 'table' | 'calendar';
 
 export interface Note {
   id: string;
