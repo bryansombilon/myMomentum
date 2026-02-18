@@ -58,35 +58,57 @@ export const ClickUpApp: React.FC<ClickUpAppProps> = ({ existingTasks, onImportT
     try {
       const headers = { 'Authorization': CLICKUP_TOKEN };
       
+      // 1. Authenticate User
       const userRes = await fetch(`${BASE_URL}/user`, { headers });
       if (!userRes.ok) throw new Error('Unauthorized or invalid token');
       const userData = await userRes.json();
       setUser(userData.user);
 
+      // 2. Get Teams (Workspaces)
       const teamsRes = await fetch(`${BASE_URL}/team`, { headers });
       const teamsData = await teamsRes.json();
       
       let allTasks: ClickUpTask[] = [];
-      for (const team of teamsData.teams) {
-        const tasksRes = await fetch(`${BASE_URL}/team/${team.id}/task?assignees[]=${userData.user.id}&subtasks=true`, { headers });
-        const taskData = await tasksRes.json();
-        if (taskData.tasks) {
-          const activeTasks = taskData.tasks.filter((t: any) => 
-            t.status.type !== 'closed' && 
-            t.status.status.toLowerCase() !== 'done' &&
-            t.status.status.toLowerCase() !== 'completed'
-          );
-          allTasks = [...allTasks, ...activeTasks];
-        }
-      }
-      setTasks(allTasks);
+      let allNotifications: ClickUpNotification[] = [];
 
-      if (teamsData.teams.length > 0) {
-        const teamId = teamsData.teams[0].id;
-        const notifyRes = await fetch(`${BASE_URL}/team/${teamId}/view/notification`, { headers });
-        const notifyData = await notifyRes.json();
-        setNotifications(notifyData.notifications || []);
+      // 3. Aggregate Data from ALL Teams
+      for (const team of teamsData.teams) {
+        // Fetch Tasks
+        try {
+          const tasksRes = await fetch(`${BASE_URL}/team/${team.id}/task?assignees[]=${userData.user.id}&subtasks=true`, { headers });
+          if (tasksRes.ok) {
+            const taskData = await tasksRes.json();
+            if (taskData.tasks) {
+              const activeTasks = taskData.tasks.filter((t: any) => 
+                t.status.type !== 'closed' && 
+                t.status.status.toLowerCase() !== 'done' &&
+                t.status.status.toLowerCase() !== 'completed'
+              );
+              allTasks = [...allTasks, ...activeTasks];
+            }
+          }
+        } catch (e) { console.error(`Failed to fetch tasks for team ${team.id}`); }
+
+        // Fetch Notifications (Global Inbox Fix)
+        try {
+          // Changed to standard notification endpoint
+          const notifyRes = await fetch(`${BASE_URL}/team/${team.id}/notification`, { headers });
+          if (notifyRes.ok) {
+            const notifyData = await notifyRes.json();
+            if (notifyData.notifications) {
+              allNotifications = [...allNotifications, ...notifyData.notifications];
+            }
+          }
+        } catch (e) { console.error(`Failed to fetch notifications for team ${team.id}`); }
       }
+
+      setTasks(allTasks);
+      
+      // Sort notifications by date (newest first)
+      const sortedNotifications = allNotifications.sort((a, b) => 
+        new Date(b.date).getTime() - new Date(a.date).getTime()
+      );
+      setNotifications(sortedNotifications);
 
     } catch (err: any) {
       setError(err.message || 'Failed to sync with ClickUp Architecture');
@@ -99,7 +121,6 @@ export const ClickUpApp: React.FC<ClickUpAppProps> = ({ existingTasks, onImportT
     fetchAll();
   }, []);
 
-  // EXTRACT UNIQUE LISTS FOR SIDEBAR
   const clickUpLists = useMemo(() => {
     const listMap = new Map<string, { name: string, count: number }>();
     tasks.forEach(t => {
@@ -117,7 +138,6 @@ export const ClickUpApp: React.FC<ClickUpAppProps> = ({ existingTasks, onImportT
     return tasks.filter(t => t.list.id === selectedListId);
   }, [tasks, selectedListId]);
 
-  // Group tasks in the main area by Folder/Space (Project)
   const groupedTasksByProject = useMemo(() => {
     const groups: Record<string, ClickUpTask[]> = {};
     filteredTasksList.forEach(task => {
@@ -186,7 +206,6 @@ export const ClickUpApp: React.FC<ClickUpAppProps> = ({ existingTasks, onImportT
         )}
       </AnimatePresence>
 
-      {/* Sidebar Rail */}
       <div className="w-80 border-r border-slate-200 dark:border-slate-800 flex flex-col bg-white dark:bg-slate-900 transition-colors shrink-0">
         <div className="p-6 border-b border-slate-200 dark:border-slate-800 flex items-center justify-between bg-slate-50/50 dark:bg-slate-900/50">
           <div className="flex items-center gap-3">
@@ -204,7 +223,6 @@ export const ClickUpApp: React.FC<ClickUpAppProps> = ({ existingTasks, onImportT
         </div>
 
         <div className="flex-1 overflow-y-auto p-4 space-y-6 no-scrollbar">
-          {/* Main Navigation */}
           <div className="space-y-1.5">
             <button 
               onClick={() => setActiveTab('inbox')}
@@ -220,7 +238,6 @@ export const ClickUpApp: React.FC<ClickUpAppProps> = ({ existingTasks, onImportT
             </button>
           </div>
 
-          {/* LISTS NAVIGATION */}
           <div className="space-y-3">
             <div className="px-4 flex items-center justify-between">
               <span className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400 dark:text-slate-500">Workspace Lists</span>
@@ -280,7 +297,6 @@ export const ClickUpApp: React.FC<ClickUpAppProps> = ({ existingTasks, onImportT
         </div>
       </div>
 
-      {/* Main Content Area */}
       <div className="flex-1 flex flex-col min-w-0 overflow-hidden">
         <header className="p-10 border-b border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 flex items-center justify-between shrink-0 transition-colors">
           <div>
@@ -290,7 +306,7 @@ export const ClickUpApp: React.FC<ClickUpAppProps> = ({ existingTasks, onImportT
               </h2>
             </div>
             <p className="text-[10px] font-bold uppercase text-indigo-500 tracking-[0.3em]">
-              {activeTab === 'tasks' ? `${filteredTasksList.length} Active Modules Found` : `System Feed • ${notifications.length} Interrupts`}
+              {activeTab === 'tasks' ? `${filteredTasksList.length} Active Modules Found` : `System Feed • ${notifications.length} Multi-Workspace Alerts`}
             </p>
           </div>
           {isLoading && (
@@ -437,7 +453,10 @@ export const ClickUpApp: React.FC<ClickUpAppProps> = ({ existingTasks, onImportT
                          </div>
                          <div className="flex-1 min-w-0">
                             <p className="text-base font-bold text-slate-900 dark:text-white leading-tight mb-2">{notif.title}</p>
-                            <p className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">{new Date(notif.date).toLocaleString()}</p>
+                            <div className="flex items-center gap-3">
+                               <p className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">{new Date(parseInt(notif.date)).toLocaleString()}</p>
+                               <span className="text-[9px] font-black uppercase text-indigo-500 bg-indigo-50 dark:bg-indigo-900/20 px-2 py-0.5 rounded">Signal Match</span>
+                            </div>
                          </div>
                          {notif.task && (
                            <button 
