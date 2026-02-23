@@ -16,7 +16,7 @@ import { EngagementApp } from './components/EngagementApp';
 import { ClickUpApp } from './components/ClickUpApp';
 import { INITIAL_TASKS, INITIAL_NOTES, INITIAL_LINKS, INITIAL_LEAVES, INITIAL_EVENT_ACTIVITIES, INITIAL_REMINDERS } from './constants';
 import { Task, Message, Priority, AppView, Note, LinkEntry, LeaveEntry, EventActivity, Reminder, TaskViewType } from './types';
-import { LayoutGrid, Trello, Table as TableIcon, Calendar as CalendarIcon, List as ListIcon } from 'lucide-react';
+import { LayoutGrid, Trello, Table as TableIcon, Calendar as CalendarIcon, List as ListIcon, X as XIcon } from 'lucide-react';
 
 const STORAGE_KEY_TASKS = 'taskflow_tasks_v1';
 const STORAGE_KEY_NOTES = 'taskflow_notes_v1';
@@ -118,6 +118,7 @@ const App: React.FC = () => {
 
   const [selectedTaskId, setSelectedTaskId] = useState<string | null>(null);
   const [isNewTaskModalOpen, setIsNewTaskModalOpen] = useState(false);
+  const [isTaskDetailModalOpen, setIsTaskDetailModalOpen] = useState(false);
   const [editingTask, setEditingTask] = useState<Task | null>(null);
   const [isDarkMode, setIsDarkMode] = useState<boolean>(() => localStorage.getItem(THEME_KEY) === 'dark');
 
@@ -270,10 +271,15 @@ const App: React.FC = () => {
     setTaskView('detail');
   };
 
+  const handleOpenTaskDetailModal = (task: Task) => {
+    setSelectedTaskId(task.id);
+    setIsTaskDetailModalOpen(true);
+  };
+
   const renderTaskDashboard = () => {
     const commonProps = {
       tasks,
-      onSelectTask: handleSelectTaskAndDetail,
+      onSelectTask: handleOpenTaskDetailModal,
       onStatusChange: handleStatusChange,
       onDeleteTask: handleDeleteTask,
       onUpdateTask: handleUpdateTaskGeneric,
@@ -381,6 +387,40 @@ const App: React.FC = () => {
       </AnimatePresence>
       <ReminderPopup reminders={reminders} />
       <NewTaskModal isOpen={isNewTaskModalOpen} onClose={() => setIsNewTaskModalOpen(false)} onSave={handleSaveTask} taskToEdit={editingTask} />
+      
+      {/* Task Detail Modal */}
+      <AnimatePresence>
+        {isTaskDetailModalOpen && selectedTask && (
+          <div className="fixed inset-0 z-[150] flex items-center justify-center p-4 bg-slate-900/80 backdrop-blur-sm transition-all">
+            <motion.div 
+              initial={{ opacity: 0, scale: 0.9, y: 20 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.9, y: 20 }}
+              className="w-full max-w-4xl max-h-[90vh] bg-white dark:bg-slate-900 rounded-[2.5rem] shadow-2xl overflow-hidden flex flex-col border border-slate-200 dark:border-slate-800"
+            >
+              <div className="flex items-center justify-between p-6 border-b border-slate-200 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-800/50">
+                <h2 className="text-lg font-black uppercase tracking-widest text-slate-500 dark:text-slate-400">Task Intelligence</h2>
+                <button 
+                  onClick={() => setIsTaskDetailModalOpen(false)}
+                  className="p-2 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 hover:bg-slate-200 dark:hover:bg-slate-800 rounded-xl transition-all"
+                >
+                  <XIcon size={24} />
+                </button>
+              </div>
+              <div className="flex-1 overflow-y-auto no-scrollbar">
+                <TaskDetail 
+                  task={selectedTask} 
+                  onUpdateTask={handleUpdateTaskMessages} 
+                  onStatusChange={handleStatusChange} 
+                  onPriorityChange={handlePriorityChange} 
+                  onDeleteTask={(id) => { handleDeleteTask(id); setIsTaskDetailModalOpen(false); }} 
+                  onEditTask={(t) => { setEditingTask(t); setIsNewTaskModalOpen(true); }} 
+                />
+              </div>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
     </div>
   );
 };
